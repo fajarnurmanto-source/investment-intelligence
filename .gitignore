@@ -1,0 +1,18 @@
+﻿# Only the synthetic II VS1 code belongs in this candidate.
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+.env*
+*.pem
+*.key
+*.pfx
+*.p12
+*.duckdb
+*.sqlite*
+*.db
+runtime_data/
+*.zip
+*.pdf
+*.xlsx
+*.csv
