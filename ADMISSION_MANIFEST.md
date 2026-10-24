@@ -1,14 +1,2 @@
-﻿# GitHub candidate admission manifest (allowlist only)
-
-| File | Reason |
-|---|---|
-| README.md | Candidate description |
-| GITHUB_CANDIDATE.md | Candidate boundaries |
-| requirements.txt | Synthetic runtime dependencies |
-| app/main.py | FastAPI vertical slice |
-| legacy/b1.py | B1 synthetic evaluator included by package |
-| tests/test_product.py | Synthetic tests |
-| .github/workflows/ci.yml | Deterministic CI |
-| .gitignore | Local exclusion rules |
-
-NOT APPROVED for GitHub yet. No II runtime files, DuckDB, SQLite, secrets, snapshots or real evidence admitted.
+# VS2 GitHub file admission
+Only app/main.py, app/research_adapter.py, app/static/index.html, legacy/b1.py, tests/*.py, README.md, requirements.txt, .gitignore, .github/workflows/ci.yml and this manifest are eligible. Everything is synthetic or code. Exclude ALL other II workspace content, reports, databases, credentials and backups. A GitHub merge does not imply production data admission.
