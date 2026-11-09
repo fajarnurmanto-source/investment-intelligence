@@ -46,9 +46,8 @@ try {
         throw 'Working tree is not clean. Commit or preserve local changes before synchronization.'
     }
 
-    $remoteRef = "refs/remotes/origin/$branch"
-    & git -C $repoRoot show-ref --verify --quiet $remoteRef
-    $remoteBranchExists = $LASTEXITCODE -eq 0
+    $remoteListing = @(& git -C $repoRoot ls-remote --exit-code --heads origin "refs/heads/$branch")
+    $remoteBranchExists = $LASTEXITCODE -eq 0 -and $remoteListing.Count -gt 0
 
     if ($Mode -in @('Pull', 'Sync') -and $remoteBranchExists) {
         Invoke-Git pull --ff-only origin $branch
@@ -63,10 +62,9 @@ try {
     }
 
     $head = (& git -C $repoRoot rev-parse HEAD).Trim()
-    & git -C $repoRoot show-ref --verify --quiet "refs/remotes/origin/$branch"
-    $remoteHeadExists = $LASTEXITCODE -eq 0
-    $remoteHead = if ($remoteHeadExists) {
-        (& git -C $repoRoot rev-parse "origin/$branch").Trim()
+    $remoteListing = @(& git -C $repoRoot ls-remote --exit-code --heads origin "refs/heads/$branch")
+    $remoteHead = if ($LASTEXITCODE -eq 0 -and $remoteListing.Count -gt 0) {
+        ($remoteListing[0] -split '\s+')[0]
     } else { 'NOT_PUBLISHED' }
 
     Write-Output "II_SYNC=PASS"
