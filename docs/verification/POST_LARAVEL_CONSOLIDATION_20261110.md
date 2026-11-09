@@ -20,5 +20,6 @@ One focused acceptance pass covered the canonical Git worktree, external local r
 | Authenticated user journey | PASS | Login page 200, login final response 200, FRED dashboard 200, FRED CSV report 200. Both `CPIAUCSL` and `FEDFUNDS` were present. Synthetic journey user was removed afterward. |
 | Final stop | PASS | Port endpoint was unreachable after the restarted launcher was stopped. |
 | Source hygiene | PASS | `.env`, runtime SQLite, vendor, cache, logs, storage data, and backups are not staged or tracked. |
+| GitHub push–pull | PASS | Review branch was created without force-push; the repeatable helper completed fetch, fast-forward-only pull, push, and local/remote HEAD comparison. |
 
 The launcher failures encountered during this pass were limited to Windows path quoting and stale serialized cache after the runtime move. Those paths were corrected, cache payload timestamps were normalized to strings, and only the affected checks were repeated.

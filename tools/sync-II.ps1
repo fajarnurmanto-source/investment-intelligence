@@ -59,6 +59,7 @@ try {
             throw "Direct push to protected branch '$branch' is blocked."
         }
         Invoke-Git push --set-upstream origin $branch
+        Invoke-Git fetch origin $branch
     }
 
     $head = (& git -C $repoRoot rev-parse HEAD).Trim()
