@@ -92,3 +92,15 @@ The repeatable `sync-II` mechanism must:
 ### 6.4 Preserved restrictions
 
 `PRODUCTION_ADMISSION=DENIED`, `C_CLEANUP_ADMISSION=DENIED`, and `NO_PAID_SERVICES_WITHOUT_APPROVAL` remain unchanged. R44/R49 and C-drive cleanup remain separate. No backup, rollback, dirty historical repository, or legacy Python source may be deleted by habitat consolidation.
+
+## 7. Product doctrine, rights-aware data, and commercialization readiness
+
+- **Results-first:** every milestone must end in a working Laravel capability, observable user result, or verified operational improvement rather than an administrative artifact.
+- **Reuse-first:** prefer mature, license-compatible Composer/Laravel packages and existing II services over rebuilding authentication, scheduling, retry, CSV, statistics, authorization, or UI infrastructure.
+- **Real-data-first:** FRED is the first connected source. IDX/BEI issuer data, Bank Indonesia macro series, and OJK data remain prioritized connectors only after terms, licensing, rate limits, provenance, and redistribution rights are explicitly recorded. Public visibility alone does not grant commercial redistribution rights.
+- **Benchmark-driven delivery:** competitor analysis remains tied to implementable gaps. The delivered screener, portfolio VaR/CVaR, macro provenance, and CSV reporting are the current evidence; future valuation, alerting, and issuer coverage must follow the same benchmark-to-feature discipline.
+- **OSS governance:** adopted OSS must retain license/version evidence, pass dependency security checks, and remain replaceable behind Laravel services.
+- **UI/UX completion:** first-run login, dashboard, provenance, error/empty/loading states, responsive screens, accessible navigation, launcher lifecycle, and exportable reports are product acceptance requirements.
+- **Commercialization readiness:** packaging, entitlement, support, reliability, data rights, legal review, and subscription design remain readiness work. Production deployment, billing activation, and investment-advice claims remain denied without separate approval.
+
+The independently provable pre-successor canonical roadmap is still unavailable. This is recorded as `CANONICAL_BASE_PENDING`; it does not block safe development and does not authorize rewriting frozen VS1–VS11 history.
