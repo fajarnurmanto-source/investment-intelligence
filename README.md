@@ -2,6 +2,13 @@
 
 Investment Intelligence (II) now runs its active backend exclusively on Laravel. The previous FastAPI/Python source remains in the repository only as a rollback checkpoint and is not called by routes, services, the launcher, CI, queues, or scheduler.
 
+## Canonical habitat
+
+- Habitat root: `D:\Research\INVESTMENT RESEARCH\II`
+- Single Git worktree: `D:\Research\INVESTMENT RESEARCH\II\repository`
+- Local runtime and installed dependencies: `D:\Research\INVESTMENT RESEARCH\II\runtime\laravel` (not tracked by Git)
+- Protected historical material remains outside the active worktree and is classified in `docs/operations/FRAGMENTATION_INVENTORY_20261109.md`.
+
 ## Working product capabilities
 
 - authenticated research workspace and persistent research cases;
@@ -13,7 +20,9 @@ Investment Intelligence (II) now runs its active backend exclusively on Laravel.
 
 ## Start
 
-Run `start-ii.ps1` from PowerShell. It prepares the local Laravel environment without overwriting an existing `.env`, applies non-destructive migrations, starts the queue and scheduler, then serves II at `http://127.0.0.1:8810`.
+Run `start-ii.ps1` from PowerShell. It prepares the external local runtime without overwriting its `.env`, applies non-destructive migrations, starts the queue and scheduler, then serves II at `http://127.0.0.1:8810`.
+
+Run `sync-II.ps1` for the repeatable fetch, fast-forward-only pull, source-only validation, and feature-branch push workflow.
 
 To ingest allow-listed FRED series immediately:
 

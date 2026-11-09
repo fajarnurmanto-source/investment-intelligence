@@ -17,6 +17,13 @@ $application = Application::configure(basePath: dirname(__DIR__))
         //
     })->create();
 
+$runtimeRoot = getenv('II_RUNTIME_ROOT');
+if (is_string($runtimeRoot) && trim($runtimeRoot) !== '') {
+    $runtimeRoot = rtrim($runtimeRoot, "\\/ ");
+    $application->useEnvironmentPath($runtimeRoot);
+    $application->useStoragePath($runtimeRoot.DIRECTORY_SEPARATOR.'storage');
+}
+
 // Laravel's default absolute-cache prefixes are Unix-oriented. Supporting
 // drive-letter paths lets Windows operators place writable runtime caches in
 // an isolated temp directory without changing source permissions.

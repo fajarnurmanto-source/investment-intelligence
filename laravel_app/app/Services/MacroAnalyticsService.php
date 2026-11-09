@@ -56,7 +56,7 @@ class MacroAnalyticsService
                     'change_volatility_pct' => count($changes) > 1 ? round(100 * Descriptive::standardDeviation($changes), 3) : null,
                     'observations' => $rows->count(),
                     'quality_status' => $latest->quality_status,
-                    'retrieved_at' => $latest->retrieved_at,
+                    'retrieved_at' => $latest->retrieved_at?->toIso8601String(),
                     'source_url' => $latest->source_url,
                     'sparkline' => $this->sparkline(array_slice($values, -36)),
                 ];
@@ -65,7 +65,7 @@ class MacroAnalyticsService
             $latestRun = IngestionRun::query()->orderByDesc('started_at')->first();
             return [
                 'series' => $series,
-                'generated_at' => now(),
+                'generated_at' => now()->toIso8601String(),
                 'pipeline_status' => $latestRun?->status ?? 'NOT_RUN',
                 'latest_run' => $latestRun,
             ];
