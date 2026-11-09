@@ -1,4 +1,4 @@
-name: II synthetic VS2 CI
+name: II Laravel-only CI
 on:
   pull_request:
     branches: [development]
@@ -9,12 +9,23 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 12
+    defaults:
+      run:
+        working-directory: laravel_app
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: shivammathur/setup-php@v2
         with:
-          python-version: '3.12'
-      - run: python -m pip install -r requirements.txt pytest
-      - run: python -m compileall -q app legacy tests
-      - run: python -m pytest -q
+          php-version: '8.4'
+          extensions: mbstring, sqlite3, pdo_sqlite
+          coverage: none
+      - run: composer install --no-interaction --prefer-dist --no-progress
+      - run: cp .env.example .env
+      - run: touch database/database.sqlite
+      - run: php artisan key:generate
+      - run: php artisan migrate --force
+      - run: php artisan test
+      - run: php artisan route:list
+      - name: Assert active Laravel app has no Python runtime bridge
+        run: '! grep -R -E "127\.0\.0\.1:8811|FastAPI|subprocess.*python|python(3)? " app config routes resources --exclude-dir=vendor'
