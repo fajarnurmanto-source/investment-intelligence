@@ -39,6 +39,7 @@ It permits fast-forward pulls and feature-branch pushes only; direct pushes to p
 
 - authenticated research workspace and role authorization;
 - issuer fundamentals ingestion and screening;
+- immutable issuer-source registration, CSV/XBRL/PDF intake, provenance/usage-right status, quality gates, nullable valuation, historical comparison, and CSV exports ([V1 guide](docs/data/ISSUER_FUNDAMENTAL_INTELLIGENCE_V1.md));
 - signal, strategy, portfolio, VaR/CVaR, and correlation analytics;
 - real FRED ingestion with provenance, timestamps, quality state, retries, dashboard, and CSV reporting;
 - queue, scheduler, cache, events, Eloquent, and report export.
