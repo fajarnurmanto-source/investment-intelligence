@@ -8,10 +8,12 @@ class FundamentalScreenerService
     {
         $rows = [];
         foreach ($records as $record) {
-            if (($filters['min_margin'] !== null && (($record['net_margin_pct'] ?? null) === null || $record['net_margin_pct'] < $filters['min_margin']))
-                || ($filters['min_growth'] !== null && (($record['revenue_growth_pct'] ?? null) === null || $record['revenue_growth_pct'] < $filters['min_growth']))
-                || ($filters['min_roe'] !== null && (($record['roe_end_pct'] ?? null) === null || $record['roe_end_pct'] < $filters['min_roe']))
-                || ($filters['cash_positive'] && ! ($record['cash_flow_positive'] ?? false))) {
+            if ((($filters['sector'] ?? null) !== null && ($record['sector'] ?? 'Unclassified') !== $filters['sector'])
+                || (($filters['period'] ?? null) !== null && (int) ($record['latest_year'] ?? 0) !== $filters['period'])
+                || (($filters['min_margin'] ?? null) !== null && (($record['net_margin_pct'] ?? null) === null || $record['net_margin_pct'] < $filters['min_margin']))
+                || (($filters['min_growth'] ?? null) !== null && (($record['revenue_growth_pct'] ?? null) === null || $record['revenue_growth_pct'] < $filters['min_growth']))
+                || (($filters['min_roe'] ?? null) !== null && (($record['roe_end_pct'] ?? null) === null || $record['roe_end_pct'] < $filters['min_roe']))
+                || (($filters['cash_positive'] ?? false) && ! ($record['cash_flow_positive'] ?? false))) {
                 continue;
             }
             $record['quality_score'] = $this->score($record);
@@ -19,9 +21,16 @@ class FundamentalScreenerService
             $rows[] = $record;
         }
 
-        $sort = $filters['sort'];
-        usort($rows, static function (array $a, array $b) use ($sort): int {
-            $comparison = ($b[$sort] ?? -INF) <=> ($a[$sort] ?? -INF);
+        $sort = $filters['sort'] ?? 'quality_score';
+        $direction = $filters['sort_direction'] ?? 'desc';
+        usort($rows, static function (array $a, array $b) use ($sort, $direction): int {
+            $av = $a[$sort] ?? null;
+            $bv = $b[$sort] ?? null;
+            if ($av === null || $bv === null) {
+                $comparison = $av === $bv ? 0 : ($av === null ? 1 : -1);
+            } else {
+                $comparison = $direction === 'asc' ? $av <=> $bv : $bv <=> $av;
+            }
 
             return $comparison !== 0 ? $comparison : strcmp($a['ticker'], $b['ticker']);
         });

@@ -3,8 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\IssuerDocument;
+use App\Models\IssuerImportBatch;
+use App\Models\IssuerMarketPrice;
 use App\Services\FundamentalSnapshotService;
+use App\Services\IssuerBatchIngestionService;
 use App\Services\IssuerFundamentalImportService;
+use App\Services\IssuerImportMetadataService;
+use App\Services\IssuerMarketPriceService;
 use App\Services\SignalInsightService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -23,35 +28,23 @@ class FundamentalHubController extends Controller
         $documents = Schema::hasTable('ii_issuer_documents')
             ? IssuerDocument::with('source')->where('user_id', (int) auth()->id())->orderByDesc('imported_at')->limit(50)->get()
             : collect();
+        $batches = Schema::hasTable('ii_issuer_import_batches')
+            ? IssuerImportBatch::with('items')->where('user_id', (int) auth()->id())->latest()->limit(20)->get()
+            : collect();
+        $marketPrices = Schema::hasTable('ii_issuer_market_prices')
+            ? IssuerMarketPrice::where('user_id', (int) auth()->id())->latest('observed_on')->limit(30)->get()
+            : collect();
 
-        return response()->view('ii.fundamentals', compact('records', 'market', 'documents'))->header('Cache-Control', 'private, no-store');
+        return response()->view('ii.fundamentals', compact('records', 'market', 'documents', 'batches', 'marketPrices'))->header('Cache-Control', 'private, no-store');
     }
 
-    public function import(Request $request, IssuerFundamentalImportService $importer)
+    public function import(Request $request, IssuerFundamentalImportService $importer, IssuerImportMetadataService $metadata)
     {
-        $data = $request->validate([
-            'ticker' => ['required', 'string', 'regex:/^[A-Za-z0-9.\-]{1,16}$/'],
-            'issuer_name' => ['required', 'string', 'max:200'],
-            'kind' => ['required', 'in:user_supplied,synthetic'],
-            'report_period' => ['required', 'string', 'max:40'], 'report_date' => ['required', 'date'],
-            'currency' => ['required', 'in:IDR,USD'], 'multiplier' => ['required', 'in:1,1000,1000000,1000000000'],
-            'consolidated' => ['nullable', 'boolean'],
-            'source_name' => ['required', 'string', 'max:160'], 'publisher' => ['nullable', 'string', 'max:160'],
-            'source_url' => ['nullable', 'url', 'max:1000'], 'terms_url' => ['nullable', 'url', 'max:1000'],
-            'license_status' => ['required', 'in:public_disclosure,licensed,user_provided,unknown'],
-            'usage_rights' => ['required', 'in:internal_research,licensed_internal,redistribution_permitted,unknown'],
-            'source_authenticity_status' => ['required', 'in:official_publisher,licensed_provider,user_attested,unverified'],
-            'numeric_reconciliation_status' => ['required', 'in:verified_against_source,user_attested,unreconciled'],
-            'provenance_confidence' => ['required', 'in:high,medium,low'],
-            'redistribution_allowed' => ['nullable', 'boolean'], 'rights_confirmed' => ['accepted'],
-            'fundamental_file' => ['required', 'file', 'max:20480'],
-        ]);
-        $data['ticker'] = strtoupper($data['ticker']);
-        if (($data['kind'] === 'synthetic') !== str_starts_with($data['ticker'], 'DEMO')) {
-            return back()->withErrors(['ticker' => 'Ticker DEMO hanya untuk data sintetis; data sintetis wajib menggunakan ticker DEMO.'])->withInput();
-        }
-        if (($data['redistribution_allowed'] ?? false) && $data['usage_rights'] !== 'redistribution_permitted') {
-            return back()->withErrors(['usage_rights' => 'Redistribusi hanya boleh ditandai jika hak redistribusi memang dinyatakan.'])->withInput();
+        $request->validate(['fundamental_file' => ['required', 'file', 'max:20480']]);
+        try {
+            $data = $metadata->validate($request->except('fundamental_file'));
+        } catch (\InvalidArgumentException $exception) {
+            return back()->withErrors(['fundamental_file' => $exception->getMessage()])->withInput();
         }
         try {
             $document = $importer->import((int) auth()->id(), $data, $request->file('fundamental_file'));
@@ -69,6 +62,41 @@ class FundamentalHubController extends Controller
         };
 
         return redirect()->route('ii.fundamentals.index')->with('fundamental_notice', 'Laporan '.$data['ticker'].' disimpan sebagai versi immutable.'.$suffix);
+    }
+
+    public function importBatch(Request $request, IssuerBatchIngestionService $batches)
+    {
+        $data = $request->validate([
+            'manifest' => ['required', 'file', 'max:1024'],
+            'issuer_files' => ['required', 'array', 'min:1', 'max:20'],
+            'issuer_files.*' => ['required', 'file', 'max:20480'],
+        ]);
+        try {
+            $batch = $batches->create((int) auth()->id(), $data['manifest'], $data['issuer_files']);
+        } catch (\InvalidArgumentException $exception) {
+            return back()->withErrors(['manifest' => $exception->getMessage()]);
+        }
+
+        return redirect()->route('ii.fundamentals.index')->with('fundamental_notice', 'Batch '.$batch->id.' diterima; setiap item diproses dan diaudit terpisah.');
+    }
+
+    public function retryBatch(string $batchId, IssuerBatchIngestionService $batches)
+    {
+        $batch = IssuerImportBatch::where('user_id', (int) auth()->id())->findOrFail($batchId);
+        $count = $batches->retryFailed($batch);
+
+        return redirect()->route('ii.fundamentals.index')->with('fundamental_notice', $count.' item gagal dijadwalkan ulang.');
+    }
+
+    public function storeMarketPrice(Request $request, IssuerMarketPriceService $prices)
+    {
+        try {
+            $price = $prices->store((int) auth()->id(), $request->all());
+        } catch (\InvalidArgumentException $exception) {
+            return back()->withErrors(['market_price' => $exception->getMessage()])->withInput();
+        }
+
+        return redirect()->route('ii.fundamentals.index')->with('fundamental_notice', 'Harga '.$price->issuer_code.' tanggal '.$price->observed_on->toDateString().' disimpan dengan provenance terpisah.');
     }
 
     public function export(string $ticker, FundamentalSnapshotService $fundamentals)
@@ -93,6 +121,31 @@ fiscal_year,period_end,restated,revenue,net_income_attributable,total_assets,tot
 CSV;
 
         return response($csv."\n", 200, ['Content-Type' => 'text/csv; charset=UTF-8', 'Content-Disposition' => 'attachment; filename="II_ISSUER_FUNDAMENTAL_SYNTHETIC_TEMPLATE.csv"', 'Cache-Control' => 'private, no-store']);
+    }
+
+    public function batchExample()
+    {
+        $manifest = [
+            'schema' => 'ii.issuer-batch.v2',
+            'items' => [[
+                'file' => 'DEMO_ONE.csv',
+                'metadata' => [
+                    'ticker' => 'DEMO1', 'issuer_name' => 'Synthetic Demo One', 'sector' => 'Demo', 'kind' => 'synthetic',
+                    'report_period' => 'FY 2024', 'fiscal_period_type' => 'annual', 'report_date' => '2025-03-01',
+                    'currency' => 'IDR', 'multiplier' => '1000000000', 'consolidated' => true,
+                    'source_name' => 'Synthetic training template', 'publisher' => 'User', 'source_url' => null, 'terms_url' => null,
+                    'license_status' => 'user_provided', 'usage_rights' => 'internal_research',
+                    'source_authenticity_status' => 'user_attested', 'numeric_reconciliation_status' => 'user_attested',
+                    'provenance_confidence' => 'low', 'redistribution_allowed' => false, 'rights_confirmed' => true,
+                ],
+            ]],
+        ];
+
+        return response(json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)."\n", 200, [
+            'Content-Type' => 'application/json; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="II_ISSUER_BATCH_SYNTHETIC_MANIFEST.json"',
+            'Cache-Control' => 'private, no-store',
+        ]);
     }
 
     private function csvCell(mixed $value): string

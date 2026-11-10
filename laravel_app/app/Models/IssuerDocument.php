@@ -21,7 +21,7 @@ class IssuerDocument extends Model
     {
         return [
             'report_date' => 'date', 'consolidated' => 'boolean', 'provenance' => 'array',
-            'imported_at' => 'immutable_datetime',
+            'conflict_details' => 'array', 'taxonomy_namespaces' => 'array', 'imported_at' => 'immutable_datetime',
         ];
     }
 

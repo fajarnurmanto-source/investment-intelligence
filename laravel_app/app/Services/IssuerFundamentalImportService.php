@@ -27,8 +27,12 @@ class IssuerFundamentalImportService
         if (IssuerDocument::where('user_id', $userId)->where('sha256', $sha256)->exists()) {
             throw new \InvalidArgumentException('Dokumen dengan checksum yang sama sudah tersimpan; versi lama tidak ditimpa.');
         }
+        if (isset($metadata['restates_document_id']) && ! IssuerDocument::where('id', $metadata['restates_document_id'])
+            ->where('user_id', $userId)->where('issuer_code', strtoupper($metadata['ticker']))->exists()) {
+            throw new \InvalidArgumentException('Dokumen yang dinyatakan direstate harus milik pengguna dan emiten yang sama.');
+        }
 
-        $xbrlValidation = ['status' => 'NOT_APPLICABLE', 'taxonomy_namespaces' => [], 'warnings' => []];
+        $xbrlValidation = ['status' => 'NOT_APPLICABLE', 'taxonomy_namespaces' => [], 'mapping_report' => [], 'warnings' => []];
         if (in_array($extension, ['xbrl', 'xml'], true)) {
             if ((int) $metadata['multiplier'] !== 1) {
                 throw new \InvalidArgumentException('Fakta XBRL harus memakai satuan asli (multiplier 1); scaling berasal dari unitRef/decimals.');
@@ -39,7 +43,7 @@ class IssuerFundamentalImportService
                 $xbrlValidation = array_diff_key($parsed, ['periods' => true]);
             } catch (UnsupportedXbrlTaxonomyException $exception) {
                 $periods = [];
-                $xbrlValidation = ['status' => 'UNSUPPORTED_HOLD', 'taxonomy_namespaces' => [], 'warnings' => [$exception->getMessage()]];
+                $xbrlValidation = ['status' => 'UNSUPPORTED_HOLD', 'taxonomy_namespaces' => [], 'mapping_report' => [], 'warnings' => [$exception->getMessage()]];
             }
         } else {
             $periods = $extension === 'csv' ? $this->parseCsv($file->getRealPath()) : [];
@@ -70,7 +74,9 @@ class IssuerFundamentalImportService
                 $document = IssuerDocument::create([
                     'id' => $id, 'user_id' => $userId, 'source_id' => $source->id,
                     'issuer_code' => strtoupper($metadata['ticker']), 'issuer_name' => $metadata['issuer_name'],
-                    'report_period' => $metadata['report_period'], 'report_date' => $metadata['report_date'],
+                    'sector' => $metadata['sector'] ?? 'Unclassified',
+                    'report_period' => $metadata['report_period'], 'fiscal_period_type' => $metadata['fiscal_period_type'] ?? 'annual',
+                    'report_date' => $metadata['report_date'],
                     'currency' => $metadata['currency'], 'unit_multiplier' => (int) $metadata['multiplier'],
                     'consolidated' => (bool) ($metadata['consolidated'] ?? false),
                     'format' => $extension === 'xml' ? 'xbrl' : $extension,
@@ -81,6 +87,8 @@ class IssuerFundamentalImportService
                     'numeric_reconciliation_status' => strtoupper($metadata['numeric_reconciliation_status'] ?? 'UNRECONCILED'),
                     'licensing_assessment' => $this->licensingAssessment($metadata['usage_rights']),
                     'provenance_confidence' => strtoupper($metadata['provenance_confidence'] ?? 'LOW'),
+                    'conflict_status' => 'NONE', 'taxonomy_status' => $xbrlValidation['status'],
+                    'taxonomy_namespaces' => $xbrlValidation['taxonomy_namespaces'],
                     'provenance' => [
                         'source_url' => $metadata['source_url'] ?? null, 'terms_url' => $metadata['terms_url'] ?? null,
                         'license_status' => $metadata['license_status'], 'usage_rights' => $metadata['usage_rights'],
@@ -95,6 +103,8 @@ class IssuerFundamentalImportService
                     $normalized = $this->normalizePeriod($period, (int) $metadata['multiplier']);
                     $document->periods()->create($normalized);
                 }
+
+                $this->assessConflicts($document);
 
                 return $document->load(['source', 'periods']);
             });
@@ -247,5 +257,54 @@ class IssuerFundamentalImportService
             'ebitda' => 'Issuer-reported EBITDA for the reporting period.',
             'market_price' => 'Observed market price per share on market_price_as_of; never inferred.',
         ];
+    }
+
+    private function assessConflicts(IssuerDocument $document): void
+    {
+        if ($document->periods()->doesntExist()) {
+            return;
+        }
+        $previous = IssuerDocument::with('periods')->where('user_id', $document->user_id)
+            ->where('issuer_code', $document->issuer_code)->where('report_period', $document->report_period)
+            ->where('id', '!=', $document->id)->get();
+        if ($previous->isEmpty()) {
+            return;
+        }
+        $metrics = array_merge(self::METRICS, ['total_equity']);
+        $conflicts = [];
+        $overlapFound = false;
+        foreach ($previous as $older) {
+            foreach ($document->periods as $currentPeriod) {
+                $oldPeriod = $older->periods->first(fn ($row) => $row->fiscal_year === $currentPeriod->fiscal_year
+                    && $row->period_end->toDateString() === $currentPeriod->period_end->toDateString());
+                if ($oldPeriod === null) {
+                    continue;
+                }
+                $overlapFound = true;
+                foreach ($metrics as $metric) {
+                    if ($oldPeriod->{$metric} !== $currentPeriod->{$metric}) {
+                        $conflicts[] = [
+                            'prior_document_id' => $older->id, 'period_end' => $currentPeriod->period_end->toDateString(),
+                            'metric' => $metric, 'prior_value' => $oldPeriod->{$metric}, 'current_value' => $currentPeriod->{$metric},
+                        ];
+                    }
+                }
+            }
+        }
+        if ($conflicts === []) {
+            if ($overlapFound) {
+                $document->update(['conflict_status' => 'CONSISTENT_VERSION', 'conflict_details' => []]);
+            }
+
+            return;
+        }
+        $conflicts = array_slice($conflicts, 0, 100);
+        $document->update(['conflict_status' => 'VALUE_CONFLICT', 'conflict_details' => $conflicts]);
+        $priorIds = collect($conflicts)->pluck('prior_document_id')->unique();
+        foreach ($previous->whereIn('id', $priorIds) as $older) {
+            $details = $older->conflict_details ?? [];
+            $details[] = ['conflicting_document_id' => $document->id, 'detected_at' => now()->toIso8601String()];
+            $older->update(['conflict_status' => 'VALUE_CONFLICT', 'conflict_details' => array_slice($details, -100)]);
+        }
     }
 }

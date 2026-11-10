@@ -40,7 +40,14 @@ Route::prefix('ii')->name('ii.')->group(function (): void {
         Route::get('/fundamentals', [FundamentalHubController::class, 'index'])->name('fundamentals.index');
         Route::post('/fundamentals/import', [FundamentalHubController::class, 'import'])
             ->middleware('throttle:6,1')->name('fundamentals.import');
+        Route::post('/fundamentals/batches', [FundamentalHubController::class, 'importBatch'])
+            ->middleware('throttle:2,1')->name('fundamentals.batches.import');
+        Route::post('/fundamentals/batches/{batchId}/retry', [FundamentalHubController::class, 'retryBatch'])
+            ->middleware('throttle:3,1')->name('fundamentals.batches.retry');
+        Route::post('/fundamentals/market-prices', [FundamentalHubController::class, 'storeMarketPrice'])
+            ->middleware('throttle:8,1')->name('fundamentals.market-prices.store');
         Route::get('/fundamentals/example', [FundamentalHubController::class, 'example'])->name('fundamentals.example');
+        Route::get('/fundamentals/batch-example', [FundamentalHubController::class, 'batchExample'])->name('fundamentals.batch-example');
         Route::get('/fundamentals/{ticker}/export.csv', [FundamentalHubController::class, 'export'])->name('fundamentals.export');
         Route::get('/screener', [FundamentalScreenerController::class, 'index'])->name('screener.index');
         Route::get('/screener/export.csv', [FundamentalScreenerController::class, 'export'])->name('screener.export');

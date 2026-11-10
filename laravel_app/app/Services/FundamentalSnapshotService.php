@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\IssuerDocument;
+use App\Models\IssuerMarketPrice;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 
@@ -27,6 +28,9 @@ class FundamentalSnapshotService
     {
         $out = $this->legacyLatest($userId);
         if (Schema::hasTable('ii_issuer_documents')) {
+            $prices = Schema::hasTable('ii_issuer_market_prices')
+                ? IssuerMarketPrice::where('user_id', $userId)->orderByDesc('observed_on')->orderByDesc('imported_at')->get()->unique('issuer_code')->keyBy('issuer_code')
+                : collect();
             $documents = IssuerDocument::query()->with(['source', 'periods' => fn ($q) => $q->orderBy('fiscal_year')->orderBy('period_end')])
                 ->where('user_id', $userId)->orderByDesc('imported_at')->get();
             $versions = $documents->groupBy('issuer_code')->map->count();
@@ -34,7 +38,7 @@ class FundamentalSnapshotService
                 if ($document->periods->isEmpty()) {
                     continue;
                 }
-                $out[$document->issuer_code] = $this->summarizeDocument($document, (int) $versions[$document->issuer_code]);
+                $out[$document->issuer_code] = $this->summarizeDocument($document, (int) $versions[$document->issuer_code], $prices->get($document->issuer_code));
             }
         }
         ksort($out);
@@ -42,7 +46,7 @@ class FundamentalSnapshotService
         return $out;
     }
 
-    private function summarizeDocument(IssuerDocument $document, int $versions): array
+    private function summarizeDocument(IssuerDocument $document, int $versions, ?IssuerMarketPrice $marketObservation = null): array
     {
         $years = $document->periods->map(fn ($row) => collect($row->getAttributes())->map(fn ($v, $k) => in_array($k, ['id', 'fiscal_year'], true) ? $v : (is_numeric($v) ? (float) $v : $v))->all())->values()->all();
         $last = $years[array_key_last($years)];
@@ -55,15 +59,21 @@ class FundamentalSnapshotService
         $totalEquity = $this->number($last['total_equity'] ?? null);
         $equity = $this->number($last['equity_attributable'] ?? null);
         $shares = $this->number($last['shares_outstanding'] ?? null);
-        $price = $this->number($last['market_price'] ?? null);
+        $embeddedPrice = $this->number($last['market_price'] ?? null);
         $debt = $this->number($last['total_debt'] ?? null);
         $cash = $this->number($last['cash_and_equivalents'] ?? null);
         $ebitda = $this->number($last['ebitda'] ?? null);
-        $marketPriceAsOf = $last['market_price_as_of'] ?? null;
-        $marketCap = $price !== null && $shares !== null ? $price * $shares : null;
+        $marketPriceAsOf = $marketObservation?->observed_on?->toDateString() ?? ($last['market_price_as_of'] ?? null);
+        $price = $marketObservation ? $this->number($marketObservation->price) : $embeddedPrice;
+        $priceRights = $marketObservation?->usage_rights ?? ($embeddedPrice !== null ? $document->source->usage_rights : null);
+        $rightsAligned = in_array($priceRights, ['internal_research', 'licensed_internal', 'redistribution_permitted'], true);
+        $priceAligned = $price !== null && $marketPriceAsOf !== null
+            && ($marketObservation === null || ($marketObservation->currency === $document->currency && $marketObservation->unit === 'per_share'))
+            && $marketPriceAsOf >= (string) $last['period_end'] && $rightsAligned;
+        $marketCap = $priceAligned && $shares !== null ? $price * $shares : null;
         $enterpriseValue = $marketCap !== null && $debt !== null && $cash !== null ? $marketCap + $debt - $cash : null;
-        $eps = $netIncome !== null && $shares > 0 ? $netIncome / $shares : null;
-        $bookValuePerShare = $equity !== null && $shares > 0 ? $equity / $shares : null;
+        $eps = $netIncome !== null && $shares !== null && $shares > 0 ? $netIncome / $shares : null;
+        $bookValuePerShare = $equity !== null && $shares !== null && $shares > 0 ? $equity / $shares : null;
 
         $annual = array_map(function (array $row) use ($ratio): array {
             return [
@@ -80,7 +90,8 @@ class FundamentalSnapshotService
         }, $years);
 
         return [
-            'ticker' => $document->issuer_code, 'issuer_name' => $document->issuer_name, 'kind' => 'user_supplied',
+            'ticker' => $document->issuer_code, 'issuer_name' => $document->issuer_name, 'sector' => $document->sector,
+            'kind' => 'user_supplied', 'fiscal_period_type' => $document->fiscal_period_type,
             'currency' => $document->currency, 'multiplier' => 1, 'report_period' => $document->report_period,
             'report_date' => $document->report_date->toDateString(), 'consolidated' => $document->consolidated,
             'source_name' => $document->source->name, 'source_url' => $document->source->source_url,
@@ -93,21 +104,54 @@ class FundamentalSnapshotService
             'numeric_reconciliation_status' => $document->numeric_reconciliation_status,
             'licensing_assessment' => $document->licensing_assessment,
             'provenance_confidence' => $document->provenance_confidence,
+            'conflict_status' => $document->conflict_status, 'conflict_details' => $document->conflict_details ?? [],
+            'taxonomy_status' => $document->taxonomy_status, 'taxonomy_namespaces' => $document->taxonomy_namespaces ?? [],
             'net_margin_pct' => $ratio($netIncome, $this->number($last['revenue'] ?? null)),
             'revenue_growth_pct' => $growth('revenue'), 'earnings_growth_pct' => $growth('net_income_attributable'),
             'roe_end_pct' => $equity !== null && $equity > 0 ? $ratio($netIncome, $equity) : null,
             'debt_equity_ratio' => $debt !== null && $totalEquity !== null && $totalEquity > 0 ? round($debt / $totalEquity, 4) : null,
             'eps' => $eps !== null ? round($eps, 4) : null,
-            'pe_ratio' => $price !== null && $price > 0 && $eps !== null && $eps > 0 ? round($price / $eps, 2) : null,
-            'pbv_ratio' => $price !== null && $price > 0 && $bookValuePerShare !== null && $bookValuePerShare > 0 ? round($price / $bookValuePerShare, 2) : null,
+            'pe_ratio' => $priceAligned && $price > 0 && $eps !== null && $eps > 0 ? round($price / $eps, 2) : null,
+            'pbv_ratio' => $priceAligned && $price > 0 && $bookValuePerShare !== null && $bookValuePerShare > 0 ? round($price / $bookValuePerShare, 2) : null,
             'ev_ebitda_ratio' => $enterpriseValue !== null && $ebitda !== null && $ebitda > 0 ? round($enterpriseValue / $ebitda, 2) : null,
             'market_price_as_of' => $marketPriceAsOf,
-            'valuation_status' => $price === null ? 'N/A_MISSING_MARKET_PRICE' : ($marketPriceAsOf === null ? 'N/A_MISSING_PRICE_DATE' : 'AVAILABLE_AS_OF_'.$marketPriceAsOf),
+            'valuation_market_price' => $price,
+            'market_price_source' => $marketObservation?->source_name ?? ($embeddedPrice !== null ? $document->source->name : null),
+            'market_price_rights' => $priceRights,
+            'valuation_status' => $this->valuationStatus($price, $marketPriceAsOf, $marketObservation, $document, (string) $last['period_end'], [$eps, $bookValuePerShare, $enterpriseValue, $ebitda]),
             'operating_cash_flow' => $this->number($last['operating_cash_flow'] ?? null),
             'income_positive' => $netIncome !== null && $netIncome > 0,
             'cash_flow_positive' => ($this->number($last['operating_cash_flow'] ?? null) ?? 0) > 0,
             'gate' => 'NOT_ADMITTED', 'decision' => 'HOLD', 'trading_authority' => 'NONE', 'trading_authorized' => false,
         ];
+    }
+
+    private function valuationStatus(?float $price, ?string $asOf, ?IssuerMarketPrice $observation, IssuerDocument $document, string $periodEnd, array $components): string
+    {
+        if ($price === null) {
+            return 'N/A_MISSING_MARKET_PRICE';
+        }
+        if ($asOf === null) {
+            return 'N/A_MISSING_PRICE_DATE';
+        }
+        if ($observation && $observation->currency !== $document->currency) {
+            return 'N/A_PRICE_CURRENCY_MISMATCH';
+        }
+        if ($observation && $observation->unit !== 'per_share') {
+            return 'N/A_PRICE_UNIT_MISMATCH';
+        }
+        if ($asOf < $periodEnd) {
+            return 'N/A_PRICE_PREDATES_REPORT_PERIOD';
+        }
+        $rights = $observation?->usage_rights ?? $document->source->usage_rights;
+        if (! in_array($rights, ['internal_research', 'licensed_internal', 'redistribution_permitted'], true)) {
+            return 'N/A_PRICE_RIGHTS_UNVERIFIED';
+        }
+        if (count(array_filter($components, fn ($value) => $value !== null)) < 2) {
+            return 'N/A_INCOMPLETE_COMPONENTS';
+        }
+
+        return 'AVAILABLE_AS_OF_'.$asOf;
     }
 
     private function number(mixed $value): ?float
@@ -156,17 +200,21 @@ class FundamentalSnapshotService
             'market_price' => null, 'market_price_as_of' => null,
             'net_margin_pct' => $pct($r['net_income_attributable'], $r['revenue']), 'roe_end_pct' => $pct($r['net_income_attributable'], $r['equity_attributable'])], $years);
 
-        return ['ticker' => $doc['ticker'], 'issuer_name' => $doc['ticker'], 'kind' => $doc['kind'], 'currency' => $doc['currency'], 'multiplier' => $m,
+        return ['ticker' => $doc['ticker'], 'issuer_name' => $doc['ticker'], 'sector' => 'Legacy / Unclassified',
+            'kind' => $doc['kind'], 'fiscal_period_type' => 'annual', 'currency' => $doc['currency'], 'multiplier' => $m,
             'report_period' => 'annual', 'report_date' => $last['year'].'-12-31', 'consolidated' => false, 'source_name' => $doc['source_name'], 'source_url' => $doc['source_url'] ?? null,
             'license_status' => 'legacy_unspecified', 'usage_rights' => 'legacy_user_attested', 'redistribution_allowed' => false, 'sha256' => null,
             'imported_at' => $doc['imported_at'], 'latest_year' => $last['year'], 'years' => $annual, 'version_count' => 1, 'quality_status' => 'LEGACY', 'data_quality_score' => 50,
             'source_authenticity_status' => 'UNVERIFIED', 'numeric_reconciliation_status' => 'UNRECONCILED',
             'licensing_assessment' => 'UNVERIFIED', 'provenance_confidence' => 'LOW',
+            'conflict_status' => 'LEGACY_UNASSESSED', 'conflict_details' => [], 'taxonomy_status' => 'LEGACY_NOT_APPLICABLE', 'taxonomy_namespaces' => [],
             'net_margin_pct' => $pct($last['net_income_attributable'], $last['revenue']), 'revenue_growth_pct' => $pct($last['revenue'] - $prev['revenue'], abs($prev['revenue'])),
             'earnings_growth_pct' => $pct($last['net_income_attributable'] - $prev['net_income_attributable'], abs($prev['net_income_attributable'])),
             'roe_end_pct' => $pct($last['net_income_attributable'], $last['equity_attributable']), 'debt_equity_ratio' => null,
             'eps' => $last['shares_outstanding'] > 0 ? round($last['net_income_attributable'] * $m / $last['shares_outstanding'], 4) : null,
-            'pe_ratio' => null, 'pbv_ratio' => null, 'ev_ebitda_ratio' => null, 'market_price_as_of' => null, 'valuation_status' => 'N/A_MISSING_MARKET_PRICE', 'operating_cash_flow' => $last['operating_cash_flow'] * $m,
+            'pe_ratio' => null, 'pbv_ratio' => null, 'ev_ebitda_ratio' => null, 'valuation_market_price' => null,
+            'market_price_as_of' => null, 'market_price_source' => null, 'market_price_rights' => null,
+            'valuation_status' => 'N/A_MISSING_MARKET_PRICE', 'operating_cash_flow' => $last['operating_cash_flow'] * $m,
             'income_positive' => $last['net_income_attributable'] > 0, 'cash_flow_positive' => $last['operating_cash_flow'] > 0,
             'gate' => 'NOT_ADMITTED', 'decision' => 'HOLD', 'trading_authority' => 'NONE', 'trading_authorized' => false];
     }
