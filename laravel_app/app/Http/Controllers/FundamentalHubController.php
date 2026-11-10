@@ -10,6 +10,7 @@ use App\Services\IssuerBatchIngestionService;
 use App\Services\IssuerFundamentalImportService;
 use App\Services\IssuerImportMetadataService;
 use App\Services\IssuerMarketPriceService;
+use App\Services\IssuerMarketPriceBatchImportService;
 use App\Services\SignalInsightService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -97,6 +98,47 @@ class FundamentalHubController extends Controller
         }
 
         return redirect()->route('ii.fundamentals.index')->with('fundamental_notice', 'Harga '.$price->issuer_code.' tanggal '.$price->observed_on->toDateString().' disimpan dengan provenance terpisah.');
+    }
+
+
+    public function importMarketPriceBatch(Request $request, IssuerMarketPriceBatchImportService $importer)
+    {
+        $data = $request->validate([
+            'market_prices_csv' => ['required', 'file', 'mimes:csv,txt', 'max:1024'],
+            'source_name' => ['required', 'string', 'max:160'],
+            'publisher' => ['nullable', 'string', 'max:160'],
+            'source_url' => ['required', 'url', 'max:1000'],
+            'license_status' => ['required', 'in:public_disclosure,licensed,user_provided'],
+            'usage_rights' => ['required', 'in:internal_research,licensed_internal,redistribution_permitted'],
+            'source_authenticity_status' => ['required', 'in:official_publisher,official_exchange,licensed_provider,user_attested'],
+            'provenance_confidence' => ['required', 'in:high,medium,low'],
+            'rights_confirmed' => ['accepted'],
+        ]);
+        try {
+            $result = $importer->import((int) auth()->id(), $data['market_prices_csv'], $request->except('market_prices_csv'));
+        } catch (\InvalidArgumentException $exception) {
+            return back()->withErrors(['market_prices_csv' => $exception->getMessage()]);
+        } catch (\Throwable $exception) {
+            Log::warning('II market price batch failed', ['type' => get_class($exception), 'message' => $exception->getMessage()]);
+
+            return back()->withErrors(['market_prices_csv' => 'Batch tidak disimpan; seluruh harga lama tetap utuh.']);
+        }
+
+        return redirect()->route('ii.fundamentals.index')->with('fundamental_notice',
+            $result['imported'].' harga tersimpan atomik; SHA-256 batch '.substr($result['sha256'], 0, 16).'…');
+    }
+
+    public function marketPriceBatchExample()
+    {
+        $csv = "ticker,observed_on,currency,price,adjustment_status\n"
+            ."DEMO1.JK,2025-01-02,IDR,1000.50,unadjusted_close\n"
+            ."DEMO2.JK,2025-01-02,IDR,250,split_adjusted\n";
+
+        return response($csv, 200, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="II_SYNTHETIC_EOD_PRICE_TEMPLATE.csv"',
+            'Cache-Control' => 'private, no-store',
+        ]);
     }
 
     public function export(string $ticker, FundamentalSnapshotService $fundamentals)
