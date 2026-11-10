@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Validator;
 
 class IssuerMarketPriceService
 {
-    public function store(int $userId, array $input): IssuerMarketPrice
+    public function store(int $userId, array $input, ?string $batchSha256 = null, ?string $batchOriginalFilename = null): IssuerMarketPrice
     {
         $data = Validator::make($input, [
             'ticker' => ['required', 'string', 'regex:/^[A-Za-z0-9.\-]{1,16}$/'],
@@ -48,7 +48,9 @@ class IssuerMarketPriceService
             'license_status' => $payload['license_status'], 'usage_rights' => $payload['usage_rights'],
             'source_authenticity_status' => $payload['source_authenticity_status'],
             'provenance_confidence' => $payload['provenance_confidence'],
-            'redistribution_allowed' => $payload['redistribution_allowed'], 'sha256' => $sha256, 'imported_at' => now(),
+            'redistribution_allowed' => $payload['redistribution_allowed'], 'sha256' => $sha256,
+            'batch_sha256' => $batchSha256, 'batch_original_filename' => $batchOriginalFilename,
+            'imported_at' => now(),
         ]);
     }
 }
