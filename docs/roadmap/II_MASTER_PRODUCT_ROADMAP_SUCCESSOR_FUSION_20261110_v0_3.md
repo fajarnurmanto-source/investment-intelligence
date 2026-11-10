@@ -29,6 +29,21 @@ The owner authorized local production deployment and verified legacy retirement 
 - Hardened XBRL intake for supported IFRS namespaces, entity/context/period/dimension isolation, currency/share units, decimals/precision, duplicate/contradictory facts, nil facts, and external-entity/network rejection. Unsupported taxonomy/dimension cases are archived on hold without numeric output.
 - Public CSV examples are synthetic. Market valuation requires an explicit price as-of date; null and zero remain distinct and CSV formula-injection defenses apply to all exported text cells.
 
+### 10 November 2026 — Issuer Fundamental Intelligence V1 production acceptance
+
+- PR #8 merged into `development` at `c048e6c78c27eb4661e0a7f3faa086d33ad64c8f` after correction commit `ce82972cd878d0de60446f9b832f233476d42795` and successful GitHub CI.
+- Local production was migrated additively with a verified recovery point, preserved APP_KEY/SQLite/storage, and remained localhost-only on FrankenPHP/Caddy with queue and scheduler.
+- The authenticated login → dashboard → FRED → CSV journey passed with 1,824 observations. One reconciled Telkom document with FY2023/FY2024 periods was separately imported into production; valuation remained `N/A` because no rights-cleared dated market price was supplied.
+- SQLite integrity, Laravel-only runtime, source/runtime commit alignment, and `NOT_ADMITTED`/`HOLD`/`NONE` gates passed final acceptance.
+
+### 10 November 2026 — Multi-Issuer Fundamental Intelligence V2 development
+
+- Started V2 on a feature branch from the accepted V1 merge without modifying local production.
+- Added Laravel queue-based batch manifests, per-item results and retry, issuer sector/period classification, explicit source conflict retention, auditable IFRS taxonomy registry output, and separately provenanced dated market-price observations.
+- Added cross-issuer sector/period filters, ascending/descending ratio sorting, provenance/conflict indicators, and expanded CSV output.
+- The development acceptance set uses official Telkom, Astra, and Unilever Indonesia FY2024 publications for internal research only; source PDFs and redistributable datasets are not committed.
+- Isolated real-data batch acceptance completed 3/3 items (three documents, six periods, three screener rows) with independent SHA-256/source records. No rights-cleared dated market price was asserted, so every valuation ratio remained explicitly `N/A`; V2 was not deployed and production V1 remained unchanged.
+
 - Laravel is the sole active backend runtime.
 - Local production uses FrankenPHP/Caddy on localhost with queue and scheduler workers.
 - APP_KEY, SQLite/FRED data, `.env`, and storage remain external to Git and were recovered into a verified checkpoint before deployment.

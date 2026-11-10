@@ -15,25 +15,9 @@ class XbrlFundamentalParserService
 
     private const ISO4217 = 'http://www.xbrl.org/2003/iso4217';
 
-    private const IFRS_NAMESPACE = '~^https?://xbrl\.ifrs\.org/taxonomy/20\d{2}-\d{2}-\d{2}/ifrs-full$~';
+    public function __construct(private readonly XbrlTaxonomyRegistryService $taxonomies) {}
 
-    /** Metric, expected context period, expected unit kind. */
-    private const MAP = [
-        'Revenue' => ['revenue', 'duration', 'monetary'],
-        'Revenues' => ['revenue', 'duration', 'monetary'],
-        'RevenueFromContractsWithCustomers' => ['revenue', 'duration', 'monetary'],
-        'ProfitLossAttributableToOwnersOfParent' => ['net_income_attributable', 'duration', 'monetary'],
-        'Assets' => ['total_assets', 'instant', 'monetary'],
-        'Equity' => ['total_equity', 'instant', 'monetary'],
-        'EquityAttributableToOwnersOfParent' => ['equity_attributable', 'instant', 'monetary'],
-        'CashFlowsFromUsedInOperatingActivities' => ['operating_cash_flow', 'duration', 'monetary'],
-        'NumberOfSharesOutstanding' => ['shares_outstanding', 'instant', 'shares'],
-        'Borrowings' => ['total_debt', 'instant', 'monetary'],
-        'CashAndCashEquivalents' => ['cash_and_equivalents', 'instant', 'monetary'],
-        'EBITDA' => ['ebitda', 'duration', 'monetary'],
-    ];
-
-    /** @return array{status:string, periods:array, taxonomy_namespaces:array, warnings:array} */
+    /** @return array{status:string, periods:array, taxonomy_namespaces:array, mapping_report:array, warnings:array} */
     public function parse(string $path, string $expectedCurrency): array
     {
         $xml = file_get_contents($path);
@@ -73,22 +57,31 @@ class XbrlFundamentalParserService
         $namespaces = [];
         $unsupportedNamespaces = [];
         $warnings = [];
+        $mappingReport = [];
 
         $facts = $xpath->query('//*[@contextRef]');
         if ($facts === false || $facts->length > 50000) {
             throw new \InvalidArgumentException('Jumlah fakta XBRL tidak wajar.');
         }
         foreach ($facts as $fact) {
-            if (! $fact instanceof DOMElement || ! isset(self::MAP[$fact->localName])) {
+            if (! $fact instanceof DOMElement) {
                 continue;
             }
-            if (! preg_match(self::IFRS_NAMESPACE, (string) $fact->namespaceURI)) {
+            $resolved = $this->taxonomies->resolve((string) $fact->namespaceURI, $fact->localName);
+            if ($resolved === null) {
+                if ($this->taxonomies->isSupportedNamespace((string) $fact->namespaceURI)) {
+                    continue;
+                }
                 $unsupportedNamespaces[(string) $fact->namespaceURI] = true;
 
                 continue;
             }
             $namespaces[(string) $fact->namespaceURI] = true;
-            [$metric, $expectedPeriodType, $unitKind] = self::MAP[$fact->localName];
+            [$metric, $expectedPeriodType, $unitKind] = $resolved['mapping'];
+            $mappingReport[$metric] = [
+                'taxonomy' => $resolved['taxonomy'], 'release' => $resolved['release'],
+                'concept' => $fact->localName, 'period_type' => $expectedPeriodType, 'unit_kind' => $unitKind,
+            ];
             $contextId = $fact->getAttribute('contextRef');
             $context = $contexts[$contextId] ?? null;
             if ($context === null) {
@@ -141,6 +134,7 @@ class XbrlFundamentalParserService
             'status' => 'VALIDATED',
             'periods' => array_values($periods),
             'taxonomy_namespaces' => array_keys($namespaces),
+            'mapping_report' => $mappingReport,
             'warnings' => array_keys($warnings),
         ];
     }
