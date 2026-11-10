@@ -6,6 +6,7 @@ use App\Models\IssuerDocument;
 use App\Models\IssuerImportBatch;
 use App\Models\IssuerImportItem;
 use App\Models\User;
+use App\Services\FundamentalSnapshotService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -125,5 +126,45 @@ class MultiIssuerFundamentalV2Test extends TestCase
         $this->assertSame(2, $item->fresh()->attempts);
         $this->assertSame('FAILED', $batch->fresh()->status);
         $this->assertDatabaseCount('ii_issuer_documents', 0);
+    }
+
+    public function test_split_adjusted_price_is_held_and_older_late_import_does_not_replace_latest_period(): void
+    {
+        Storage::fake('local');
+        $user = $this->analyst();
+        $latest = $this->metadata('PERIOD.JK', 'Industrials', 'FY2024 official source');
+        $latest['fundamental_file'] = UploadedFile::fake()->createWithContent('period-2024.csv', $this->csv());
+        $this->actingAs($user)->post('/ii/fundamentals/import', $latest)->assertRedirect('/ii/fundamentals');
+
+        $older = $this->metadata('PERIOD.JK', 'Industrials', 'FY2022 late official source');
+        $older['report_period'] = 'FY 2022';
+        $older['report_date'] = '2023-03-01';
+        $older['fundamental_file'] = UploadedFile::fake()->createWithContent('period-2022.csv',
+            "fiscal_year,period_end,restated,revenue,net_income_attributable,total_assets,total_equity,equity_attributable,operating_cash_flow,shares_outstanding,total_debt,cash_and_equivalents,ebitda,market_price,market_price_as_of\n"
+            ."2021,2021-12-31,false,80,8,450,280,230,42,1000,90,18,35,,\n"
+            ."2022,2022-12-31,false,90,9,470,290,240,45,1000,95,19,37,,\n");
+        $this->actingAs($user)->post('/ii/fundamentals/import', $older)->assertRedirect('/ii/fundamentals');
+
+        $snapshot = app(FundamentalSnapshotService::class)->latestByTicker((int) $user->id)['PERIOD.JK'];
+        $this->assertSame(2024, $snapshot['latest_year']);
+        $this->assertSame('FY2024 official source', $snapshot['source_name']);
+        $this->assertSame(2, $snapshot['version_count']);
+
+        $this->actingAs($user)->post('/ii/fundamentals/market-prices', [
+            'ticker' => 'PERIOD.JK', 'observed_on' => '2025-01-02', 'currency' => 'IDR', 'price' => '1000',
+            'unit' => 'per_share', 'adjustment_status' => 'split_adjusted', 'source_name' => 'Licensed adjusted price',
+            'publisher' => 'Licensed Vendor', 'source_url' => 'https://example.test/prices/PERIOD/2025-01-02',
+            'license_status' => 'licensed', 'usage_rights' => 'licensed_internal',
+            'source_authenticity_status' => 'licensed_provider', 'provenance_confidence' => 'high',
+            'rights_confirmed' => '1',
+        ])->assertRedirect('/ii/fundamentals');
+        $snapshot = app(FundamentalSnapshotService::class)->latestByTicker((int) $user->id)['PERIOD.JK'];
+        $this->assertSame('N/A_SPLIT_ADJUSTMENT_UNALIGNED', $snapshot['valuation_status']);
+        $this->assertNull($snapshot['pe_ratio']);
+        $this->assertNull($snapshot['pbv_ratio']);
+        $this->assertNull($snapshot['ev_ebitda_ratio']);
+        $this->assertSame('NOT_ADMITTED', $snapshot['gate']);
+        $this->assertSame('HOLD', $snapshot['decision']);
+        $this->assertSame('NONE', $snapshot['trading_authority']);
     }
 }
