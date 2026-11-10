@@ -53,6 +53,8 @@ Market price is an immutable, dated observation separate from the financial repo
 
 P/E requires positive earnings per share. P/BV requires positive attributable book value per share. EV/EBITDA additionally requires shares, debt, cash, and positive EBITDA. Missing or incompatible inputs remain null and expose a specific `N/A_*` status.
 
+A `split_adjusted` price remains `N/A_SPLIT_ADJUSTMENT_UNALIGNED` until the corresponding share-count adjustment basis is explicitly recorded and matched. A later import of an older fiscal report is retained as a source version but cannot replace the issuer snapshot selected from the newest `period_end`; import time is only the tie-breaker for the same latest period.
+
 ## Conflict semantics
 
 For the same user, issuer, report label, fiscal year, and period end, values from a new document are compared with every prior version. Identical values receive `CONSISTENT_VERSION`; any differing normalized metric sets both versions to `VALUE_CONFLICT` and records document IDs, metric, period, and both values. Neither source nor period is overwritten.

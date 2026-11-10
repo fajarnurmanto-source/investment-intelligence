@@ -32,9 +32,14 @@ class FundamentalSnapshotService
                 ? IssuerMarketPrice::where('user_id', $userId)->orderByDesc('observed_on')->orderByDesc('imported_at')->get()->unique('issuer_code')->keyBy('issuer_code')
                 : collect();
             $documents = IssuerDocument::query()->with(['source', 'periods' => fn ($q) => $q->orderBy('fiscal_year')->orderBy('period_end')])
-                ->where('user_id', $userId)->orderByDesc('imported_at')->get();
+                ->where('user_id', $userId)->get();
             $versions = $documents->groupBy('issuer_code')->map->count();
-            foreach ($documents->unique('issuer_code') as $document) {
+            $latestDocuments = $documents->groupBy('issuer_code')->map(fn ($group) => $group->sortByDesc(function (IssuerDocument $document): string {
+                $latestPeriod = $document->periods->sortByDesc(fn ($period) => $period->period_end->format('Y-m-d'))->first();
+
+                return ($latestPeriod?->period_end?->format('Y-m-d') ?? '0000-00-00').'|'.($document->imported_at?->format('Y-m-d H:i:s.u') ?? '');
+            })->first());
+            foreach ($latestDocuments as $document) {
                 if ($document->periods->isEmpty()) {
                     continue;
                 }
@@ -67,9 +72,10 @@ class FundamentalSnapshotService
         $price = $marketObservation ? $this->number($marketObservation->price) : $embeddedPrice;
         $priceRights = $marketObservation?->usage_rights ?? ($embeddedPrice !== null ? $document->source->usage_rights : null);
         $rightsAligned = in_array($priceRights, ['internal_research', 'licensed_internal', 'redistribution_permitted'], true);
+        $adjustmentAligned = $marketObservation === null || in_array($marketObservation->adjustment_status, ['UNADJUSTED', 'UNADJUSTED_CLOSE'], true);
         $priceAligned = $price !== null && $marketPriceAsOf !== null
             && ($marketObservation === null || ($marketObservation->currency === $document->currency && $marketObservation->unit === 'per_share'))
-            && $marketPriceAsOf >= (string) $last['period_end'] && $rightsAligned;
+            && $marketPriceAsOf >= (string) $last['period_end'] && $rightsAligned && $adjustmentAligned;
         $marketCap = $priceAligned && $shares !== null ? $price * $shares : null;
         $enterpriseValue = $marketCap !== null && $debt !== null && $cash !== null ? $marketCap + $debt - $cash : null;
         $eps = $netIncome !== null && $shares !== null && $shares > 0 ? $netIncome / $shares : null;
@@ -139,6 +145,9 @@ class FundamentalSnapshotService
         }
         if ($observation && $observation->unit !== 'per_share') {
             return 'N/A_PRICE_UNIT_MISMATCH';
+        }
+        if ($observation && $observation->adjustment_status === 'SPLIT_ADJUSTED') {
+            return 'N/A_SPLIT_ADJUSTMENT_UNALIGNED';
         }
         if ($asOf < $periodEnd) {
             return 'N/A_PRICE_PREDATES_REPORT_PERIOD';
