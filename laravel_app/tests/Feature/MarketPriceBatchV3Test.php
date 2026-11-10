@@ -6,6 +6,7 @@ use App\Models\IssuerMarketPrice;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -107,6 +108,7 @@ class MarketPriceBatchV3Test extends TestCase
 
     public function test_bad_dates_duplicate_rows_and_rights_missing_are_rejected(): void
     {
+        $this->withoutMiddleware(ThrottleRequests::class);
         Storage::fake('local');
         $analyst = $this->analyst();
         foreach ([
