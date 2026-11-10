@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\UnsupportedXbrlTaxonomyException;
 use App\Models\IssuerDocument;
 use App\Models\IssuerSource;
 use Illuminate\Http\UploadedFile;
@@ -11,7 +12,7 @@ use Illuminate\Support\Str;
 
 class IssuerFundamentalImportService
 {
-    private const METRICS = ['revenue', 'net_income_attributable', 'total_assets', 'equity_attributable',
+    private const METRICS = ['revenue', 'net_income_attributable', 'total_assets', 'total_equity', 'equity_attributable',
         'operating_cash_flow', 'shares_outstanding', 'total_debt', 'cash_and_equivalents', 'ebitda', 'market_price'];
 
     public function __construct(private readonly XbrlFundamentalParserService $xbrl) {}
@@ -27,12 +28,23 @@ class IssuerFundamentalImportService
             throw new \InvalidArgumentException('Dokumen dengan checksum yang sama sudah tersimpan; versi lama tidak ditimpa.');
         }
 
-        $periods = match ($extension) {
-            'csv' => $this->parseCsv($file->getRealPath()),
-            'xbrl', 'xml' => $this->xbrl->parse($file->getRealPath()),
-            default => [],
-        };
-        $quality = $this->quality($periods, $metadata);
+        $xbrlValidation = ['status' => 'NOT_APPLICABLE', 'taxonomy_namespaces' => [], 'warnings' => []];
+        if (in_array($extension, ['xbrl', 'xml'], true)) {
+            if ((int) $metadata['multiplier'] !== 1) {
+                throw new \InvalidArgumentException('Fakta XBRL harus memakai satuan asli (multiplier 1); scaling berasal dari unitRef/decimals.');
+            }
+            try {
+                $parsed = $this->xbrl->parse($file->getRealPath(), $metadata['currency']);
+                $periods = $parsed['periods'];
+                $xbrlValidation = array_diff_key($parsed, ['periods' => true]);
+            } catch (UnsupportedXbrlTaxonomyException $exception) {
+                $periods = [];
+                $xbrlValidation = ['status' => 'UNSUPPORTED_HOLD', 'taxonomy_namespaces' => [], 'warnings' => [$exception->getMessage()]];
+            }
+        } else {
+            $periods = $extension === 'csv' ? $this->parseCsv($file->getRealPath()) : [];
+        }
+        $quality = $this->quality($periods, $xbrlValidation['status']);
         $id = (string) Str::uuid();
         $path = 'ii_issuer_documents/u'.$userId.'/'.$id.'.'.$extension;
         if (! Storage::disk('local')->put($path, file_get_contents($file->getRealPath()))) {
@@ -40,7 +52,7 @@ class IssuerFundamentalImportService
         }
 
         try {
-            return DB::transaction(function () use ($userId, $metadata, $file, $extension, $sha256, $periods, $quality, $id, $path): IssuerDocument {
+            return DB::transaction(function () use ($userId, $metadata, $file, $extension, $sha256, $periods, $quality, $id, $path, $xbrlValidation): IssuerDocument {
                 $sourceKey = hash('sha256', json_encode([
                     $metadata['source_name'], $metadata['source_url'] ?? null, $metadata['terms_url'] ?? null,
                     $metadata['license_status'], $metadata['usage_rights'], (bool) ($metadata['redistribution_allowed'] ?? false),
@@ -65,12 +77,17 @@ class IssuerFundamentalImportService
                     'original_filename' => basename($file->getClientOriginalName()), 'storage_path' => $path,
                     'sha256' => $sha256, 'restates_document_id' => $metadata['restates_document_id'] ?? null,
                     'quality_status' => $quality['status'], 'quality_score' => $quality['score'],
+                    'source_authenticity_status' => strtoupper($metadata['source_authenticity_status'] ?? 'UNVERIFIED'),
+                    'numeric_reconciliation_status' => strtoupper($metadata['numeric_reconciliation_status'] ?? 'UNRECONCILED'),
+                    'licensing_assessment' => $this->licensingAssessment($metadata['usage_rights']),
+                    'provenance_confidence' => strtoupper($metadata['provenance_confidence'] ?? 'LOW'),
                     'provenance' => [
                         'source_url' => $metadata['source_url'] ?? null, 'terms_url' => $metadata['terms_url'] ?? null,
                         'license_status' => $metadata['license_status'], 'usage_rights' => $metadata['usage_rights'],
                         'redistribution_allowed' => (bool) ($metadata['redistribution_allowed'] ?? false),
                         'sha256' => $sha256, 'original_filename' => basename($file->getClientOriginalName()),
-                        'reported_by_user' => true,
+                        'reported_by_user' => true, 'xbrl_validation' => $xbrlValidation,
+                        'metric_definitions' => $this->metricDefinitions(),
                     ],
                     'imported_at' => now(),
                 ]);
@@ -100,7 +117,7 @@ class IssuerFundamentalImportService
             }
             $header[0] = preg_replace('/^\xEF\xBB\xBF/', '', (string) $header[0]);
             $header = array_map(fn ($v) => strtolower(trim((string) $v)), $header);
-            $allowed = array_merge(['fiscal_year', 'year', 'period_end', 'restated'], self::METRICS);
+            $allowed = array_merge(['fiscal_year', 'year', 'period_end', 'restated', 'market_price_as_of'], self::METRICS);
             if (! in_array('fiscal_year', $header, true) && ! in_array('year', $header, true)) {
                 throw new \InvalidArgumentException('CSV wajib memiliki fiscal_year (atau year).');
             }
@@ -146,6 +163,14 @@ class IssuerFundamentalImportService
                 if (($parsed['market_price'] ?? 1) <= 0 || ($parsed['total_debt'] ?? 0) < 0 || ($parsed['cash_and_equivalents'] ?? 0) < 0) {
                     throw new \InvalidArgumentException('Harga harus positif; utang dan kas tidak boleh negatif.');
                 }
+                $priceAsOf = trim((string) ($row['market_price_as_of'] ?? ''));
+                if (($parsed['market_price'] ?? null) !== null && ! $this->validDate($priceAsOf)) {
+                    throw new \InvalidArgumentException('market_price wajib memiliki market_price_as_of berformat YYYY-MM-DD.');
+                }
+                if (($parsed['market_price'] ?? null) === null && $priceAsOf !== '') {
+                    throw new \InvalidArgumentException('market_price_as_of tidak boleh diisi tanpa market_price.');
+                }
+                $parsed['market_price_as_of'] = $priceAsOf !== '' ? $priceAsOf : null;
                 $rows[] = $parsed;
                 if (count($rows) > 20) {
                     throw new \InvalidArgumentException('Maksimal 20 periode per impor.');
@@ -174,22 +199,53 @@ class IssuerFundamentalImportService
         }
         $period['available_fields'] = $available;
 
-        return array_intersect_key($period, array_flip(array_merge(['fiscal_year', 'period_end', 'restated', 'available_fields'], self::METRICS)));
+        return array_intersect_key($period, array_flip(array_merge(['fiscal_year', 'period_end', 'restated', 'market_price_as_of', 'available_fields'], self::METRICS)));
     }
 
-    private function quality(array $periods, array $metadata): array
+    private function quality(array $periods, string $xbrlStatus): array
     {
         if ($periods === []) {
-            return ['status' => 'DOCUMENT_ONLY', 'score' => 25];
+            return ['status' => $xbrlStatus === 'UNSUPPORTED_HOLD' ? 'UNSUPPORTED_XBRL' : 'DOCUMENT_ONLY', 'score' => 0];
         }
         $required = ['revenue', 'net_income_attributable', 'total_assets', 'equity_attributable', 'operating_cash_flow', 'shares_outstanding'];
         $latest = end($periods);
         $present = count(array_filter($required, fn ($field) => ($latest[$field] ?? null) !== null));
-        $score = (int) round(15 + 70 * $present / count($required));
-        if (($metadata['source_url'] ?? null) && ($metadata['usage_rights'] ?? 'unknown') !== 'unknown') {
-            $score += 15;
-        }
+        $score = (int) round(100 * $present / count($required));
 
-        return ['status' => $present === count($required) ? 'COMPLETE' : 'PARTIAL', 'score' => min(100, $score)];
+        return ['status' => $present === count($required) ? 'COMPLETE' : 'PARTIAL', 'score' => $score];
+    }
+
+    private function licensingAssessment(string $usageRights): string
+    {
+        return match ($usageRights) {
+            'internal_research' => 'INTERNAL_RESEARCH_ONLY',
+            'licensed_internal' => 'LICENSED_INTERNAL',
+            'redistribution_permitted' => 'REDISTRIBUTION_DECLARED',
+            default => 'UNVERIFIED',
+        };
+    }
+
+    private function validDate(string $date): bool
+    {
+        $parsed = \DateTimeImmutable::createFromFormat('!Y-m-d', $date);
+
+        return $parsed !== false && $parsed->format('Y-m-d') === $date;
+    }
+
+    private function metricDefinitions(): array
+    {
+        return [
+            'revenue' => 'Consolidated revenue for the reporting period.',
+            'net_income_attributable' => 'Profit attributable to owners of the parent.',
+            'total_assets' => 'Consolidated total assets at period end.',
+            'total_equity' => 'Consolidated total equity including non-controlling interests at period end.',
+            'equity_attributable' => 'Equity attributable to owners of the parent at period end.',
+            'operating_cash_flow' => 'Net cash provided by operating activities.',
+            'shares_outstanding' => 'Issued and fully paid shares outstanding at period end.',
+            'total_debt' => 'Total financing debt including bank loans, bonds/other borrowings and lease liabilities.',
+            'cash_and_equivalents' => 'Cash and cash equivalents at period end.',
+            'ebitda' => 'Issuer-reported EBITDA for the reporting period.',
+            'market_price' => 'Observed market price per share on market_price_as_of; never inferred.',
+        ];
     }
 }

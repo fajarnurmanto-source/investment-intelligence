@@ -40,7 +40,12 @@ return new class extends Migration
             $table->char('sha256', 64);
             $table->uuid('restates_document_id')->nullable();
             $table->string('quality_status', 32);
+            // Completeness is intentionally independent from authenticity, reconciliation and rights.
             $table->unsignedTinyInteger('quality_score')->default(0);
+            $table->string('source_authenticity_status', 40)->default('UNVERIFIED');
+            $table->string('numeric_reconciliation_status', 40)->default('UNRECONCILED');
+            $table->string('licensing_assessment', 40)->default('UNVERIFIED');
+            $table->string('provenance_confidence', 16)->default('LOW');
             $table->json('provenance');
             $table->timestampTz('imported_at');
             $table->timestamps();
@@ -54,11 +59,12 @@ return new class extends Migration
             $table->unsignedSmallInteger('fiscal_year');
             $table->date('period_end');
             $table->boolean('restated')->default(false);
-            foreach (['revenue', 'net_income_attributable', 'total_assets', 'equity_attributable',
+            foreach (['revenue', 'net_income_attributable', 'total_assets', 'total_equity', 'equity_attributable',
                 'operating_cash_flow', 'shares_outstanding', 'total_debt', 'cash_and_equivalents',
                 'ebitda', 'market_price'] as $metric) {
                 $table->decimal($metric, 30, 6)->nullable();
             }
+            $table->date('market_price_as_of')->nullable();
             $table->json('available_fields');
             $table->timestamps();
             $table->foreign('document_id')->references('id')->on('ii_issuer_documents')->cascadeOnDelete();

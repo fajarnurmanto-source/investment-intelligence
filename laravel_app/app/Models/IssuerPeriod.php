@@ -12,6 +12,6 @@ class IssuerPeriod extends Model
 
     protected function casts(): array
     {
-        return ['period_end' => 'date', 'restated' => 'boolean', 'available_fields' => 'array'];
+        return ['period_end' => 'date', 'market_price_as_of' => 'date', 'restated' => 'boolean', 'available_fields' => 'array'];
     }
 }

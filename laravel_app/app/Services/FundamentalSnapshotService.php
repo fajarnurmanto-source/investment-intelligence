@@ -52,12 +52,14 @@ class FundamentalSnapshotService
             ? round(100 * ((float) $last[$key] - (float) $prev[$key]) / abs((float) $prev[$key]), 2) : null;
 
         $netIncome = $this->number($last['net_income_attributable'] ?? null);
+        $totalEquity = $this->number($last['total_equity'] ?? null);
         $equity = $this->number($last['equity_attributable'] ?? null);
         $shares = $this->number($last['shares_outstanding'] ?? null);
         $price = $this->number($last['market_price'] ?? null);
         $debt = $this->number($last['total_debt'] ?? null);
         $cash = $this->number($last['cash_and_equivalents'] ?? null);
         $ebitda = $this->number($last['ebitda'] ?? null);
+        $marketPriceAsOf = $last['market_price_as_of'] ?? null;
         $marketCap = $price !== null && $shares !== null ? $price * $shares : null;
         $enterpriseValue = $marketCap !== null && $debt !== null && $cash !== null ? $marketCap + $debt - $cash : null;
         $eps = $netIncome !== null && $shares > 0 ? $netIncome / $shares : null;
@@ -67,8 +69,11 @@ class FundamentalSnapshotService
             return [
                 'year' => (int) $row['fiscal_year'], 'period_end' => $row['period_end'], 'restated' => (bool) $row['restated'],
                 'revenue' => $this->number($row['revenue'] ?? null), 'net_income' => $this->number($row['net_income_attributable'] ?? null),
-                'total_assets' => $this->number($row['total_assets'] ?? null), 'equity' => $this->number($row['equity_attributable'] ?? null),
+                'total_assets' => $this->number($row['total_assets'] ?? null), 'total_equity' => $this->number($row['total_equity'] ?? null), 'equity' => $this->number($row['equity_attributable'] ?? null),
                 'operating_cash_flow' => $this->number($row['operating_cash_flow'] ?? null),
+                'shares_outstanding' => $this->number($row['shares_outstanding'] ?? null), 'total_debt' => $this->number($row['total_debt'] ?? null),
+                'cash_and_equivalents' => $this->number($row['cash_and_equivalents'] ?? null), 'ebitda' => $this->number($row['ebitda'] ?? null),
+                'market_price' => $this->number($row['market_price'] ?? null), 'market_price_as_of' => $row['market_price_as_of'] ?? null,
                 'net_margin_pct' => $ratio($this->number($row['net_income_attributable'] ?? null), $this->number($row['revenue'] ?? null)),
                 'roe_end_pct' => $ratio($this->number($row['net_income_attributable'] ?? null), $this->number($row['equity_attributable'] ?? null)),
             ];
@@ -84,14 +89,20 @@ class FundamentalSnapshotService
             'sha256' => $document->sha256, 'imported_at' => $document->imported_at->toIso8601String(),
             'latest_year' => (int) $last['fiscal_year'], 'years' => $annual, 'version_count' => $versions,
             'quality_status' => $document->quality_status, 'data_quality_score' => $document->quality_score,
+            'source_authenticity_status' => $document->source_authenticity_status,
+            'numeric_reconciliation_status' => $document->numeric_reconciliation_status,
+            'licensing_assessment' => $document->licensing_assessment,
+            'provenance_confidence' => $document->provenance_confidence,
             'net_margin_pct' => $ratio($netIncome, $this->number($last['revenue'] ?? null)),
             'revenue_growth_pct' => $growth('revenue'), 'earnings_growth_pct' => $growth('net_income_attributable'),
             'roe_end_pct' => $equity !== null && $equity > 0 ? $ratio($netIncome, $equity) : null,
-            'debt_equity_ratio' => $debt !== null && $equity !== null && $equity > 0 ? round($debt / $equity, 4) : null,
+            'debt_equity_ratio' => $debt !== null && $totalEquity !== null && $totalEquity > 0 ? round($debt / $totalEquity, 4) : null,
             'eps' => $eps !== null ? round($eps, 4) : null,
             'pe_ratio' => $price !== null && $price > 0 && $eps !== null && $eps > 0 ? round($price / $eps, 2) : null,
             'pbv_ratio' => $price !== null && $price > 0 && $bookValuePerShare !== null && $bookValuePerShare > 0 ? round($price / $bookValuePerShare, 2) : null,
             'ev_ebitda_ratio' => $enterpriseValue !== null && $ebitda !== null && $ebitda > 0 ? round($enterpriseValue / $ebitda, 2) : null,
+            'market_price_as_of' => $marketPriceAsOf,
+            'valuation_status' => $price === null ? 'N/A_MISSING_MARKET_PRICE' : ($marketPriceAsOf === null ? 'N/A_MISSING_PRICE_DATE' : 'AVAILABLE_AS_OF_'.$marketPriceAsOf),
             'operating_cash_flow' => $this->number($last['operating_cash_flow'] ?? null),
             'income_positive' => $netIncome !== null && $netIncome > 0,
             'cash_flow_positive' => ($this->number($last['operating_cash_flow'] ?? null) ?? 0) > 0,
@@ -139,19 +150,23 @@ class FundamentalSnapshotService
         $m = (float) $doc['multiplier'];
         $pct = fn ($n, $d) => $d != 0 ? round(100 * $n / $d, 2) : null;
         $annual = array_map(fn ($r) => ['year' => $r['year'], 'period_end' => $r['year'].'-12-31', 'restated' => false,
-            'revenue' => $r['revenue'] * $m, 'net_income' => $r['net_income_attributable'] * $m, 'total_assets' => $r['total_assets'] * $m,
+            'revenue' => $r['revenue'] * $m, 'net_income' => $r['net_income_attributable'] * $m, 'total_assets' => $r['total_assets'] * $m, 'total_equity' => null,
             'equity' => $r['equity_attributable'] * $m, 'operating_cash_flow' => $r['operating_cash_flow'] * $m,
+            'shares_outstanding' => $r['shares_outstanding'], 'total_debt' => null, 'cash_and_equivalents' => null, 'ebitda' => null,
+            'market_price' => null, 'market_price_as_of' => null,
             'net_margin_pct' => $pct($r['net_income_attributable'], $r['revenue']), 'roe_end_pct' => $pct($r['net_income_attributable'], $r['equity_attributable'])], $years);
 
         return ['ticker' => $doc['ticker'], 'issuer_name' => $doc['ticker'], 'kind' => $doc['kind'], 'currency' => $doc['currency'], 'multiplier' => $m,
             'report_period' => 'annual', 'report_date' => $last['year'].'-12-31', 'consolidated' => false, 'source_name' => $doc['source_name'], 'source_url' => $doc['source_url'] ?? null,
             'license_status' => 'legacy_unspecified', 'usage_rights' => 'legacy_user_attested', 'redistribution_allowed' => false, 'sha256' => null,
             'imported_at' => $doc['imported_at'], 'latest_year' => $last['year'], 'years' => $annual, 'version_count' => 1, 'quality_status' => 'LEGACY', 'data_quality_score' => 50,
+            'source_authenticity_status' => 'UNVERIFIED', 'numeric_reconciliation_status' => 'UNRECONCILED',
+            'licensing_assessment' => 'UNVERIFIED', 'provenance_confidence' => 'LOW',
             'net_margin_pct' => $pct($last['net_income_attributable'], $last['revenue']), 'revenue_growth_pct' => $pct($last['revenue'] - $prev['revenue'], abs($prev['revenue'])),
             'earnings_growth_pct' => $pct($last['net_income_attributable'] - $prev['net_income_attributable'], abs($prev['net_income_attributable'])),
             'roe_end_pct' => $pct($last['net_income_attributable'], $last['equity_attributable']), 'debt_equity_ratio' => null,
             'eps' => $last['shares_outstanding'] > 0 ? round($last['net_income_attributable'] * $m / $last['shares_outstanding'], 4) : null,
-            'pe_ratio' => null, 'pbv_ratio' => null, 'ev_ebitda_ratio' => null, 'operating_cash_flow' => $last['operating_cash_flow'] * $m,
+            'pe_ratio' => null, 'pbv_ratio' => null, 'ev_ebitda_ratio' => null, 'market_price_as_of' => null, 'valuation_status' => 'N/A_MISSING_MARKET_PRICE', 'operating_cash_flow' => $last['operating_cash_flow'] * $m,
             'income_positive' => $last['net_income_attributable'] > 0, 'cash_flow_positive' => $last['operating_cash_flow'] > 0,
             'gate' => 'NOT_ADMITTED', 'decision' => 'HOLD', 'trading_authority' => 'NONE', 'trading_authorized' => false];
     }

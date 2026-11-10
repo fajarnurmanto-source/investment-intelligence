@@ -21,14 +21,14 @@ class FundamentalScreenerController extends Controller
     {
         [, $rows] = $this->result($request, $snapshots, $screener);
         $writer = Writer::createFromString();
-        $writer->insertOne(['ticker', 'screen_score', 'data_quality_score', 'pe_ratio', 'pbv_ratio', 'ev_ebitda_ratio', 'net_margin_pct', 'revenue_growth_pct', 'earnings_growth_pct', 'roe_pct', 'debt_equity_ratio', 'operating_cash_flow', 'eps', 'latest_year', 'source_name', 'license_status', 'evidence_status', 'decision', 'trading_authority']);
+        $writer->insertOne(['ticker', 'screen_score', 'completeness_score', 'source_authenticity', 'numeric_reconciliation', 'licensing_assessment', 'provenance_confidence', 'pe_ratio', 'pbv_ratio', 'ev_ebitda_ratio', 'market_price_as_of', 'valuation_status', 'net_margin_pct', 'revenue_growth_pct', 'earnings_growth_pct', 'roe_pct', 'debt_equity_ratio', 'operating_cash_flow', 'eps', 'latest_year', 'source_name', 'license_status', 'evidence_status', 'decision', 'trading_authority']);
         foreach ($rows as $row) {
-            $writer->insertOne([
-                $row['ticker'], $row['quality_score'], $row['data_quality_score'], $row['pe_ratio'], $row['pbv_ratio'], $row['ev_ebitda_ratio'],
+            $writer->insertOne(array_map($this->csvCell(...), [
+                $row['ticker'], $row['quality_score'], $row['data_quality_score'], $row['source_authenticity_status'], $row['numeric_reconciliation_status'], $row['licensing_assessment'], $row['provenance_confidence'], $row['pe_ratio'], $row['pbv_ratio'], $row['ev_ebitda_ratio'], $row['market_price_as_of'], $row['valuation_status'],
                 $row['net_margin_pct'], $row['revenue_growth_pct'], $row['earnings_growth_pct'], $row['roe_end_pct'],
                 $row['debt_equity_ratio'], $row['operating_cash_flow'], $row['eps'], $row['latest_year'],
-                $this->csvSafe((string) $row['source_name']), $row['license_status'], $row['gate'], $row['decision'], $row['trading_authority'],
-            ]);
+                $row['source_name'], $row['license_status'], $row['gate'], $row['decision'], $row['trading_authority'],
+            ]));
         }
 
         return response($writer->toString(), 200, [
@@ -60,8 +60,20 @@ class FundamentalScreenerController extends Controller
         return [$filters, $screener->screen($records, $filters)];
     }
 
-    private function csvSafe(string $value): string
+    private function csvCell(mixed $value): string
     {
-        return preg_match('/^[=+\-@]/', $value) ? "'".$value : $value;
+        if ($value === null) {
+            return '';
+        }
+        if (is_int($value) || is_float($value)) {
+            if ((float) $value === 0.0) {
+                return '0';
+            }
+
+            return rtrim(rtrim(number_format((float) $value, 6, '.', ''), '0'), '.');
+        }
+        $text = (string) $value;
+
+        return preg_match('/^\s*[=+\-@]/u', $text) ? "'".$text : $text;
     }
 }
