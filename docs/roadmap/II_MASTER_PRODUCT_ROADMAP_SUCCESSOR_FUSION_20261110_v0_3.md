@@ -14,6 +14,21 @@ The owner authorized local production deployment and verified legacy retirement 
 
 ## Achieved state
 
+### 10 November 2026 — Issuer Fundamental Intelligence V1 development checkpoint
+
+- Added Laravel source registration, immutable document versions, normalized historical periods, SHA-256 provenance, license/usage-right status, and data-quality gates.
+- Added lawful user-supplied CSV, XBRL/XML, and PDF intake; no IDX scraping, hidden API, paid service, or production database mutation.
+- Added nullable P/E, P/BV, EV/EBITDA, ROE, debt/equity, revenue/earnings growth, OCF, historical comparison, exports, and screener integration while retaining `NOT_ADMITTED`, `HOLD`, and `TRADING_AUTHORITY=NONE`.
+- Verified in an isolated database with PT Telkom Indonesia (Persero) Tbk's official audited Annual Report 2024 disclosure, classified as internal-research/no-redistribution.
+- Deployment remains a separate approved action after PR review; local production remains on the prior `development` baseline.
+
+### PR #8 acceptance correction
+
+- Reconciled Telkom FY2024/FY2023 against the official Annual Report: `total_debt` now includes lease liabilities (`76,868`/`68,124` Rp billion); the earlier `52,909`/`47,699` subset was debt excluding leases. FY2024 EBITDA was corrected from `75,579` to `75,029` Rp billion.
+- Separated completeness scoring from source authenticity, numeric reconciliation, licensing assessment, and provenance confidence. Completeness never changes `NOT_ADMITTED`, `HOLD`, or `TRADING_AUTHORITY=NONE`.
+- Hardened XBRL intake for supported IFRS namespaces, entity/context/period/dimension isolation, currency/share units, decimals/precision, duplicate/contradictory facts, nil facts, and external-entity/network rejection. Unsupported taxonomy/dimension cases are archived on hold without numeric output.
+- Public CSV examples are synthetic. Market valuation requires an explicit price as-of date; null and zero remain distinct and CSV formula-injection defenses apply to all exported text cells.
+
 - Laravel is the sole active backend runtime.
 - Local production uses FrankenPHP/Caddy on localhost with queue and scheduler workers.
 - APP_KEY, SQLite/FRED data, `.env`, and storage remain external to Git and were recovered into a verified checkpoint before deployment.

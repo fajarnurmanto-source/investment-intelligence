@@ -1,19 +1,19 @@
 <?php
 
 use App\Http\Controllers\CompanyResearchController;
+use App\Http\Controllers\FundamentalHubController;
+use App\Http\Controllers\FundamentalScreenerController;
+use App\Http\Controllers\MacroDashboardController;
+use App\Http\Controllers\PortfolioSandboxController;
+use App\Http\Controllers\ProductDashboardController;
 use App\Http\Controllers\ResearchCaseController;
 use App\Http\Controllers\ResearchLoginController;
 use App\Http\Controllers\ResearchWorkspaceController;
-use App\Http\Controllers\ProductDashboardController;
+use App\Http\Controllers\RiskBudgetController;
+use App\Http\Controllers\RollingValidationController;
 use App\Http\Controllers\SignalCenterController;
-use App\Http\Controllers\FundamentalHubController;
-use App\Http\Controllers\FundamentalScreenerController;
 use App\Http\Controllers\StrategyLabController;
 use App\Http\Controllers\StrategyValidationController;
-use App\Http\Controllers\RollingValidationController;
-use App\Http\Controllers\RiskBudgetController;
-use App\Http\Controllers\PortfolioSandboxController;
-use App\Http\Controllers\MacroDashboardController;
 use App\Http\Middleware\EnsureResearchRole;
 use Illuminate\Support\Facades\Route;
 
@@ -41,6 +41,7 @@ Route::prefix('ii')->name('ii.')->group(function (): void {
         Route::post('/fundamentals/import', [FundamentalHubController::class, 'import'])
             ->middleware('throttle:6,1')->name('fundamentals.import');
         Route::get('/fundamentals/example', [FundamentalHubController::class, 'example'])->name('fundamentals.example');
+        Route::get('/fundamentals/{ticker}/export.csv', [FundamentalHubController::class, 'export'])->name('fundamentals.export');
         Route::get('/screener', [FundamentalScreenerController::class, 'index'])->name('screener.index');
         Route::get('/screener/export.csv', [FundamentalScreenerController::class, 'export'])->name('screener.export');
         Route::get('/strategy', [StrategyLabController::class, 'index'])->name('strategy.index');
