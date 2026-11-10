@@ -47,7 +47,7 @@
         @endif
         @if($marketPrices->isNotEmpty())
         <section class="panel"><h2>Register harga bertanggal</h2><div class="tablewrap"><table><thead><tr><th>Emiten</th><th>Harga</th><th>Tanggal</th><th>Provenance</th><th>Hak</th></tr></thead><tbody>
-        @foreach($marketPrices as $price)<tr><td>{{ $price->issuer_code }}</td><td>{{ $price->currency }} {{ $fmt($price->price,2) }} / saham</td><td>{{ $price->observed_on->toDateString() }}<br><span class="caption">{{ $price->adjustment_status }}</span></td><td>{{ $price->source_name }}<br><span class="caption">{{ $price->source_authenticity_status }} · {{ $price->provenance_confidence }}</span></td><td>{{ $price->usage_rights }}<br><span class="caption">redistribusi {{ $price->redistribution_allowed ? 'ya' : 'tidak' }}</span></td></tr>@endforeach
+        @foreach($marketPrices as $price)<tr><td>{{ $price->issuer_code }}</td><td>{{ $price->currency }} {{ $fmt($price->price,2) }} / saham</td><td>{{ $price->observed_on->toDateString() }}<br><span class="caption">{{ $price->adjustment_status }}</span></td><td>{{ $price->source_name }}<br><span class="caption">{{ $price->source_authenticity_status }} · {{ $price->provenance_confidence }}</span><br><span class="caption">SHA batch: {{ $price->batch_sha256 ? substr($price->batch_sha256,0,16).'…' : 'manual' }}</span></td><td>{{ $price->usage_rights }}<br><span class="caption">redistribusi {{ $price->redistribution_allowed ? 'ya' : 'tidak' }}</span></td></tr>@endforeach
         </tbody></table></div></section>
         @endif
     </div>
@@ -85,6 +85,27 @@
             <div class="split"><div class="field"><label for="price_authenticity">Keaslian</label><select id="price_authenticity" name="source_authenticity_status"><option value="licensed_provider">Licensed provider</option><option value="official_exchange">Official exchange</option><option value="official_publisher">Official publisher</option><option value="user_attested">User attested</option></select></div><div class="field"><label for="price_confidence">Confidence</label><select id="price_confidence" name="provenance_confidence"><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select></div></div>
             <div class="field"><label class="checkline"><input type="checkbox" name="rights_confirmed" value="1" required>Saya berhak memakai observasi harga ini sesuai status di atas.</label></div><button type="submit" style="width:100%">Simpan harga bertanggal</button>
         </form>
+    </section>
+    <section class="panel form-card" aria-labelledby="eod-batch-title">
+        <span class="badge blue">V3 · RIGHTS-AWARE EOD CSV</span><h2 id="eod-batch-title" style="margin-top:12px">Batch harga penutupan</h2>
+        <p class="hint">Impor 1–100 observasi harga dengan sumber dan hak penggunaan yang jelas. Tidak mengambil data melalui scraping BEI. Semua baris divalidasi atomik; satu baris gagal membatalkan seluruh batch. <a href="{{ route('ii.fundamentals.market-prices.batch-example') }}">Unduh contoh CSV sintetis</a>.</p>
+        <form method="POST" action="{{ route('ii.fundamentals.market-prices.batch') }}" enctype="multipart/form-data">@csrf
+            <div class="field"><label for="market_prices_csv">File CSV sumber (maksimal 1 MB)</label><input id="market_prices_csv" type="file" name="market_prices_csv" accept=".csv,text/csv" required></div>
+            <div class="field"><label for="eod_source_name">Nama sumber</label><input id="eod_source_name" name="source_name" required maxlength="160"></div>
+            <div class="field"><label for="eod_publisher">Penerbit</label><input id="eod_publisher" name="publisher" maxlength="160"></div>
+            <div class="field"><label for="eod_source_url">URL dokumentasi sumber/lisensi</label><input id="eod_source_url" type="url" name="source_url" required></div>
+            <div class="split">
+                <div class="field"><label for="eod_license">Status sumber</label><select id="eod_license" name="license_status"><option value="licensed">Licensed</option><option value="public_disclosure">Public disclosure</option><option value="user_provided">User provided</option></select></div>
+                <div class="field"><label for="eod_rights">Hak penggunaan</label><select id="eod_rights" name="usage_rights"><option value="licensed_internal">Licensed internal</option><option value="internal_research">Internal research</option><option value="redistribution_permitted">Redistribution permitted</option></select></div>
+            </div>
+            <div class="split">
+                <div class="field"><label for="eod_authenticity">Keaslian sumber</label><select id="eod_authenticity" name="source_authenticity_status"><option value="licensed_provider">Licensed provider</option><option value="official_exchange">Official exchange</option><option value="official_publisher">Official publisher</option><option value="user_attested">User attested</option></select></div>
+                <div class="field"><label for="eod_confidence">Confidence</label><select id="eod_confidence" name="provenance_confidence"><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select></div>
+            </div>
+            <div class="field"><label class="checkline"><input type="checkbox" name="rights_confirmed" value="1" required>Saya memiliki hak penggunaan data dan memahami larangan redistribusi tanpa izin.</label></div>
+            <button type="submit" style="width:100%">Validasi & impor harga batch</button>
+        </form>
+        <p class="hint" style="margin-top:12px">Harga <span class="mono">split_adjusted</span> disimpan sebagai bukti tetapi tidak digunakan untuk valuasi sebelum penyesuaian saham selaras. Semua keputusan tetap HOLD.</p>
     </section>
     </div></div>
 @endsection
