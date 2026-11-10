@@ -1,21 +1,20 @@
 # II canonical habitat
 
-Effective 9 November 2026, the only active Investment Intelligence worktree is:
+The only active Investment Intelligence habitat is `D:\Research\INVESTMENT RESEARCH\II`.
 
-`D:\Research\INVESTMENT RESEARCH\II\repository`
+| Purpose | Canonical path |
+|---|---|
+| Git source | `D:\Research\INVESTMENT RESEARCH\II\repository` |
+| Private runtime | `D:\Research\INVESTMENT RESEARCH\II\runtime\laravel` |
+| Server binary/state | `D:\Research\INVESTMENT RESEARCH\II\runtime\server` |
+| Recovery/quarantine | `D:\Research\INVESTMENT RESEARCH\II\recovery` |
 
-The origin remote is `https://github.com/fajarnurmanto-source/investment-intelligence.git`. The application source, tests, launchers, synchronization helper, product documentation, migrations, and source assets are Git-tracked here.
+Operational commands:
 
-Local state is deliberately outside Git:
+- deploy: `repository\tools\production\Deploy-IIProduction.ps1`;
+- start: `repository\start-ii.ps1`;
+- stop: `repository\stop-ii.ps1`;
+- restart: `repository\restart-ii.ps1`;
+- sync: `repository\tools\sync-II.ps1`.
 
-- environment, SQLite database, writable storage, logs, cache, sessions, views, and installed Composer dependencies: `D:\Research\INVESTMENT RESEARCH\II\runtime\laravel`;
-- frozen backups and rollback material: retained in their existing protected locations;
-- previous Git delivery repositories: classified as `ARCHIVED` or `PROTECTED`, never active source.
-
-## Commands
-
-- Start: `D:\Research\INVESTMENT RESEARCH\II\repository\start-ii.ps1`
-- Synchronize: `D:\Research\INVESTMENT RESEARCH\II\repository\sync-II.ps1`
-- Read-only sync status: `D:\Research\INVESTMENT RESEARCH\II\repository\sync-II.ps1 -Mode Status`
-
-The synchronization helper checks the canonical worktree and remote, rejects tracked runtime/secrets/dependencies, fetches remote state, permits fast-forward-only pull, and blocks direct pushes to `main`, `master`, and `development`.
+No other repository, launcher, source directory, Downloads package, Temp run, or historical overlay is an active II habitat. Retired material that could not be permanently erased under the safety gate is isolated in a hash-verified recovery quarantine and is not used by any launcher or process.

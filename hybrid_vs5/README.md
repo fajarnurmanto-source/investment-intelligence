@@ -1,7 +1,0 @@
-# II VS5 â€” Persistent Research Cases (synthetic-only overlay)
-
-Source overlay for the existing VS3 Laravel app plus VS4 workspace. Copy the controller, Blade views, and migration into a Laravel installation. Append the 5 route declarations in route_fragment.php to routes/web.php. The existing VS3 service configuration must point to FastAPI at http://127.0.0.1:8811. Run php artisan migrate using a separate local SQLite workflow database. No .env, SQLite file, session data, vendor, canonical II data, or secrets are committed.
-
-Windows local E2E evidence (2026-10-25): 10 Python regression tests PASS; synthetic engine PASS; DEMO2 case created; reviewer note persisted across fresh HTTP sessions; case listing and event history persist; Markdown report includes stored events; invalid case identifiers fail closed.
-
-CI only checks PHP syntax, Laravel route registration, Blade compilation, SQLite migration and synthetic DB persistence primitives. It does not replay Windows full-stack E2E. Authenticated reviewer access and Filament are not yet integrated: localhost synthetic demos ONLY. NOT_ADMITTED / HOLD / authority NONE / valuation FALSE / trading FALSE. The local review database is not the canonical II ledger.

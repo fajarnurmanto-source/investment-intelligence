@@ -1,0 +1,30 @@
+{
+	admin off
+}
+
+http://{$II_BIND_ADDRESS} {
+	bind 127.0.0.1
+	root * "{$II_PUBLIC_ROOT}"
+	encode zstd gzip
+	php_server
+
+	@private path /.env /.git/* /storage/* /vendor/*
+	respond @private 404
+
+	header {
+		-Server
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+	}
+
+	log {
+		output file "{$II_RUNTIME_ROOT}/storage/logs/services/access.log" {
+			roll_size 10MiB
+			roll_keep 5
+			roll_keep_for 168h
+		}
+		format json
+	}
+}
