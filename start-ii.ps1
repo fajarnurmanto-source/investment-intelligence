@@ -1,115 +1,68 @@
 param(
-    [ValidateRange(1024, 65535)]
-    [int]$Port = 8810,
+    [ValidateRange(1024, 65535)][int]$Port = 8810,
     [switch]$SkipMigrate
 )
 
 $ErrorActionPreference = 'Stop'
-$repoRoot = $PSScriptRoot
-$habitatRoot = Split-Path -Parent $repoRoot
-$appRoot = Join-Path $PSScriptRoot 'laravel_app'
-$runtimeRoot = Join-Path $habitatRoot 'runtime\laravel'
-$storageRoot = Join-Path $runtimeRoot 'storage'
-$bootstrapCacheRoot = Join-Path $runtimeRoot 'bootstrap-cache'
-$databaseRoot = Join-Path $runtimeRoot 'database'
-$databasePath = Join-Path $databaseRoot 'ii.sqlite'
-$environmentPath = Join-Path $runtimeRoot '.env'
-$vendorRoot = Join-Path $runtimeRoot 'vendor'
+. (Join-Path $PSScriptRoot 'tools\production\II-Production.Common.ps1')
+$context = Get-IIProductionContext -RepositoryRoot $PSScriptRoot -Port $Port
+Set-IIProductionEnvironment -Context $context
+Initialize-IIProductionDirectories -Context $context
 
-if (-not (Test-Path -LiteralPath (Join-Path $appRoot 'artisan'))) {
-    throw 'Laravel application was not found.'
+if (-not (Test-Path -LiteralPath $context.EnvironmentPath)) {
+    throw "Production environment is missing. Run tools\production\Deploy-IIProduction.ps1 first."
 }
-if (-not (Get-Command php -ErrorAction SilentlyContinue)) {
-    throw 'PHP 8.3 or newer is required.'
-}
+if (-not (Test-Path -LiteralPath $context.FrankenPhpPath)) { throw "FrankenPHP is missing: $($context.FrankenPhpPath)" }
+if (-not (Test-Path -LiteralPath (Join-Path $context.VendorRoot 'autoload.php'))) { throw "Composer dependencies are missing: $($context.VendorRoot)" }
 
-$runtimeDirectories = @(
-    $runtimeRoot,
-    $bootstrapCacheRoot,
-    $databaseRoot,
-    (Join-Path $storageRoot 'app\private'),
-    (Join-Path $storageRoot 'app\public'),
-    (Join-Path $storageRoot 'framework\cache\data'),
-    (Join-Path $storageRoot 'framework\sessions'),
-    (Join-Path $storageRoot 'framework\testing'),
-    (Join-Path $storageRoot 'framework\views'),
-    (Join-Path $storageRoot 'logs')
-)
-foreach ($directory in $runtimeDirectories) {
-    if (-not (Test-Path -LiteralPath $directory)) {
-        New-Item -ItemType Directory -Path $directory -Force | Out-Null
-    }
+$existing = Read-IIProcessManifest -Context $context
+if ($existing) {
+    $alive = @($existing.processes | Where-Object { $null -ne (Get-IIManagedProcess -Entry $_) })
+    if ($alive.Count -gt 0) { throw 'Investment Intelligence is already running. Use restart-ii.ps1.' }
+    Remove-Item -LiteralPath $context.ProcessManifest -Force -ErrorAction SilentlyContinue
 }
 
-if (-not (Test-Path -LiteralPath $environmentPath)) {
-    Copy-Item -LiteralPath (Join-Path $appRoot '.env.example') -Destination $environmentPath
-}
-if (-not (Test-Path -LiteralPath $databasePath)) {
-    New-Item -ItemType File -Path $databasePath | Out-Null
-}
+if (Test-IIListeningPort -Port $Port) { throw "Port $Port is already in use outside the managed II process manifest." }
 
-function Set-EnvironmentValue {
-    param([string]$Path, [string]$Name, [string]$Value)
-
-    $lines = [System.Collections.Generic.List[string]]::new()
-    foreach ($line in [System.IO.File]::ReadAllLines($Path)) { $lines.Add($line) }
-    $updated = $false
-    for ($index = 0; $index -lt $lines.Count; $index++) {
-        if ($lines[$index] -match "^$([regex]::Escape($Name))=") {
-            $lines[$index] = "$Name=$Value"
-            $updated = $true
-            break
-        }
-    }
-    if (-not $updated) { $lines.Add("$Name=$Value") }
-    [System.IO.File]::WriteAllLines($Path, $lines, [System.Text.UTF8Encoding]::new($false))
-}
-
-$databaseForLaravel = $databasePath.Replace('\', '/')
-Set-EnvironmentValue -Path $environmentPath -Name 'DB_CONNECTION' -Value 'sqlite'
-Set-EnvironmentValue -Path $environmentPath -Name 'DB_DATABASE' -Value ('"' + $databaseForLaravel + '"')
-Set-EnvironmentValue -Path $environmentPath -Name 'APP_URL' -Value "http://127.0.0.1:$Port"
-
-$env:II_RUNTIME_ROOT = $runtimeRoot
-$env:II_VENDOR_PATH = $vendorRoot
-$env:COMPOSER_VENDOR_DIR = $vendorRoot
-$env:APP_BASE_PATH = $appRoot
-$env:APP_SERVICES_CACHE = Join-Path $bootstrapCacheRoot 'services.php'
-$env:APP_PACKAGES_CACHE = Join-Path $bootstrapCacheRoot 'packages.php'
-$env:APP_CONFIG_CACHE = Join-Path $bootstrapCacheRoot 'config.php'
-$env:APP_ROUTES_CACHE = Join-Path $bootstrapCacheRoot 'routes.php'
-$env:APP_EVENTS_CACHE = Join-Path $bootstrapCacheRoot 'events.php'
-
-Push-Location $appRoot
+Push-Location $context.AppRoot
 try {
-    if (-not (Test-Path -LiteralPath (Join-Path $vendorRoot 'autoload.php'))) {
-        & composer install --no-interaction --prefer-dist
-        if ($LASTEXITCODE -ne 0) { throw 'Composer install failed.' }
-    }
-    $appKey = Select-String -LiteralPath $environmentPath -Pattern '^APP_KEY=.+$' -Quiet
-    if (-not $appKey) {
-        & php artisan key:generate --force
-        if ($LASTEXITCODE -ne 0) { throw 'Laravel key generation failed.' }
-    }
-    & php artisan optimize:clear
-    if ($LASTEXITCODE -ne 0) { throw 'Laravel cache reset failed.' }
     if (-not $SkipMigrate) {
         & php artisan migrate --force
         if ($LASTEXITCODE -ne 0) { throw 'Laravel migration failed.' }
     }
-
-    $queue = Start-Process -FilePath 'php' -ArgumentList @('artisan','queue:work','--tries=3','--timeout=90') -WorkingDirectory $appRoot -WindowStyle Hidden -PassThru
-    $scheduler = Start-Process -FilePath 'php' -ArgumentList @('artisan','schedule:work') -WorkingDirectory $appRoot -WindowStyle Hidden -PassThru
-    try {
-        Write-Host "Investment Intelligence: http://127.0.0.1:$Port"
-        Write-Host "Canonical habitat: $habitatRoot"
-        Write-Host "Local runtime: $runtimeRoot"
-        & php artisan serve --host=127.0.0.1 --port=$Port
-    } finally {
-        foreach ($process in @($queue, $scheduler)) {
-            if ($process -and -not $process.HasExited) { Stop-Process -Id $process.Id }
-        }
+    $serverEnvironment = @{
+        PHPRC = $context.PhpIniRoot
+        II_PHP_EXTENSION_DIR = $context.PhpExtensionRoot
     }
+    $server = Start-IIManagedProcess -Name 'web' -FilePath $context.FrankenPhpPath -ArgumentList @('run', '--config', '..\deploy\Caddyfile', '--adapter', 'caddyfile') -WorkingDirectory $context.AppRoot -LogRoot $context.LogRoot -Environment $serverEnvironment
+    $manifest = [ordered]@{
+        started_at = [DateTimeOffset]::Now.ToString('o')
+        url = $context.AppUrl
+        commit = (& git -C $context.RepositoryRoot rev-parse HEAD).Trim()
+        processes = @($server)
+    }
+    Write-IIProcessManifest -Context $context -Manifest $manifest
+    $ready = $false
+    for ($attempt = 0; $attempt -lt 30; $attempt++) {
+        Start-Sleep -Milliseconds 500
+        try {
+            if ((Invoke-WebRequest -Uri "$($context.AppUrl)/up" -UseBasicParsing -TimeoutSec 2).StatusCode -eq 200) { $ready = $true; break }
+        } catch { }
+        if (-not (Test-IIProcess -ProcessId $server.id)) { break }
+    }
+    if (-not $ready) {
+        & (Join-Path $context.RepositoryRoot 'stop-ii.ps1') -Port $Port
+        throw "Investment Intelligence did not become healthy. Review $($context.LogRoot)."
+    }
+    $queue = Start-IIManagedProcess -Name 'queue' -FilePath 'php' -ArgumentList @('artisan', 'queue:work', '--sleep=3', '--tries=3', '--timeout=90') -WorkingDirectory $context.AppRoot -LogRoot $context.LogRoot
+    $scheduler = Start-IIManagedProcess -Name 'scheduler' -FilePath 'php' -ArgumentList @('artisan', 'schedule:work') -WorkingDirectory $context.AppRoot -LogRoot $context.LogRoot
+    $manifest.processes = @($server, $queue, $scheduler)
+    Write-IIProcessManifest -Context $context -Manifest $manifest
+    Write-Host "Investment Intelligence started at $($context.AppUrl)"
+    Write-Host "Managed processes: web=$($server.id), queue=$($queue.id), scheduler=$($scheduler.id)"
+} catch {
+    if (Test-Path -LiteralPath $context.ProcessManifest) { & (Join-Path $context.RepositoryRoot 'stop-ii.ps1') -Port $Port }
+    throw
 } finally {
     Pop-Location
 }
