@@ -66,6 +66,19 @@
         </section>
         @empty <section class="panel"><h2>Belum ada laporan fundamental</h2><p class="muted">Impor dokumen resmi untuk arsip provenance, atau CSV/XBRL untuk normalisasi dan rasio.</p><a href="{{ route('ii.fundamentals.example') }}">Unduh template CSV →</a></section>
         @endforelse
+        @if($marketPrices->isNotEmpty())
+        <section class="panel" aria-label="Ringkasan provenance harga" style="margin-top:18px">
+            <h2>Provenance harga terbaru</h2>
+            <p class="caption">Sumber ditampilkan sebagai bukti, bukan izin redistribusi atau otorisasi trading.</p>
+            @foreach($marketPrices->take(5) as $price)
+                <div class="status-line">
+                    <strong>{{ $price->issuer_code }} · {{ $price->source_name }}</strong>
+                    <small>{{ $price->observed_on->toDateString() }} · {{ $price->adjustment_status }} · {{ $price->usage_rights }} · SHA batch {{ $price->batch_sha256 ? substr($price->batch_sha256,0,16) : 'manual' }}</small>
+                </div>
+            @endforeach
+            <a href="{{ route('ii.fundamentals.index', ['workspace' => 'prices']) }}">Buka register lengkap →</a>
+        </section>
+        @endif
         @if($shareBasisReviews->isNotEmpty())
         <section class="panel" aria-label="Review basis saham terbaru" style="margin-top:18px">
             <h2>Review basis saham tercatat</h2>
