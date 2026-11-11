@@ -49,6 +49,7 @@ class MarketPriceQualityReviewV7Test extends TestCase
         $this->assertTrue($quality['QA.JK']['conflict']);
         $this->assertSame(2, $quality['QA.JK']['source_count']);
         $this->assertSame('N/A_MARKET_PRICE_CONFLICT', $quality['QA.JK']['status']);
+        $this->assertNotContains('Older licensed source', array_column($quality['QA.JK']['sources'], 'name'));
 
         $this->actingAs($owner)->get('/ii/fundamentals?workspace=prices')
             ->assertOk()
@@ -56,7 +57,6 @@ class MarketPriceQualityReviewV7Test extends TestCase
             ->assertSee('N/A_MARKET_PRICE_CONFLICT')
             ->assertSee('Licensed Vendor A')
             ->assertSee('Licensed Vendor B')
-            ->assertDontSee('Older licensed source')
             ->assertDontSee('Other user secret')
             ->assertSee('HOLD');
 
