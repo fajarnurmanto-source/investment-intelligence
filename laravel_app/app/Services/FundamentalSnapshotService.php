@@ -28,9 +28,24 @@ class FundamentalSnapshotService
     {
         $out = $this->legacyLatest($userId);
         if (Schema::hasTable('ii_issuer_documents')) {
-            $prices = Schema::hasTable('ii_issuer_market_prices')
-                ? IssuerMarketPrice::where('user_id', $userId)->orderByDesc('observed_on')->orderByDesc('imported_at')->get()->unique('issuer_code')->keyBy('issuer_code')
+            // Compare all observations on the latest date per ticker before selecting
+            // a valuation price. Different vendor prices or adjustment bases
+            // must not be silently resolved by import ordering.
+            $priceGroups = Schema::hasTable('ii_issuer_market_prices')
+                ? IssuerMarketPrice::where('user_id', $userId)->orderByDesc('observed_on')->orderByDesc('imported_at')->get()->groupBy('issuer_code')
                 : collect();
+            $prices = $priceGroups->map(fn ($rows) => $rows->first());
+            $priceConflicts = $priceGroups->map(function ($rows): bool {
+                $latestDate = $rows->first()->observed_on->toDateString();
+
+                return $rows->filter(fn ($price) => $price->observed_on->toDateString() === $latestDate)
+                    ->map(fn ($price) => implode('|', [
+                        strtoupper((string) $price->currency),
+                        number_format((float) $price->price, 6, '.', ''),
+                        in_array($price->adjustment_status, ['UNADJUSTED', 'UNADJUSTED_CLOSE'], true)
+                            ? 'RAW_CLOSE' : (string) $price->adjustment_status,
+                    ]))->unique()->count() > 1;
+            });
             $documents = IssuerDocument::query()->with(['source', 'periods' => fn ($q) => $q->orderBy('fiscal_year')->orderBy('period_end')])
                 ->where('user_id', $userId)->get();
             $versions = $documents->groupBy('issuer_code')->map->count();
@@ -43,7 +58,7 @@ class FundamentalSnapshotService
                 if ($document->periods->isEmpty()) {
                     continue;
                 }
-                $out[$document->issuer_code] = $this->summarizeDocument($document, (int) $versions[$document->issuer_code], $prices->get($document->issuer_code));
+                $out[$document->issuer_code] = $this->summarizeDocument($document, (int) $versions[$document->issuer_code], $prices->get($document->issuer_code), (bool) $priceConflicts->get($document->issuer_code, false));
             }
         }
         ksort($out);
@@ -51,7 +66,7 @@ class FundamentalSnapshotService
         return $out;
     }
 
-    private function summarizeDocument(IssuerDocument $document, int $versions, ?IssuerMarketPrice $marketObservation = null): array
+    private function summarizeDocument(IssuerDocument $document, int $versions, ?IssuerMarketPrice $marketObservation = null, bool $priceConflict = false): array
     {
         $years = $document->periods->map(fn ($row) => collect($row->getAttributes())->map(fn ($v, $k) => in_array($k, ['id', 'fiscal_year'], true) ? $v : (is_numeric($v) ? (float) $v : $v))->all())->values()->all();
         $last = $years[array_key_last($years)];
@@ -87,7 +102,8 @@ class FundamentalSnapshotService
         $basisAligned = $marketObservation === null
             || in_array($basis['status'] ?? '', ['ALIGNED_SAME_DAY', 'ALIGNED_USER_ATTESTED'], true);
         $valuationShares = $basisAligned ? ($basis['shares'] ?? $shares) : $shares;
-        $priceAligned = $price !== null && $marketPriceAsOf !== null
+        $priceAligned = ! $priceConflict && $price !== null && $marketPriceAsOf !== null
+            && $marketPriceAsOf <= now()->toDateString()
             && ($marketObservation === null || ($marketObservation->currency === $document->currency && $marketObservation->unit === 'per_share'))
             && $marketPriceAsOf >= $periodEnd && $rightsAligned && $adjustmentAligned && $basisAligned;
         $marketCap = $priceAligned && $valuationShares !== null ? $price * $valuationShares : null;
@@ -142,7 +158,7 @@ class FundamentalSnapshotService
             'share_basis_factor' => $basis['factor'] ?? null,
             'share_basis_source' => $basis['source'] ?? null,
             'valuation_shares_outstanding' => $priceAligned ? $valuationShares : null,
-            'valuation_status' => $this->valuationStatus($price, $marketPriceAsOf, $marketObservation, $document, $periodEnd, [$eps, $bookValuePerShare, $enterpriseValue, $ebitda], $basis['status'] ?? null),
+            'valuation_status' => $this->valuationStatus($price, $marketPriceAsOf, $marketObservation, $document, $periodEnd, [$eps, $bookValuePerShare, $enterpriseValue, $ebitda], $basis['status'] ?? null, $priceConflict),
             'operating_cash_flow' => $this->number($last['operating_cash_flow'] ?? null),
             'income_positive' => $netIncome !== null && $netIncome > 0,
             'cash_flow_positive' => ($this->number($last['operating_cash_flow'] ?? null) ?? 0) > 0,
@@ -150,13 +166,19 @@ class FundamentalSnapshotService
         ];
     }
 
-    private function valuationStatus(?float $price, ?string $asOf, ?IssuerMarketPrice $observation, IssuerDocument $document, string $periodEnd, array $components, ?string $basisStatus = null): string
+    private function valuationStatus(?float $price, ?string $asOf, ?IssuerMarketPrice $observation, IssuerDocument $document, string $periodEnd, array $components, ?string $basisStatus = null, bool $priceConflict = false): string
     {
         if ($price === null) {
             return 'N/A_MISSING_MARKET_PRICE';
         }
         if ($asOf === null) {
             return 'N/A_MISSING_PRICE_DATE';
+        }
+        if ($asOf > now()->toDateString()) {
+            return 'N/A_FUTURE_MARKET_PRICE_DATE';
+        }
+        if ($priceConflict) {
+            return 'N/A_MARKET_PRICE_CONFLICT';
         }
         if ($observation && $observation->currency !== $document->currency) {
             return 'N/A_PRICE_CURRENCY_MISMATCH';

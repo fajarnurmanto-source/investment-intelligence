@@ -11,7 +11,7 @@ class IssuerMarketPriceService
     {
         $data = Validator::make($input, [
             'ticker' => ['required', 'string', 'regex:/^[A-Za-z0-9.\-]{1,16}$/'],
-            'observed_on' => ['required', 'date'], 'currency' => ['required', 'in:IDR,USD'],
+            'observed_on' => ['required', 'date_format:Y-m-d', 'before_or_equal:today'], 'currency' => ['required', 'in:IDR,USD'],
             'price' => ['required', 'numeric', 'gt:0'], 'unit' => ['required', 'in:per_share'],
             'adjustment_status' => ['required', 'in:unadjusted,unadjusted_close,split_adjusted'],
             'source_name' => ['required', 'string', 'max:160'], 'publisher' => ['nullable', 'string', 'max:160'],
