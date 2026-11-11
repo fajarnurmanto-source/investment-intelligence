@@ -40,8 +40,8 @@
     </nav>
     <div class="workspace-summary" aria-label="Ringkasan data pengguna">
         <div class="stat"><span>Emiten</span><strong>{{ count($records) }}</strong></div>
-        <div class="stat"><span>Dokumen sumber</span><strong>{{ $documents->count() }}</strong></div>
-        <div class="stat"><span>Observasi EOD</span><strong>{{ $marketPrices->count() }}</strong></div>
+        <div class="stat"><span>Dokumen ditampilkan</span><strong>{{ $documents->count() }}</strong></div>
+        <div class="stat"><span>Harga ditampilkan</span><strong>{{ $marketPrices->count() }}</strong></div>
         <div class="stat"><span>Valuasi tersedia</span><strong>{{ $readyCount }} / {{ count($records) }}</strong></div>
     </div>
     <div @class(['finance-layout', 'single-view' => $workspace === 'overview'])><div>
