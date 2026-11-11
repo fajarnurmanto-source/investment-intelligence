@@ -49,6 +49,10 @@ Route::prefix('ii')->name('ii.')->group(function (): void {
         Route::post('/fundamentals/market-prices/batch', [FundamentalHubController::class, 'importMarketPriceBatch'])
             ->middleware('throttle:2,1')->name('fundamentals.market-prices.batch');
         Route::get('/fundamentals/market-prices/batch-example', [FundamentalHubController::class, 'marketPriceBatchExample'])->name('fundamentals.market-prices.batch-example');
+        Route::post('/fundamentals/corporate-actions', [FundamentalHubController::class, 'storeCorporateAction'])
+            ->middleware('throttle:5,1')->name('fundamentals.corporate-actions.store');
+        Route::post('/fundamentals/share-basis/reviews', [FundamentalHubController::class, 'reviewShareBasis'])
+            ->middleware('throttle:5,1')->name('fundamentals.share-basis.review');
         Route::get('/fundamentals/example', [FundamentalHubController::class, 'example'])->name('fundamentals.example');
         Route::get('/fundamentals/batch-example', [FundamentalHubController::class, 'batchExample'])->name('fundamentals.batch-example');
         Route::get('/fundamentals/{ticker}/export.csv', [FundamentalHubController::class, 'export'])->name('fundamentals.export');

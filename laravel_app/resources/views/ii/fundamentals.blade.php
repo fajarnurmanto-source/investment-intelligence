@@ -27,7 +27,7 @@
                 <div class="stat"><span>P/E</span><strong>{{ $fmt($record['pe_ratio'],2) }}</strong></div><div class="stat"><span>P/BV</span><strong>{{ $fmt($record['pbv_ratio'],2) }}</strong></div><div class="stat"><span>EV/EBITDA</span><strong>{{ $fmt($record['ev_ebitda_ratio'],2) }}</strong></div><div class="stat"><span>ROE</span><strong>{{ $record['roe_end_pct'] === null ? 'N/A' : $record['roe_end_pct'].'%' }}</strong></div>
                 <div class="stat"><span>Revenue growth</span><strong>{{ $record['revenue_growth_pct'] === null ? 'N/A' : $record['revenue_growth_pct'].'%' }}</strong></div><div class="stat"><span>Earnings growth</span><strong>{{ $record['earnings_growth_pct'] === null ? 'N/A' : $record['earnings_growth_pct'].'%' }}</strong></div><div class="stat"><span>Debt / equity</span><strong>{{ $fmt($record['debt_equity_ratio'],2) }}</strong></div><div class="stat"><span>Operating cash flow</span><strong>{{ $fmt($record['operating_cash_flow']) }}</strong></div>
             </div>
-            <p class="caption">Status valuasi: {{ $record['valuation_status'] }} · harga {{ $record['market_price_as_of'] ?? 'N/A' }} dari {{ $record['market_price_source'] ?? 'belum tersedia' }}. P/E, P/BV, dan EV/EBITDA tidak dihitung tanpa harga bertanggal, unit/mata uang selaras, hak penggunaan, dan komponen lengkap.</p>
+            <p class="caption">Status valuasi: {{ $record['valuation_status'] }} · harga {{ $record['market_price_as_of'] ?? 'N/A' }} dari {{ $record['market_price_source'] ?? 'belum tersedia' }}. Basis saham: {{ $record['share_basis_status'] ?? 'NOT_APPLICABLE' }}@if(isset($record['share_basis_factor'])) · faktor {{ $record['share_basis_factor'] }} @endif @if(!empty($record['share_basis_source'])) · review {{ $record['share_basis_source'] }} @endif. Rasio tidak dihitung jika tanggal, unit, mata uang, hak, atau basis saham belum selaras.</p>
             <div class="tablewrap"><table><thead><tr><th>Periode</th><th>Revenue</th><th>Laba pemilik</th><th>Aset</th><th>Ekuitas</th><th>OCF</th><th>Status</th></tr></thead><tbody>
             @foreach($record['years'] as $year)<tr><td>{{ $year['period_end'] }}</td><td>{{ $fmt($year['revenue']) }}</td><td>{{ $fmt($year['net_income']) }}</td><td>{{ $fmt($year['total_assets']) }}</td><td>{{ $fmt($year['equity']) }}</td><td>{{ $fmt($year['operating_cash_flow']) }}</td><td>{{ $year['restated'] ? 'RESTATED' : 'AS REPORTED' }}</td></tr>@endforeach
             </tbody></table></div>
@@ -107,5 +107,6 @@
         </form>
         <p class="hint" style="margin-top:12px">Harga <span class="mono">split_adjusted</span> disimpan sebagai bukti tetapi tidak digunakan untuk valuasi sebelum penyesuaian saham selaras. Semua keputusan tetap HOLD.</p>
     </section>
+    @include('ii.partials.share-basis-v4')
     </div></div>
 @endsection
