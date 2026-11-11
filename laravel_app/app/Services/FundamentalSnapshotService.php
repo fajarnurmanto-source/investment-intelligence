@@ -56,6 +56,9 @@ class FundamentalSnapshotService
         $years = $document->periods->map(fn ($row) => collect($row->getAttributes())->map(fn ($v, $k) => in_array($k, ['id', 'fiscal_year'], true) ? $v : (is_numeric($v) ? (float) $v : $v))->all())->values()->all();
         $last = $years[array_key_last($years)];
         $prev = count($years) > 1 ? $years[count($years) - 2] : null;
+        // Eloquent's date cast serializes raw attributes with a midnight time;
+        // normalize to the canonical YYYY-MM-DD key used by share-basis reviews.
+        $periodEnd = $document->periods->last()->period_end->toDateString();
         $ratio = fn (?float $n, ?float $d) => $n !== null && $d !== null && $d != 0.0 ? round(100 * $n / $d, 2) : null;
         $growth = fn (string $key) => $prev && $last[$key] !== null && $prev[$key] !== null && (float) $prev[$key] != 0.0
             ? round(100 * ((float) $last[$key] - (float) $prev[$key]) / abs((float) $prev[$key]), 2) : null;
@@ -77,7 +80,7 @@ class FundamentalSnapshotService
         // share-basis review even when the vendor labels it "unadjusted".
         $basis = $marketObservation !== null && $marketPriceAsOf !== null
             ? app(IssuerShareBasisReconciliationService::class)->resolve(
-                (int) $document->user_id, $document->issuer_code, (string) $last['period_end'],
+                (int) $document->user_id, $document->issuer_code, $periodEnd,
                 $marketPriceAsOf, $shares
             )
             : null;
@@ -86,7 +89,7 @@ class FundamentalSnapshotService
         $valuationShares = $basisAligned ? ($basis['shares'] ?? $shares) : $shares;
         $priceAligned = $price !== null && $marketPriceAsOf !== null
             && ($marketObservation === null || ($marketObservation->currency === $document->currency && $marketObservation->unit === 'per_share'))
-            && $marketPriceAsOf >= (string) $last['period_end'] && $rightsAligned && $adjustmentAligned && $basisAligned;
+            && $marketPriceAsOf >= $periodEnd && $rightsAligned && $adjustmentAligned && $basisAligned;
         $marketCap = $priceAligned && $valuationShares !== null ? $price * $valuationShares : null;
         $enterpriseValue = $marketCap !== null && $debt !== null && $cash !== null ? $marketCap + $debt - $cash : null;
         $eps = $netIncome !== null && $valuationShares !== null && $valuationShares > 0 ? $netIncome / $valuationShares : null;
@@ -139,7 +142,7 @@ class FundamentalSnapshotService
             'share_basis_factor' => $basis['factor'] ?? null,
             'share_basis_source' => $basis['source'] ?? null,
             'valuation_shares_outstanding' => $priceAligned ? $valuationShares : null,
-            'valuation_status' => $this->valuationStatus($price, $marketPriceAsOf, $marketObservation, $document, (string) $last['period_end'], [$eps, $bookValuePerShare, $enterpriseValue, $ebitda], $basis['status'] ?? null),
+            'valuation_status' => $this->valuationStatus($price, $marketPriceAsOf, $marketObservation, $document, $periodEnd, [$eps, $bookValuePerShare, $enterpriseValue, $ebitda], $basis['status'] ?? null),
             'operating_cash_flow' => $this->number($last['operating_cash_flow'] ?? null),
             'income_positive' => $netIncome !== null && $netIncome > 0,
             'cash_flow_positive' => ($this->number($last['operating_cash_flow'] ?? null) ?? 0) > 0,
