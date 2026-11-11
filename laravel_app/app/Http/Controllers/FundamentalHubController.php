@@ -5,12 +5,15 @@ namespace App\Http\Controllers;
 use App\Models\IssuerDocument;
 use App\Models\IssuerImportBatch;
 use App\Models\IssuerMarketPrice;
+use App\Models\IssuerCorporateAction;
+use App\Models\IssuerShareBasisReview;
 use App\Services\FundamentalSnapshotService;
 use App\Services\IssuerBatchIngestionService;
 use App\Services\IssuerFundamentalImportService;
 use App\Services\IssuerImportMetadataService;
 use App\Services\IssuerMarketPriceService;
 use App\Services\IssuerMarketPriceBatchImportService;
+use App\Services\IssuerShareBasisReconciliationService;
 use App\Services\SignalInsightService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -35,8 +38,14 @@ class FundamentalHubController extends Controller
         $marketPrices = Schema::hasTable('ii_issuer_market_prices')
             ? IssuerMarketPrice::where('user_id', (int) auth()->id())->latest('observed_on')->limit(30)->get()
             : collect();
+        $corporateActions = Schema::hasTable('ii_issuer_corporate_actions')
+            ? IssuerCorporateAction::where('user_id', (int) auth()->id())->latest('effective_on')->limit(30)->get()
+            : collect();
+        $shareBasisReviews = Schema::hasTable('ii_issuer_share_basis_reviews')
+            ? IssuerShareBasisReview::where('user_id', (int) auth()->id())->latest()->limit(30)->get()
+            : collect();
 
-        return response()->view('ii.fundamentals', compact('records', 'market', 'documents', 'batches', 'marketPrices'))->header('Cache-Control', 'private, no-store');
+        return response()->view('ii.fundamentals', compact('records', 'market', 'documents', 'batches', 'marketPrices', 'corporateActions', 'shareBasisReviews'))->header('Cache-Control', 'private, no-store');
     }
 
     public function import(Request $request, IssuerFundamentalImportService $importer, IssuerImportMetadataService $metadata)
@@ -139,6 +148,30 @@ class FundamentalHubController extends Controller
             'Content-Disposition' => 'attachment; filename="II_SYNTHETIC_EOD_PRICE_TEMPLATE.csv"',
             'Cache-Control' => 'private, no-store',
         ]);
+    }
+
+    public function storeCorporateAction(Request $request, IssuerShareBasisReconciliationService $basis)
+    {
+        try {
+            $action = $basis->recordAction((int) auth()->id(), $request->all());
+        } catch (\InvalidArgumentException $exception) {
+            return back()->withErrors(['corporate_action' => $exception->getMessage()])->withInput();
+        }
+
+        return redirect()->route('ii.fundamentals.index')->with('fundamental_notice',
+            'Aksi '.$action->issuer_code.' '.$action->effective_on->toDateString().' disimpan immutable; review terdahulu menjadi stale bila intervalnya terdampak.');
+    }
+
+    public function reviewShareBasis(Request $request, IssuerShareBasisReconciliationService $basis)
+    {
+        try {
+            $review = $basis->attestCoverage((int) auth()->id(), $request->all());
+        } catch (\InvalidArgumentException $exception) {
+            return back()->withErrors(['share_basis' => $exception->getMessage()])->withInput();
+        }
+
+        return redirect()->route('ii.fundamentals.index')->with('fundamental_notice',
+            'Review basis saham '.$review->issuer_code.' dicatat untuk '.$review->price_observed_on->toDateString().'; hak dan status valuasi tetap dibatasi.');
     }
 
     public function export(string $ticker, FundamentalSnapshotService $fundamentals)

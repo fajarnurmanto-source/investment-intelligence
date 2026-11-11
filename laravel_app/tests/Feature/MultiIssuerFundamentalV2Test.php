@@ -85,7 +85,7 @@ class MultiIssuerFundamentalV2Test extends TestCase
             'usage_rights' => 'licensed_internal', 'source_authenticity_status' => 'LICENSED_PROVIDER',
         ]);
         $this->actingAs($user)->get('/ii/screener?sector=Industrials&period=2024&sort=pe_ratio&sort_direction=asc')
-            ->assertOk()->assertSee('AVAILABLE_AS_OF_2025-01-02')->assertSee('Licensed Closing Price');
+            ->assertOk()->assertSee('N/A_SHARE_BASIS_REVIEW_MISSING')->assertSee('Licensed Closing Price');
 
         $conflicting = $this->metadata('AAA.JK', 'Industrials', 'AAA second official source');
         $conflicting['restates_document_id'] = IssuerDocument::where('issuer_code', 'AAA.JK')->value('id');

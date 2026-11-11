@@ -21,10 +21,11 @@ class FundamentalScreenerController extends Controller
     {
         [, $rows] = $this->result($request, $snapshots, $screener);
         $writer = Writer::createFromString();
-        $writer->insertOne(['ticker', 'issuer_name', 'sector', 'period', 'screen_score', 'completeness_score', 'source_authenticity', 'numeric_reconciliation', 'licensing_assessment', 'provenance_confidence', 'conflict_status', 'pe_ratio', 'pbv_ratio', 'ev_ebitda_ratio', 'market_price', 'market_price_as_of', 'market_price_source', 'market_price_rights', 'valuation_status', 'net_margin_pct', 'revenue_growth_pct', 'earnings_growth_pct', 'roe_pct', 'debt_equity_ratio', 'operating_cash_flow', 'eps', 'source_name', 'license_status', 'evidence_status', 'decision', 'trading_authority']);
+        $writer->insertOne(['ticker', 'issuer_name', 'sector', 'period', 'screen_score', 'completeness_score', 'source_authenticity', 'numeric_reconciliation', 'licensing_assessment', 'provenance_confidence', 'conflict_status', 'pe_ratio', 'pbv_ratio', 'ev_ebitda_ratio', 'market_price', 'market_price_as_of', 'market_price_source', 'market_price_rights', 'valuation_status', 'share_basis_status', 'share_basis_factor', 'share_basis_source', 'net_margin_pct', 'revenue_growth_pct', 'earnings_growth_pct', 'roe_pct', 'debt_equity_ratio', 'operating_cash_flow', 'eps', 'source_name', 'license_status', 'evidence_status', 'decision', 'trading_authority']);
         foreach ($rows as $row) {
             $writer->insertOne(array_map($this->csvCell(...), [
                 $row['ticker'], $row['issuer_name'], $row['sector'], $row['latest_year'], $row['quality_score'], $row['data_quality_score'], $row['source_authenticity_status'], $row['numeric_reconciliation_status'], $row['licensing_assessment'], $row['provenance_confidence'], $row['conflict_status'], $row['pe_ratio'], $row['pbv_ratio'], $row['ev_ebitda_ratio'], $row['valuation_market_price'], $row['market_price_as_of'], $row['market_price_source'], $row['market_price_rights'], $row['valuation_status'],
+                $row['share_basis_status'] ?? null, $row['share_basis_factor'] ?? null, $row['share_basis_source'] ?? null,
                 $row['net_margin_pct'], $row['revenue_growth_pct'], $row['earnings_growth_pct'], $row['roe_end_pct'],
                 $row['debt_equity_ratio'], $row['operating_cash_flow'], $row['eps'],
                 $row['source_name'], $row['license_status'], $row['gate'], $row['decision'], $row['trading_authority'],

@@ -73,13 +73,24 @@ class FundamentalSnapshotService
         $priceRights = $marketObservation?->usage_rights ?? ($embeddedPrice !== null ? $document->source->usage_rights : null);
         $rightsAligned = in_array($priceRights, ['internal_research', 'licensed_internal', 'redistribution_permitted'], true);
         $adjustmentAligned = $marketObservation === null || in_array($marketObservation->adjustment_status, ['UNADJUSTED', 'UNADJUSTED_CLOSE'], true);
+        // Any separately sourced raw price after fiscal close needs a sourced
+        // share-basis review even when the vendor labels it "unadjusted".
+        $basis = $marketObservation !== null && $marketPriceAsOf !== null
+            ? app(IssuerShareBasisReconciliationService::class)->resolve(
+                (int) $document->user_id, $document->issuer_code, (string) $last['period_end'],
+                $marketPriceAsOf, $shares
+            )
+            : null;
+        $basisAligned = $marketObservation === null
+            || in_array($basis['status'] ?? '', ['ALIGNED_SAME_DAY', 'ALIGNED_USER_ATTESTED'], true);
+        $valuationShares = $basisAligned ? ($basis['shares'] ?? $shares) : $shares;
         $priceAligned = $price !== null && $marketPriceAsOf !== null
             && ($marketObservation === null || ($marketObservation->currency === $document->currency && $marketObservation->unit === 'per_share'))
-            && $marketPriceAsOf >= (string) $last['period_end'] && $rightsAligned && $adjustmentAligned;
-        $marketCap = $priceAligned && $shares !== null ? $price * $shares : null;
+            && $marketPriceAsOf >= (string) $last['period_end'] && $rightsAligned && $adjustmentAligned && $basisAligned;
+        $marketCap = $priceAligned && $valuationShares !== null ? $price * $valuationShares : null;
         $enterpriseValue = $marketCap !== null && $debt !== null && $cash !== null ? $marketCap + $debt - $cash : null;
-        $eps = $netIncome !== null && $shares !== null && $shares > 0 ? $netIncome / $shares : null;
-        $bookValuePerShare = $equity !== null && $shares !== null && $shares > 0 ? $equity / $shares : null;
+        $eps = $netIncome !== null && $valuationShares !== null && $valuationShares > 0 ? $netIncome / $valuationShares : null;
+        $bookValuePerShare = $equity !== null && $valuationShares !== null && $valuationShares > 0 ? $equity / $valuationShares : null;
 
         $annual = array_map(function (array $row) use ($ratio): array {
             return [
@@ -124,7 +135,11 @@ class FundamentalSnapshotService
             'valuation_market_price' => $price,
             'market_price_source' => $marketObservation?->source_name ?? ($embeddedPrice !== null ? $document->source->name : null),
             'market_price_rights' => $priceRights,
-            'valuation_status' => $this->valuationStatus($price, $marketPriceAsOf, $marketObservation, $document, (string) $last['period_end'], [$eps, $bookValuePerShare, $enterpriseValue, $ebitda]),
+            'share_basis_status' => $basis['status'] ?? 'NOT_APPLICABLE',
+            'share_basis_factor' => $basis['factor'] ?? null,
+            'share_basis_source' => $basis['source'] ?? null,
+            'valuation_shares_outstanding' => $priceAligned ? $valuationShares : null,
+            'valuation_status' => $this->valuationStatus($price, $marketPriceAsOf, $marketObservation, $document, (string) $last['period_end'], [$eps, $bookValuePerShare, $enterpriseValue, $ebitda], $basis['status'] ?? null),
             'operating_cash_flow' => $this->number($last['operating_cash_flow'] ?? null),
             'income_positive' => $netIncome !== null && $netIncome > 0,
             'cash_flow_positive' => ($this->number($last['operating_cash_flow'] ?? null) ?? 0) > 0,
@@ -132,7 +147,7 @@ class FundamentalSnapshotService
         ];
     }
 
-    private function valuationStatus(?float $price, ?string $asOf, ?IssuerMarketPrice $observation, IssuerDocument $document, string $periodEnd, array $components): string
+    private function valuationStatus(?float $price, ?string $asOf, ?IssuerMarketPrice $observation, IssuerDocument $document, string $periodEnd, array $components, ?string $basisStatus = null): string
     {
         if ($price === null) {
             return 'N/A_MISSING_MARKET_PRICE';
@@ -152,6 +167,9 @@ class FundamentalSnapshotService
         if ($asOf < $periodEnd) {
             return 'N/A_PRICE_PREDATES_REPORT_PERIOD';
         }
+        if ($observation && ! in_array($basisStatus, ['ALIGNED_SAME_DAY', 'ALIGNED_USER_ATTESTED'], true)) {
+            return $basisStatus ?? 'N/A_SHARE_BASIS_REVIEW_MISSING';
+        }
         $rights = $observation?->usage_rights ?? $document->source->usage_rights;
         if (! in_array($rights, ['internal_research', 'licensed_internal', 'redistribution_permitted'], true)) {
             return 'N/A_PRICE_RIGHTS_UNVERIFIED';
@@ -160,7 +178,7 @@ class FundamentalSnapshotService
             return 'N/A_INCOMPLETE_COMPONENTS';
         }
 
-        return 'AVAILABLE_AS_OF_'.$asOf;
+        return ($basisStatus === 'ALIGNED_USER_ATTESTED' ? 'AVAILABLE_USER_RECONCILED_AS_OF_' : 'AVAILABLE_AS_OF_').$asOf;
     }
 
     private function number(mixed $value): ?float
