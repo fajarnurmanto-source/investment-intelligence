@@ -12,6 +12,7 @@ use App\Services\IssuerBatchIngestionService;
 use App\Services\IssuerFundamentalImportService;
 use App\Services\IssuerImportMetadataService;
 use App\Services\IssuerMarketPriceService;
+use App\Services\MarketPriceQualityService;
 use App\Services\IssuerMarketPriceBatchImportService;
 use App\Services\IssuerShareBasisReconciliationService;
 use App\Services\SignalInsightService;
@@ -22,7 +23,7 @@ use League\Csv\Writer;
 
 class FundamentalHubController extends Controller
 {
-    public function index(FundamentalSnapshotService $fundamentals, SignalInsightService $signals)
+    public function index(FundamentalSnapshotService $fundamentals, SignalInsightService $signals, MarketPriceQualityService $priceQuality)
     {
         $records = $fundamentals->latestByTicker((int) auth()->id());
         $market = [];
@@ -38,6 +39,9 @@ class FundamentalHubController extends Controller
         $marketPrices = Schema::hasTable('ii_issuer_market_prices')
             ? IssuerMarketPrice::where('user_id', (int) auth()->id())->latest('observed_on')->limit(30)->get()
             : collect();
+        $priceReviews = Schema::hasTable('ii_issuer_market_prices')
+            ? $priceQuality->latestByTicker((int) auth()->id())->values()
+            : collect();
         $corporateActions = Schema::hasTable('ii_issuer_corporate_actions')
             ? IssuerCorporateAction::where('user_id', (int) auth()->id())->latest('effective_on')->limit(30)->get()
             : collect();
@@ -45,7 +49,7 @@ class FundamentalHubController extends Controller
             ? IssuerShareBasisReview::where('user_id', (int) auth()->id())->latest()->limit(30)->get()
             : collect();
 
-        return response()->view('ii.fundamentals', compact('records', 'market', 'documents', 'batches', 'marketPrices', 'corporateActions', 'shareBasisReviews'))->header('Cache-Control', 'private, no-store');
+        return response()->view('ii.fundamentals', compact('records', 'market', 'documents', 'batches', 'marketPrices', 'priceReviews', 'corporateActions', 'shareBasisReviews'))->header('Cache-Control', 'private, no-store');
     }
 
     public function import(Request $request, IssuerFundamentalImportService $importer, IssuerImportMetadataService $metadata)
