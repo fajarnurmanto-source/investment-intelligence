@@ -28,24 +28,13 @@ class FundamentalSnapshotService
     {
         $out = $this->legacyLatest($userId);
         if (Schema::hasTable('ii_issuer_documents')) {
-            // Compare all observations on the latest date per ticker before selecting
-            // a valuation price. Different vendor prices or adjustment bases
-            // must not be silently resolved by import ordering.
-            $priceGroups = Schema::hasTable('ii_issuer_market_prices')
-                ? IssuerMarketPrice::where('user_id', $userId)->orderByDesc('observed_on')->orderByDesc('imported_at')->get()->groupBy('issuer_code')
+            // The same latest-date quality assessment feeds valuation and the
+            // V7 reviewer interface; never resolve conflicting vendor data by import order.
+            $quality = Schema::hasTable('ii_issuer_market_prices')
+                ? app(MarketPriceQualityService::class)->latestByTicker($userId)
                 : collect();
-            $prices = $priceGroups->map(fn ($rows) => $rows->first());
-            $priceConflicts = $priceGroups->map(function ($rows): bool {
-                $latestDate = $rows->first()->observed_on->toDateString();
-
-                return $rows->filter(fn ($price) => $price->observed_on->toDateString() === $latestDate)
-                    ->map(fn ($price) => implode('|', [
-                        strtoupper((string) $price->currency),
-                        number_format((float) $price->price, 6, '.', ''),
-                        in_array($price->adjustment_status, ['UNADJUSTED', 'UNADJUSTED_CLOSE'], true)
-                            ? 'RAW_CLOSE' : (string) $price->adjustment_status,
-                    ]))->unique()->count() > 1;
-            });
+            $prices = $quality->map(fn ($review) => $review['price']);
+            $priceConflicts = $quality->map(fn ($review) => $review['conflict']);
             $documents = IssuerDocument::query()->with(['source', 'periods' => fn ($q) => $q->orderBy('fiscal_year')->orderBy('period_end')])
                 ->where('user_id', $userId)->get();
             $versions = $documents->groupBy('issuer_code')->map->count();
