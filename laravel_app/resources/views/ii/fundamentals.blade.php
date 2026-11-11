@@ -6,16 +6,46 @@
     .stat-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;margin:16px 0}.stat{background:#0b192b;border-radius:10px;padding:13px}.stat span{font-size:.7rem;color:var(--muted);display:block}.stat strong{font-size:1.15rem;display:block;margin-top:5px}
     .split{display:grid;grid-template-columns:1fr 1fr;gap:10px}.checkline{display:flex;gap:11px;align-items:flex-start;color:#d2e4f1;font-size:.82rem;font-weight:500}.checkline input{width:auto;margin-top:4px}.source{border-top:1px solid var(--line);margin-top:16px;padding-top:14px;color:var(--muted);font-size:.78rem;overflow-wrap:anywhere}.mono{font-family:ui-monospace,monospace;font-size:.72rem}
     @media(max-width:1160px){.finance-layout{display:block}.stat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.form-card{margin-top:22px}}@media(max-width:560px){.split,.stat-grid{grid-template-columns:1fr}}
+
+    .fundamental-workspaces{display:flex;flex-wrap:wrap;gap:9px;margin:18px 0 15px}
+    .fundamental-workspaces a{border:1px solid var(--line);background:var(--panel);color:#cddff1;text-decoration:none;padding:10px 14px;border-radius:11px;font-weight:700;font-size:.86rem}
+    .fundamental-workspaces a:hover,.fundamental-workspaces a[aria-current="page"]{background:#1b4150;color:#c1f9ff;border-color:#43899b}
+    .workspace-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:14px 0 22px}
+    .workspace-summary .stat{border:1px solid var(--line)}
+    .finance-layout.single-view{grid-template-columns:minmax(0,1fr)}.finance-layout.single-view>div:last-child{display:none}
+    .issuer-more{margin-top:16px;border-top:1px solid var(--line);padding-top:12px}
+    .issuer-more summary{cursor:pointer;color:var(--cyan);font-weight:750;padding:7px 0}
+    .issuer-more summary:focus-visible{outline:3px solid var(--cyan);outline-offset:3px}
+    .status-line{padding:10px 0;border-bottom:1px solid var(--line);overflow-wrap:anywhere}
+    .status-line:last-child{border:0}.status-line strong{display:block}.status-line small{color:var(--muted);display:block}
+    @media(max-width:900px){.workspace-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media(max-width:560px){.fundamental-workspaces{display:grid;grid-template-columns:1fr 1fr}.fundamental-workspaces a{text-align:center;font-size:.75rem;padding:9px 5px}.workspace-summary{grid-template-columns:1fr 1fr;gap:7px}}
 </style>
 @endpush
 @section('content')
     @php($fmt = fn($value, $decimals = 0) => $value === null ? 'N/A' : number_format((float)$value, $decimals))
+    @php($requestedWorkspace = request()->query('workspace', 'overview'))
+    @php($workspace = in_array($requestedWorkspace, ['overview', 'sources', 'prices', 'reconciliation'], true) ? $requestedWorkspace : 'overview')
+    @php($readyCount = collect($records)->filter(fn ($item) => str_starts_with((string) ($item['valuation_status'] ?? ''), 'AVAILABLE_'))->count())
     <p class="eyebrow">II / Multi-Issuer Intelligence V2</p><h1>Issuer Fundamentals</h1>
     <p class="lead">Impor dokumen, CSV normalisasi, atau XBRL yang diperoleh secara sah. II menyimpan versi sumber secara immutable, menormalkan satuan, menilai kelengkapan, dan hanya menghitung rasio saat semua input wajib tersedia.</p>
     <div class="boundary"><strong>NOT_ADMITTED · HOLD · TRADING_AUTHORITY=NONE.</strong> Keterbukaan publik tidak otomatis memberikan hak redistribusi atau otoritas trading. Rasio yang kekurangan input ditampilkan sebagai N/A—tanpa asumsi pengganti.</div>
     @if(session('fundamental_notice'))<div class="success" role="status">{{ session('fundamental_notice') }}</div>@endif
     @if($errors->any())<div class="error" role="alert"><strong>Impor belum disimpan.</strong> {{ $errors->first() }}</div>@endif
-    <div class="finance-layout"><div>
+    <nav class="fundamental-workspaces" aria-label="Ruang kerja fundamental">
+        <a href="{{ route('ii.fundamentals.index', ['workspace' => 'overview']) }}" @if($workspace === 'overview') aria-current="page" @endif>Ringkasan emiten</a>
+        <a href="{{ route('ii.fundamentals.index', ['workspace' => 'sources']) }}" @if($workspace === 'sources') aria-current="page" @endif>Sumber &amp; Batch ingestion</a>
+        <a href="{{ route('ii.fundamentals.index', ['workspace' => 'prices']) }}" @if($workspace === 'prices') aria-current="page" @endif>Harga pasar</a>
+        <a href="{{ route('ii.fundamentals.index', ['workspace' => 'reconciliation']) }}" @if($workspace === 'reconciliation') aria-current="page" @endif>Rekonsiliasi</a>
+    </nav>
+    <div class="workspace-summary" aria-label="Ringkasan data pengguna">
+        <div class="stat"><span>Emiten</span><strong>{{ count($records) }}</strong></div>
+        <div class="stat"><span>Dokumen sumber</span><strong>{{ $documents->count() }}</strong></div>
+        <div class="stat"><span>Observasi EOD</span><strong>{{ $marketPrices->count() }}</strong></div>
+        <div class="stat"><span>Valuasi tersedia</span><strong>{{ $readyCount }} / {{ count($records) }}</strong></div>
+    </div>
+    <div @class(['finance-layout', 'single-view' => $workspace === 'overview'])><div>
+        @if($workspace === 'overview')
         <div class="section-header"><h2>Riwayat emiten · {{ count($records) }} ticker</h2><span class="caption">Data pengguna ini saja</span></div>
         @forelse($records as $record)
         <section class="panel financial-card">
@@ -28,13 +58,26 @@
                 <div class="stat"><span>Revenue growth</span><strong>{{ $record['revenue_growth_pct'] === null ? 'N/A' : $record['revenue_growth_pct'].'%' }}</strong></div><div class="stat"><span>Earnings growth</span><strong>{{ $record['earnings_growth_pct'] === null ? 'N/A' : $record['earnings_growth_pct'].'%' }}</strong></div><div class="stat"><span>Debt / equity</span><strong>{{ $fmt($record['debt_equity_ratio'],2) }}</strong></div><div class="stat"><span>Operating cash flow</span><strong>{{ $fmt($record['operating_cash_flow']) }}</strong></div>
             </div>
             <p class="caption">Status valuasi: {{ $record['valuation_status'] }} · harga {{ $record['market_price_as_of'] ?? 'N/A' }} dari {{ $record['market_price_source'] ?? 'belum tersedia' }}. Basis saham: {{ $record['share_basis_status'] ?? 'NOT_APPLICABLE' }}@if(isset($record['share_basis_factor'])) · faktor {{ $record['share_basis_factor'] }} @endif @if(!empty($record['share_basis_source'])) · review {{ $record['share_basis_source'] }} @endif. Rasio tidak dihitung jika tanggal, unit, mata uang, hak, atau basis saham belum selaras.</p>
-            <div class="tablewrap"><table><thead><tr><th>Periode</th><th>Revenue</th><th>Laba pemilik</th><th>Aset</th><th>Ekuitas</th><th>OCF</th><th>Status</th></tr></thead><tbody>
+            <details class="issuer-more"><summary>Periode fiskal, provenance &amp; bukti sumber</summary><div class="tablewrap"><table><thead><tr><th>Periode</th><th>Revenue</th><th>Laba pemilik</th><th>Aset</th><th>Ekuitas</th><th>OCF</th><th>Status</th></tr></thead><tbody>
             @foreach($record['years'] as $year)<tr><td>{{ $year['period_end'] }}</td><td>{{ $fmt($year['revenue']) }}</td><td>{{ $fmt($year['net_income']) }}</td><td>{{ $fmt($year['total_assets']) }}</td><td>{{ $fmt($year['equity']) }}</td><td>{{ $fmt($year['operating_cash_flow']) }}</td><td>{{ $year['restated'] ? 'RESTATED' : 'AS REPORTED' }}</td></tr>@endforeach
             </tbody></table></div>
             <div class="source"><strong>Provenance:</strong> {{ $record['source_name'] }} @if($record['source_url']) · <a href="{{ $record['source_url'] }}" rel="noopener noreferrer">sumber</a>@endif<br><strong>Assessment terpisah:</strong> authenticity {{ $record['source_authenticity_status'] }} · numeric {{ $record['numeric_reconciliation_status'] }} · licensing {{ $record['licensing_assessment'] }} · confidence {{ $record['provenance_confidence'] }}<br><strong>Hak penggunaan:</strong> {{ $record['license_status'] }} · {{ $record['usage_rights'] }} · redistribusi {{ $record['redistribution_allowed'] ? 'diizinkan' : 'tidak dinyatakan' }}<br><strong>Mapping:</strong> {{ $record['taxonomy_status'] }} · <strong>Konflik versi:</strong> {{ $record['conflict_status'] }}<br><strong>Valuation:</strong> {{ $record['valuation_status'] }}<br><strong>Checksum SHA-256:</strong> <span class="mono">{{ $record['sha256'] ?? 'legacy unavailable' }}</span><br><strong>Impor:</strong> {{ $record['imported_at'] }} · <strong>Gate:</strong> {{ $record['gate'] }} · {{ $record['decision'] }} · AUTHORITY {{ $record['trading_authority'] }}</div>
+            </details>
         </section>
         @empty <section class="panel"><h2>Belum ada laporan fundamental</h2><p class="muted">Impor dokumen resmi untuk arsip provenance, atau CSV/XBRL untuk normalisasi dan rasio.</p><a href="{{ route('ii.fundamentals.example') }}">Unduh template CSV →</a></section>
         @endforelse
+        @if($shareBasisReviews->isNotEmpty())
+        <section class="panel" aria-label="Review basis saham terbaru" style="margin-top:18px">
+            <h2>Review basis saham tercatat</h2>
+            <p class="caption">Review pengguna bukan verifikasi bursa. Periksa status terkini melalui ruang Rekonsiliasi.</p>
+            @foreach($shareBasisReviews->take(5) as $review)
+                <div class="status-line"><strong>{{ $review->issuer_code }} · {{ $review->source_name }}</strong><small>{{ $review->period_end->toDateString() }} → {{ $review->price_observed_on->toDateString() }} · perlu cek ulang bila ada aksi baru</small></div>
+            @endforeach
+            <a href="{{ route('ii.fundamentals.index', ['workspace' => 'reconciliation']) }}">Buka rekonsiliasi →</a>
+        </section>
+        @endif
+        @endif
+        @if($workspace === 'sources')
         @if($documents->isNotEmpty())
         <section class="panel"><h2>Register dokumen sumber</h2><div class="tablewrap"><table><thead><tr><th>Emiten</th><th>Periode</th><th>Format</th><th>Kelengkapan</th><th>Rekonsiliasi</th><th>Hak</th><th>Checksum</th></tr></thead><tbody>
         @foreach($documents as $document)<tr><td>{{ $document->issuer_code }}<br><span class="caption">{{ $document->issuer_name }} · {{ $document->sector }}</span></td><td>{{ $document->report_period }}<br><span class="caption">{{ $document->report_date->toDateString() }}</span></td><td>{{ strtoupper($document->format) }}<br><span class="caption">{{ $document->taxonomy_status }}</span></td><td>{{ $document->quality_status }} · {{ $document->quality_score }}/100<br><span class="caption">{{ $document->conflict_status }}</span></td><td>{{ $document->numeric_reconciliation_status }}<br><span class="caption">{{ $document->source_authenticity_status }} · {{ $document->provenance_confidence }}</span></td><td>{{ $document->licensing_assessment }}<br><span class="caption">{{ $document->source->usage_rights }}</span></td><td class="mono">{{ substr($document->sha256,0,16) }}…</td></tr>@endforeach
@@ -45,13 +88,33 @@
         @foreach($batches as $batch)<tr><td class="mono">{{ substr($batch->id,0,12) }}…<br><span class="caption">{{ $batch->original_filename }}</span></td><td>{{ $batch->status }}<br><span class="caption">{{ $batch->succeeded_items }} berhasil · {{ $batch->failed_items }} gagal</span></td><td>@foreach($batch->items as $item)<span class="caption">{{ $item->ticker }} · {{ $item->status }} · attempt {{ $item->attempts }}</span><br>@endforeach</td><td>@if($batch->failed_items > 0)<form method="POST" action="{{ route('ii.fundamentals.batches.retry',$batch->id) }}">@csrf<button type="submit">Retry gagal</button></form>@else<span class="caption">Tidak ada item gagal</span>@endif</td></tr>@endforeach
         </tbody></table></div></section>
         @endif
+        @endif
+        @if($workspace === 'prices')
         @if($marketPrices->isNotEmpty())
         <section class="panel"><h2>Register harga bertanggal</h2><div class="tablewrap"><table><thead><tr><th>Emiten</th><th>Harga</th><th>Tanggal</th><th>Provenance</th><th>Hak</th></tr></thead><tbody>
         @foreach($marketPrices as $price)<tr><td>{{ $price->issuer_code }}</td><td>{{ $price->currency }} {{ $fmt($price->price,2) }} / saham</td><td>{{ $price->observed_on->toDateString() }}<br><span class="caption">{{ $price->adjustment_status }}</span></td><td>{{ $price->source_name }}<br><span class="caption">{{ $price->source_authenticity_status }} · {{ $price->provenance_confidence }}</span><br><span class="caption">SHA batch: {{ $price->batch_sha256 ? substr($price->batch_sha256,0,16).'…' : 'manual' }}</span></td><td>{{ $price->usage_rights }}<br><span class="caption">redistribusi {{ $price->redistribution_allowed ? 'ya' : 'tidak' }}</span></td></tr>@endforeach
         </tbody></table></div></section>
+        @else
+        <section class="panel"><h2>Belum ada harga pasar</h2><p class="muted">Data EOD harus bersumber sah dan disertai hak penggunaan. Tidak ada harga estimasi.</p></section>
+        @endif
+        @endif
+        @if($workspace === 'reconciliation')
+        <section class="panel">
+            <h2>Status keselarasan basis saham</h2>
+            <p class="caption">Ringkasan status mutakhir dari snapshot masing-masing emiten. Nilai N/A bukan nol dan tidak boleh dipakai sebagai ranking.</p>
+            @forelse($records as $record)
+                <div class="status-line">
+                    <strong>{{ $record['ticker'] }} · {{ $record['share_basis_status'] ?? 'NOT_APPLICABLE' }}</strong>
+                    <small>{{ $record['valuation_status'] }} · tanggal harga {{ $record['market_price_as_of'] ?? 'belum tersedia' }} · keputusan HOLD</small>
+                </div>
+            @empty
+                <p class="muted">Belum ada emiten untuk direkonsiliasi.</p>
+            @endforelse
+        </section>
         @endif
     </div>
     <div>
+    @if($workspace === 'sources')
     <section class="panel form-card" aria-labelledby="import-title"><span class="badge">IMMUTABLE SOURCE REGISTER</span><h2 id="import-title" style="margin-top:12px">Impor laporan emiten</h2>
         <form method="POST" action="{{ route('ii.fundamentals.import') }}" enctype="multipart/form-data">@csrf
             <div class="split"><div class="field"><label for="ticker">Kode emiten</label><input id="ticker" name="ticker" required maxlength="16" placeholder="TLKM.JK" value="{{ old('ticker') }}"></div><div class="field"><label for="issuer_name">Nama emiten</label><input id="issuer_name" name="issuer_name" required maxlength="200" value="{{ old('issuer_name') }}"></div></div>
@@ -75,6 +138,8 @@
             <div class="field"><label for="issuer_files">Dokumen/CSV/XBRL (1–20)</label><input id="issuer_files" type="file" name="issuer_files[]" accept=".csv,.xbrl,.xml,.pdf" multiple required></div><button type="submit" style="width:100%">Validasi & antrekan batch</button>
         </form>
     </section>
+    @endif
+    @if($workspace === 'prices')
     <section class="panel form-card"><span class="badge">DATED PRICE · SEPARATE PROVENANCE</span><h2 style="margin-top:12px">Tambah harga pasar</h2>
         <form method="POST" action="{{ route('ii.fundamentals.market-prices.store') }}">@csrf
             <div class="split"><div class="field"><label for="price_ticker">Kode emiten</label><input id="price_ticker" name="ticker" required maxlength="16"></div><div class="field"><label for="observed_on">Tanggal harga</label><input id="observed_on" type="date" name="observed_on" required></div></div>
@@ -107,6 +172,9 @@
         </form>
         <p class="hint" style="margin-top:12px">Harga <span class="mono">split_adjusted</span> disimpan sebagai bukti tetapi tidak digunakan untuk valuasi sebelum penyesuaian saham selaras. Semua keputusan tetap HOLD.</p>
     </section>
+    @endif
+    @if($workspace === 'reconciliation')
     @include('ii.partials.share-basis-v4')
+    @endif
     </div></div>
 @endsection
