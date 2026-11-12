@@ -72,10 +72,11 @@ class BulkMarketDataOnboardingV8Test extends TestCase
             'BBB.JK,2025-01-03,IDR,200,unadjusted_close',
             'CCC.JK,2025-01-04,IDR,300,unadjusted_close',
         ];
-        $sha256 = hash_file('sha256', $this->csv($rows)->getRealPath());
+        $file = $this->csv($rows);
+        $sha256 = hash_file('sha256', $file->getRealPath());
 
         $this->actingAs($owner)->post('/ii/fundamentals/market-prices/preview', [
-            'market_prices_csv' => $this->csv($rows),
+            'market_prices_csv' => $file,
         ])->assertRedirect('/ii/fundamentals?workspace=prices')
             ->assertSessionHas('market_price_preview', function (array $preview) use ($sha256): bool {
                 return $preview['is_preview'] === true
