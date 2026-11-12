@@ -43,7 +43,9 @@ class FundamentalHubController extends Controller
         $priceReviews = Schema::hasTable('ii_issuer_market_prices')
             ? $priceQuality->latestByTicker((int) auth()->id())->values()
             : collect();
-        $coverage = $coverageService->report((int) auth()->id(), $records, $priceReviews);
+        $coverage = request()->query('workspace') === 'activation'
+            ? $coverageService->report((int) auth()->id(), $records, $priceReviews)
+            : null;
         $corporateActions = Schema::hasTable('ii_issuer_corporate_actions')
             ? IssuerCorporateAction::where('user_id', (int) auth()->id())->latest('effective_on')->limit(30)->get()
             : collect();
