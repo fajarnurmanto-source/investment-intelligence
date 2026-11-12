@@ -194,11 +194,33 @@
             <div class="field"><label class="checkline"><input type="checkbox" name="rights_confirmed" value="1" required>Saya berhak memakai observasi harga ini sesuai status di atas.</label></div><button type="submit" style="width:100%">Simpan harga bertanggal</button>
         </form>
     </section>
+    <section class="panel form-card" aria-labelledby="eod-preflight-title">
+        <span class="badge blue">V8 · CSV PREFLIGHT</span>
+        <h2 id="eod-preflight-title" style="margin-top:12px">Periksa file sebelum mengimpor</h2>
+        <p class="hint">Preview memeriksa validitas sampai 1.000 observasi, cakupan emiten/tanggal, dan potensi konflik dengan data milik akun ini. File hanya diproses untuk pemeriksaan permintaan ini, tanpa disimpan oleh proses preview. Saat siap mengimpor, unggah file yang sama pada formulir berikutnya.</p>
+        <form method="POST" action="{{ route('ii.fundamentals.market-prices.preview') }}" enctype="multipart/form-data">@csrf
+            <div class="field"><label for="eod_preview_file">CSV untuk preview (maks. 2 MB)</label><input id="eod_preview_file" type="file" name="market_prices_csv" accept=".csv,text/csv" required></div>
+            <button type="submit" style="width:100%">Periksa tanpa menyimpan</button>
+        </form>
+        @if(session('market_price_preview'))
+            @php($preview = session('market_price_preview'))
+            <div class="boundary" role="status" style="margin-top:14px">
+                <strong>Preview saja — belum ada data diimpor.</strong>
+                <p>{{ $preview['rows'] }} baris · {{ $preview['tickers'] }} emiten · {{ $preview['first_date'] }} s.d. {{ $preview['last_date'] }}</p>
+                <p>SHA-256: <span class="mono">{{ $preview['sha256_prefix'] }}…</span> · Batch sudah pernah diimpor: {{ $preview['already_imported'] ? 'YA' : 'TIDAK' }}</p>
+                <p>Baris bertanggal sama dengan data tersimpan: <strong>{{ $preview['overlaps'] }}</strong> · Potensi konflik: <strong>{{ $preview['potential_conflicts'] }}</strong></p>
+                @if($preview['examples'])
+                    <p class="hint">Contoh konflik: {{ implode(', ', $preview['examples']) }}. Periksa sumber dan harga melalui register; preview tidak memilih vendor secara otomatis.</p>
+                @endif
+                <p class="hint">Preview bukan validasi lisensi dan bukan persetujuan valuasi. Hak penggunaan harus dikonfirmasi secara terpisah saat impor.</p>
+            </div>
+        @endif
+    </section>
     <section class="panel form-card" aria-labelledby="eod-batch-title">
         <span class="badge blue">V3 · RIGHTS-AWARE EOD CSV</span><h2 id="eod-batch-title" style="margin-top:12px">Batch harga penutupan</h2>
-        <p class="hint">Impor 1–100 observasi harga dengan sumber dan hak penggunaan yang jelas. Tidak mengambil data melalui scraping BEI. Semua baris divalidasi atomik; satu baris gagal membatalkan seluruh batch. <a href="{{ route('ii.fundamentals.market-prices.batch-example') }}">Unduh contoh CSV sintetis</a>.</p>
+        <p class="hint">Impor 1–1.000 observasi harga dengan sumber dan hak penggunaan yang jelas. Tidak mengambil data melalui scraping BEI. Semua baris divalidasi atomik; satu baris gagal membatalkan seluruh batch. <a href="{{ route('ii.fundamentals.market-prices.batch-example') }}">Unduh contoh CSV sintetis</a>.</p>
         <form method="POST" action="{{ route('ii.fundamentals.market-prices.batch') }}" enctype="multipart/form-data">@csrf
-            <div class="field"><label for="market_prices_csv">File CSV sumber (maksimal 1 MB)</label><input id="market_prices_csv" type="file" name="market_prices_csv" accept=".csv,text/csv" required></div>
+            <div class="field"><label for="market_prices_csv">File CSV sumber (maksimal 2 MB)</label><input id="market_prices_csv" type="file" name="market_prices_csv" accept=".csv,text/csv" required></div>
             <div class="field"><label for="eod_source_name">Nama sumber</label><input id="eod_source_name" name="source_name" required maxlength="160"></div>
             <div class="field"><label for="eod_publisher">Penerbit</label><input id="eod_publisher" name="publisher" maxlength="160"></div>
             <div class="field"><label for="eod_source_url">URL dokumentasi sumber/lisensi</label><input id="eod_source_url" type="url" name="source_url" required></div>
