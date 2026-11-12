@@ -8,6 +8,7 @@ use App\Models\IssuerMarketPrice;
 use App\Models\IssuerCorporateAction;
 use App\Models\IssuerShareBasisReview;
 use App\Services\FundamentalSnapshotService;
+use App\Services\IssuerCoverageService;
 use App\Services\IssuerBatchIngestionService;
 use App\Services\IssuerFundamentalImportService;
 use App\Services\IssuerImportMetadataService;
@@ -23,7 +24,7 @@ use League\Csv\Writer;
 
 class FundamentalHubController extends Controller
 {
-    public function index(FundamentalSnapshotService $fundamentals, SignalInsightService $signals, MarketPriceQualityService $priceQuality)
+    public function index(FundamentalSnapshotService $fundamentals, SignalInsightService $signals, MarketPriceQualityService $priceQuality, IssuerCoverageService $coverageService)
     {
         $records = $fundamentals->latestByTicker((int) auth()->id());
         $market = [];
@@ -42,6 +43,7 @@ class FundamentalHubController extends Controller
         $priceReviews = Schema::hasTable('ii_issuer_market_prices')
             ? $priceQuality->latestByTicker((int) auth()->id())->values()
             : collect();
+        $coverage = $coverageService->report((int) auth()->id(), $records, $priceReviews);
         $corporateActions = Schema::hasTable('ii_issuer_corporate_actions')
             ? IssuerCorporateAction::where('user_id', (int) auth()->id())->latest('effective_on')->limit(30)->get()
             : collect();
@@ -49,7 +51,38 @@ class FundamentalHubController extends Controller
             ? IssuerShareBasisReview::where('user_id', (int) auth()->id())->latest()->limit(30)->get()
             : collect();
 
-        return response()->view('ii.fundamentals', compact('records', 'market', 'documents', 'batches', 'marketPrices', 'priceReviews', 'corporateActions', 'shareBasisReviews'))->header('Cache-Control', 'private, no-store');
+        return response()->view('ii.fundamentals', compact('records', 'market', 'documents', 'batches', 'marketPrices', 'priceReviews', 'coverage', 'corporateActions', 'shareBasisReviews'))->header('Cache-Control', 'private, no-store');
+    }
+
+    public function exportCoverage(FundamentalSnapshotService $fundamentals, MarketPriceQualityService $priceQuality, IssuerCoverageService $coverageService)
+    {
+        $userId = (int) auth()->id();
+        $records = $fundamentals->latestByTicker($userId);
+        $priceReviews = Schema::hasTable('ii_issuer_market_prices')
+            ? $priceQuality->latestByTicker($userId)->values() : collect();
+        $coverage = $coverageService->report($userId, $records, $priceReviews);
+
+        $writer = Writer::createFromString();
+        $writer->insertOne(['ticker', 'issuer_name', 'documents', 'periods', 'latest_period',
+            'source_name', 'source_url', 'source_claim_user_attested', 'numeric_claim_user_attested',
+            'usage_rights_claimed', 'price_date', 'price_status', 'valuation_status',
+            'next_action', 'gate', 'decision', 'trading_authority']);
+        foreach ($coverage['rows'] as $row) {
+            $writer->insertOne(array_map($this->csvCell(...), [
+                $row['ticker'], $row['issuer_name'], $row['documents'], $row['periods'],
+                $row['latest_period'], $row['source_name'], $row['source_url'],
+                $row['source_claim'], $row['numeric_claim'], $row['usage_rights'],
+                $row['price_date'], $row['price_status'], $row['valuation_status'],
+                $row['next_action'], $row['gate'], $row['decision'], $row['trading_authority'],
+            ]));
+        }
+
+        return response($writer->toString(), 200, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="II_ISSUER_SOURCE_ACTIVATION_V9.csv"',
+            'Cache-Control' => 'private, no-store',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
     }
 
     public function import(Request $request, IssuerFundamentalImportService $importer, IssuerImportMetadataService $metadata)
