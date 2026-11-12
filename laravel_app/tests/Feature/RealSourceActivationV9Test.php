@@ -69,6 +69,9 @@ class RealSourceActivationV9Test extends TestCase
         $this->issuer($owner, 'RIGHTS.JK', rights: 'unknown');
         $this->price($owner, 'PRICEONLY.JK');
         $this->issuer($other, 'HIDDEN.JK');
+        // The test switches authenticated users within one browser session.
+        // Clear the other user's prior flash toast before checking DB isolation.
+        session()->forget('fundamental_notice');
 
         $page = $this->actingAs($owner)->get('/ii/fundamentals?workspace=activation')
             ->assertOk()
