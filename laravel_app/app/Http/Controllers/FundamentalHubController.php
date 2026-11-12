@@ -114,10 +114,25 @@ class FundamentalHubController extends Controller
     }
 
 
+    public function previewMarketPriceBatch(Request $request, IssuerMarketPriceBatchImportService $importer)
+    {
+        $request->validate(['market_prices_csv' => ['required', 'file', 'mimes:csv,txt', 'max:2048']]);
+
+        try {
+            $result = $importer->preview((int) auth()->id(), $request->file('market_prices_csv'));
+        } catch (\InvalidArgumentException $exception) {
+            return redirect()->route('ii.fundamentals.index', ['workspace' => 'prices'])
+                ->withErrors(['market_prices_csv' => $exception->getMessage()]);
+        }
+
+        return redirect()->route('ii.fundamentals.index', ['workspace' => 'prices'])
+            ->with('market_price_preview', $result);
+    }
+
     public function importMarketPriceBatch(Request $request, IssuerMarketPriceBatchImportService $importer)
     {
         $data = $request->validate([
-            'market_prices_csv' => ['required', 'file', 'mimes:csv,txt', 'max:1024'],
+            'market_prices_csv' => ['required', 'file', 'mimes:csv,txt', 'max:2048'],
             'source_name' => ['required', 'string', 'max:160'],
             'publisher' => ['nullable', 'string', 'max:160'],
             'source_url' => ['required', 'url', 'max:1000'],
