@@ -25,7 +25,7 @@
 @section('content')
     @php($fmt = fn($value, $decimals = 0) => $value === null ? 'N/A' : number_format((float)$value, $decimals))
     @php($requestedWorkspace = request()->query('workspace', 'overview'))
-    @php($workspace = in_array($requestedWorkspace, ['overview', 'sources', 'prices', 'reconciliation'], true) ? $requestedWorkspace : 'overview')
+    @php($workspace = in_array($requestedWorkspace, ['overview', 'sources', 'prices', 'reconciliation', 'activation'], true) ? $requestedWorkspace : 'overview')
     @php($readyCount = collect($records)->filter(fn ($item) => str_starts_with((string) ($item['valuation_status'] ?? ''), 'AVAILABLE_'))->count())
     <p class="eyebrow">II / Multi-Issuer Intelligence V2</p><h1>Issuer Fundamentals</h1>
     <p class="lead">Impor dokumen, CSV normalisasi, atau XBRL yang diperoleh secara sah. II menyimpan versi sumber secara immutable, menormalkan satuan, menilai kelengkapan, dan hanya menghitung rasio saat semua input wajib tersedia.</p>
@@ -37,6 +37,7 @@
         <a href="{{ route('ii.fundamentals.index', ['workspace' => 'sources']) }}" @if($workspace === 'sources') aria-current="page" @endif>Sumber &amp; Batch ingestion</a>
         <a href="{{ route('ii.fundamentals.index', ['workspace' => 'prices']) }}" @if($workspace === 'prices') aria-current="page" @endif>Harga pasar</a>
         <a href="{{ route('ii.fundamentals.index', ['workspace' => 'reconciliation']) }}" @if($workspace === 'reconciliation') aria-current="page" @endif>Rekonsiliasi</a>
+        <a href="{{ route('ii.fundamentals.index', ['workspace' => 'activation']) }}" @if($workspace === 'activation') aria-current="page" @endif>Aktivasi Data V9</a>
     </nav>
     <div class="workspace-summary" aria-label="Ringkasan data pengguna">
         <div class="stat"><span>Emiten</span><strong>{{ count($records) }}</strong></div>
@@ -44,7 +45,67 @@
         <div class="stat"><span>Harga ditampilkan</span><strong>{{ $marketPrices->count() }}</strong></div>
         <div class="stat"><span>Valuasi tersedia</span><strong>{{ $readyCount }} / {{ count($records) }}</strong></div>
     </div>
-    <div @class(['finance-layout', 'single-view' => $workspace === 'overview'])><div>
+    <div @class(['finance-layout', 'single-view' => in_array($workspace, ['overview', 'activation'], true)])><div>
+        @if($workspace === 'activation')
+        <section class="panel" aria-labelledby="v9-title">
+            <span class="badge blue">V9 · EVIDENCE-LED INTAKE</span>
+            <h2 id="v9-title" style="margin-top:12px">Aktivasi sumber dan cakupan emiten</h2>
+            <p class="caption">Cakupan dihitung hanya dari berkas dan harga yang sudah tersedia untuk akun ini, bukan dari seluruh emiten BEI. Status asal data dan rekonsiliasi adalah keterangan yang dilaporkan pengguna, bukan verifikasi independen atau izin redistribusi.</p>
+            <div class="stat-grid">
+                <div class="stat"><span>Emiten dalam register akun</span><strong>{{ $coverage['issuer_count'] }}</strong></div>
+                <div class="stat"><span>Emiten dengan periode angka</span><strong>{{ $coverage['has_fundamentals'] }}</strong></div>
+                <div class="stat"><span>Emiten dengan harga bertanggal</span><strong>{{ $coverage['has_market_prices'] }}</strong></div>
+                <div class="stat"><span>Butuh langkah lanjutan</span><strong>{{ $coverage['review_required'] }}</strong></div>
+            </div>
+            <a class="button" href="{{ route('ii.fundamentals.coverage.export') }}">Ekspor daftar aktivasi CSV</a>
+            <div class="boundary" style="margin-top:16px"><strong>NOT_ADMITTED · HOLD · TRADING_AUTHORITY=NONE</strong> · Daftar ini adalah antrian akuisisi dan review data, bukan rekomendasi saham atau izin perdagangan.</div>
+        </section>
+        <section class="panel" aria-labelledby="source-guide-title" style="margin-top:16px">
+            <h2 id="source-guide-title">Rute sumber resmi, tanpa scraping</h2>
+            <p class="caption">Gunakan dokumen yang Anda unduh atau peroleh secara sah. II belum memiliki feed harga BEI yang telah dilisensikan.</p>
+            <div class="status-line">
+                <strong>Laporan keuangan dan tahunan emiten</strong>
+                <small>Arsip laporan resmi BEI; pengguna dapat mengunggah PDF sebagai bukti, atau CSV/XBRL sesuai taksonomi yang didukung untuk pengolahan angka.</small>
+                <a href="https://www.idx.co.id/id/perusahaan-tercatat/laporan-keuangan-dan-tahunan/" target="_blank" rel="noopener noreferrer">Buka arsip laporan BEI</a>
+            </div>
+            <div class="status-line">
+                <strong>Taksonomi XBRL BEI</strong>
+                <small>Cocokkan namespace, unit, konteks, dan cakupan parser sebelum memasukkan angka ke II. Taksonomi yang tidak didukung tetap HOLD.</small>
+                <a href="https://www.idx.co.id/id/perusahaan-tercatat/xbrl" target="_blank" rel="noopener noreferrer">Lihat dokumentasi XBRL BEI</a>
+            </div>
+            <div class="status-line">
+                <strong>Harga pasar berlisensi</strong>
+                <small>Produk EOD dan historical perlu hak non-display atau hak lain sesuai penggunaan. Jangan mengambil harga melalui crawling situs BEI.</small>
+                <a href="https://data.idx.co.id/" target="_blank" rel="noopener noreferrer">Lihat IDX Data Services</a>
+            </div>
+            <p class="hint">Ketentuan BEI melarang web scraping/crawling serta penggunaan komersial atau penyebaran kembali data tanpa izin yang diperlukan. <a href="https://www.idx.co.id/id/syarat-penggunaan/" target="_blank" rel="noopener noreferrer">Baca syarat penggunaan BEI</a>. Metadata hak penggunaan yang diinput pengguna belum merupakan bukti lisensi komersial.</p>
+            <p><a href="{{ route('ii.fundamentals.index', ['workspace' => 'sources']) }}">Buka unggah laporan dan batch →</a> · <a href="{{ route('ii.fundamentals.index', ['workspace' => 'prices']) }}">Buka harga EOD dan preview →</a></p>
+        </section>
+        <section class="panel" aria-labelledby="coverage-queue-title" style="margin-top:16px">
+            <h2 id="coverage-queue-title">Antrian cakupan berdasarkan data akun</h2>
+            <p class="caption">Prioritas otomatis adalah kebutuhan bukti berikutnya, bukan verifikasi status sumber oleh pihak independen. Angka yang tidak tersedia tetap N/A.</p>
+            <div class="tablewrap">
+                <table>
+                    <thead><tr><th>Emiten</th><th>Arsip dan periode</th><th>Klaim sumber/hak</th><th>Harga dan valuasi</th><th>Langkah berikutnya</th></tr></thead>
+                    <tbody>
+                        @forelse($coverage['rows'] as $item)
+                        <tr>
+                            <td><strong>{{ $item['ticker'] }}</strong><br><span class="caption">{{ $item['issuer_name'] }}</span></td>
+                            <td>{{ $item['documents'] }} dokumen · {{ $item['periods'] }} periode<br><span class="caption">Terbaru: {{ $item['latest_period'] ?? 'belum ada' }}</span></td>
+                            <td>{{ $item['source_claim'] }}<br><span class="caption">{{ $item['numeric_claim'] }} · {{ $item['usage_rights'] }}</span>
+                                @if($item['source_url'])<br><a href="{{ $item['source_url'] }}" rel="noopener noreferrer" target="_blank">Tautan sumber terlapor</a>@endif
+                            </td>
+                            <td>{{ $item['price_date'] ?? 'N/A' }}<br><span class="caption">{{ $item['price_status'] }}</span><br><span class="caption">{{ $item['valuation_status'] }}</span></td>
+                            <td><strong>{{ $item['next_action'] }}</strong><br><span class="caption">NOT_ADMITTED / HOLD</span></td>
+                        </tr>
+                        @empty
+                        <tr><td colspan="5">Belum ada dokumen fundamental atau observasi harga yang tercatat untuk akun ini. Gunakan sumber resmi dan unggah berkas secara sah untuk membentuk antrian.</td></tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        @endif
         @if($workspace === 'overview')
         <div class="section-header"><h2>Riwayat emiten · {{ count($records) }} ticker</h2><span class="caption">Data pengguna ini saja</span></div>
         @forelse($records as $record)
