@@ -14,18 +14,14 @@ use Illuminate\Support\Facades\Storage;
 class IssuerMarketPriceBatchImportService
 {
     private const HEADER = ['ticker', 'observed_on', 'currency', 'price', 'adjustment_status'];
+    public const MAX_ROWS = 1000;
+    public const MAX_BYTES = 2 * 1024 * 1024;
 
     public function __construct(private readonly IssuerMarketPriceService $prices) {}
 
     public function import(int $userId, UploadedFile $file, array $source): array
     {
-        if (! $file->isValid() || strtolower($file->getClientOriginalExtension()) !== 'csv') {
-            throw new \InvalidArgumentException('Unggah file CSV harga pasar yang valid.');
-        }
-        $raw = file_get_contents($file->getRealPath());
-        if ($raw === false || $raw === '' || strlen($raw) > 1024 * 1024) {
-            throw new \InvalidArgumentException('CSV harga pasar harus berisi data dan maksimal 1MB.');
-        }
+        $raw = $this->readCsv($file);
         $sha256 = hash('sha256', $raw);
         if (IssuerMarketPrice::where('user_id', $userId)->where('batch_sha256', $sha256)->exists()) {
             throw new \InvalidArgumentException('Batch CSV dengan checksum yang sama sudah diimpor.');
@@ -54,6 +50,86 @@ class IssuerMarketPriceBatchImportService
         }
 
         return ['imported' => count($rows), 'sha256' => $sha256, 'storage_path' => $path];
+    }
+
+    /**
+     * Non-persistent preflight for licensed/source-attested CSV onboarding.
+     * All comparisons are scoped to the requesting user. No raw file, quote
+     * content, or price rows are written by this method.
+     */
+    public function preview(int $userId, UploadedFile $file): array
+    {
+        $raw = $this->readCsv($file);
+        $rows = $this->parse($raw);
+        $sha256 = hash('sha256', $raw);
+        $tickers = array_unique(array_column($rows, 'ticker'));
+        $dates = array_column($rows, 'observed_on');
+        $overlapCount = 0;
+        $conflictCount = 0;
+        $conflictExamples = [];
+
+        foreach ($rows as $row) {
+            $existing = IssuerMarketPrice::query()
+                ->where('user_id', $userId)
+                ->where('issuer_code', $row['ticker'])
+                ->whereDate('observed_on', $row['observed_on'])
+                ->get(['currency', 'price', 'adjustment_status']);
+            if ($existing->isEmpty()) {
+                continue;
+            }
+            $overlapCount++;
+            $incomingFingerprint = $this->fingerprint(
+                $row['currency'], $row['price'], $row['adjustment_status']
+            );
+            $disagrees = $existing->contains(fn (IssuerMarketPrice $price): bool =>
+                $this->fingerprint($price->currency, $price->price, $price->adjustment_status) !== $incomingFingerprint
+            );
+            if ($disagrees) {
+                $conflictCount++;
+                if (count($conflictExamples) < 5) {
+                    $conflictExamples[] = $row['ticker'].' / '.$row['observed_on'];
+                }
+            }
+        }
+
+        return [
+            'rows' => count($rows),
+            'tickers' => count($tickers),
+            'first_date' => min($dates),
+            'last_date' => max($dates),
+            'sha256_prefix' => substr($sha256, 0, 16),
+            'already_imported' => IssuerMarketPrice::where('user_id', $userId)
+                ->where('batch_sha256', $sha256)->exists()
+                || Storage::disk('local')->exists('ii_price_batches/u'.$userId.'/'.$sha256.'.csv'),
+            'overlaps' => $overlapCount,
+            'potential_conflicts' => $conflictCount,
+            'examples' => $conflictExamples,
+            'is_preview' => true,
+        ];
+    }
+
+    private function fingerprint(string $currency, string $price, string $adjustment): string
+    {
+        $basis = strtoupper($adjustment);
+
+        return implode('|', [
+            strtoupper($currency),
+            number_format((float) $price, 6, '.', ''),
+            in_array($basis, ['UNADJUSTED', 'UNADJUSTED_CLOSE'], true) ? 'RAW_CLOSE' : $basis,
+        ]);
+    }
+
+    private function readCsv(UploadedFile $file): string
+    {
+        if (! $file->isValid() || strtolower($file->getClientOriginalExtension()) !== 'csv') {
+            throw new \InvalidArgumentException('Unggah file CSV harga pasar yang valid.');
+        }
+        $raw = file_get_contents($file->getRealPath());
+        if ($raw === false || $raw === '' || strlen($raw) > self::MAX_BYTES) {
+            throw new \InvalidArgumentException('CSV harga pasar harus berisi data dan maksimal 2 MB.');
+        }
+
+        return $raw;
     }
 
     private function parse(string $raw): array
@@ -105,8 +181,8 @@ class IssuerMarketPriceBatchImportService
                 }
                 $seen[$key] = true;
                 $rows[] = $row;
-                if (count($rows) > 100) {
-                    throw new \InvalidArgumentException('Maksimal 100 observasi harga per batch.');
+                if (count($rows) > self::MAX_ROWS) {
+                    throw new \InvalidArgumentException('Maksimal '.self::MAX_ROWS.' observasi harga per batch.');
                 }
             }
             if ($rows === []) {
