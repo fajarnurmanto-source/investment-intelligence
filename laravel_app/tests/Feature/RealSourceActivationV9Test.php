@@ -83,9 +83,7 @@ class RealSourceActivationV9Test extends TestCase
             ->assertSee('TRADING_AUTHORITY=NONE')
             ->assertSee('https://data.idx.co.id/', false)
             ->assertDontSee('HIDDEN.JK');
-        $this->assertStringContainsString('Pengakuan provenance', $page->getContent()) === false
-            ? $this->assertStringContainsString('keterangan yang dilaporkan pengguna', $page->getContent())
-            : $this->assertTrue(true);
+        $this->assertStringContainsString('keterangan yang dilaporkan pengguna', $page->getContent());
         $this->actingAs($other)->get('/ii/fundamentals?workspace=activation')
             ->assertOk()->assertSee('HIDDEN.JK')->assertDontSee('COVER.JK');
     }
