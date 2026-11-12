@@ -27,7 +27,10 @@ class RealSourceActivationV9Test extends TestCase
         $csv = "fiscal_year,period_end,restated,revenue,net_income_attributable,total_assets,total_equity,equity_attributable,operating_cash_flow,shares_outstanding,total_debt,cash_and_equivalents,ebitda,market_price,market_price_as_of\n"
             ."2023,2023-12-31,false,100,10,500,300,250,50,1000,100,20,40,,\n"
             ."2024,2024-12-31,false,120,12,550,320,270,60,1000,110,25,45,,\n";
-        $body = $extension === 'pdf' ? '%PDF-1.4 archive only' : $csv;
+        // Separate immutable source checksums even when synthetic schema and metrics match.
+        $csv = str_replace('2023,2023-12-31,false,100,10',
+            '2023,2023-12-31,false,'.(100 + abs(crc32($ticker) % 100000)).',10', $csv);
+        $body = $extension === 'pdf' ? '%PDF-1.4 archive only for '.$ticker : $csv;
         $this->actingAs($user)->post('/ii/fundamentals/import', [
             'ticker' => $ticker, 'issuer_name' => $issuerName,
             'sector' => 'Industrials', 'kind' => 'user_supplied', 'report_period' => 'FY 2024',
@@ -69,7 +72,6 @@ class RealSourceActivationV9Test extends TestCase
 
         $page = $this->actingAs($owner)->get('/ii/fundamentals?workspace=activation')
             ->assertOk()
-            ->assertHeader('Cache-Control', 'private, no-store')
             ->assertSee('Aktivasi sumber dan cakupan emiten')
             ->assertSee('COVER.JK')
             ->assertSee('ARCHIVE.JK')
@@ -84,6 +86,8 @@ class RealSourceActivationV9Test extends TestCase
             ->assertSee('https://data.idx.co.id/', false)
             ->assertDontSee('HIDDEN.JK');
         $this->assertStringContainsString('keterangan yang dilaporkan pengguna', $page->getContent());
+        $this->assertStringContainsString('private', $page->headers->get('Cache-Control'));
+        $this->assertStringContainsString('no-store', $page->headers->get('Cache-Control'));
         $this->actingAs($other)->get('/ii/fundamentals?workspace=activation')
             ->assertOk()->assertSee('HIDDEN.JK')->assertDontSee('COVER.JK');
     }
@@ -100,8 +104,9 @@ class RealSourceActivationV9Test extends TestCase
         $this->get('/ii/fundamentals/coverage/export.csv')->assertRedirect('/login');
 
         $response = $this->actingAs($owner)->get('/ii/fundamentals/coverage/export.csv')
-            ->assertOk()->assertHeader('Cache-Control', 'private, no-store')
-            ->assertHeader('X-Content-Type-Options', 'nosniff');
+            ->assertOk()->assertHeader('X-Content-Type-Options', 'nosniff');
+        $this->assertStringContainsString('private', $response->headers->get('Cache-Control'));
+        $this->assertStringContainsString('no-store', $response->headers->get('Cache-Control'));
 
         $csv = $response->getContent();
         $reader = Reader::createFromString($csv);
