@@ -103,6 +103,36 @@
         @endif
         @endif
         @if($workspace === 'prices')
+        <section class="panel" aria-labelledby="eod-quality-title" style="margin-bottom:16px">
+            <h2 id="eod-quality-title">Review kualitas harga terbaru</h2>
+            <p class="caption">Semua sumber pada tanggal harga terbaru diperbandingkan per emiten. Harga yang berbeda, basis penyesuaian tidak selaras, atau tanggal masa depan ditahan dari valuasi. Histori tidak diubah dan tidak ada sumber yang dipilih otomatis.</p>
+            @forelse($priceReviews as $review)
+                <div class="status-line">
+                    <strong>{{ $review['ticker'] }} · {{ $review['observed_on'] }}</strong>
+                    <span @class(['badge', 'red' => $review['conflict'] || str_starts_with($review['status'], 'N/A_')])>{{ $review['status'] }}</span>
+                    <small>{{ $review['source_count'] }} sumber/observasi pada tanggal terakhir · keputusan riset tetap HOLD</small>
+                    <details class="issuer-more">
+                        <summary>Lihat provenance sumber ({{ $review['source_count'] }})</summary>
+                        <div class="tablewrap"><table>
+                            <thead><tr><th>Sumber</th><th>Harga</th><th>Basis</th><th>Hak penggunaan</th><th>Checksum</th></tr></thead>
+                            <tbody>
+                                @foreach($review['sources'] as $eodSource)
+                                    <tr>
+                                        <td>{{ $eodSource['name'] }}</td>
+                                        <td>{{ $eodSource['currency'] }} {{ $fmt($eodSource['price'], 6) }}</td>
+                                        <td>{{ $eodSource['adjustment'] }}</td>
+                                        <td>{{ $eodSource['rights'] }}</td>
+                                        <td class="mono">{{ substr((string) $eodSource['sha256'], 0, 16) }}…</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table></div>
+                    </details>
+                </div>
+            @empty
+                <p class="muted">Belum ada harga bertanggal untuk ditinjau. Impor harga dari sumber yang sah melalui formulir di sebelah kanan.</p>
+            @endforelse
+        </section>
         @if($marketPrices->isNotEmpty())
         <section class="panel"><h2>Register harga bertanggal</h2><div class="tablewrap"><table><thead><tr><th>Emiten</th><th>Harga</th><th>Tanggal</th><th>Provenance</th><th>Hak</th></tr></thead><tbody>
         @foreach($marketPrices as $price)<tr><td>{{ $price->issuer_code }}</td><td>{{ $price->currency }} {{ $fmt($price->price,2) }} / saham</td><td>{{ $price->observed_on->toDateString() }}<br><span class="caption">{{ $price->adjustment_status }}</span></td><td>{{ $price->source_name }}<br><span class="caption">{{ $price->source_authenticity_status }} · {{ $price->provenance_confidence }}</span><br><span class="caption">SHA batch: {{ $price->batch_sha256 ? substr($price->batch_sha256,0,16).'…' : 'manual' }}</span></td><td>{{ $price->usage_rights }}<br><span class="caption">redistribusi {{ $price->redistribution_allowed ? 'ya' : 'tidak' }}</span></td></tr>@endforeach
