@@ -39,6 +39,8 @@ Route::prefix('ii')->name('ii.')->group(function (): void {
         Route::get('/signals/example', [SignalCenterController::class, 'example'])->name('signals.example');
         Route::get('/fundamentals', [FundamentalHubController::class, 'index'])->name('fundamentals.index');
         Route::get('/fundamentals/coverage/export.csv', [FundamentalHubController::class, 'exportCoverage'])->name('fundamentals.coverage.export');
+        Route::post('/fundamentals/sec-companyfacts/normalize', [FundamentalHubController::class, 'normalizeSecCompanyFacts'])
+            ->middleware('throttle:3,1')->name('fundamentals.sec-companyfacts.normalize');
         Route::post('/fundamentals/import', [FundamentalHubController::class, 'import'])
             ->middleware('throttle:6,1')->name('fundamentals.import');
         Route::post('/fundamentals/batches', [FundamentalHubController::class, 'importBatch'])
