@@ -81,6 +81,17 @@
             <p class="hint">Ketentuan BEI melarang web scraping/crawling serta penggunaan komersial atau penyebaran kembali data tanpa izin yang diperlukan. <a href="https://www.idx.co.id/id/syarat-penggunaan/" target="_blank" rel="noopener noreferrer">Baca syarat penggunaan BEI</a>. Metadata hak penggunaan yang diinput pengguna belum merupakan bukti lisensi komersial.</p>
             <p><a href="{{ route('ii.fundamentals.index', ['workspace' => 'sources']) }}">Buka unggah laporan dan batch →</a> · <a href="{{ route('ii.fundamentals.index', ['workspace' => 'prices']) }}">Buka harga EOD dan preview →</a></p>
         </section>
+        <section class="panel" aria-labelledby="sec-normalize-title" style="margin-top:16px">
+            <span class="badge blue">V10 · SEC US-GAAP · OFFLINE</span>
+            <h2 id="sec-normalize-title" style="margin-top:12px">Normalisasi data riil SEC EDGAR</h2>
+            <p class="caption">Untuk emiten Amerika Serikat yang melaporkan US-GAAP. Unduh berkas JSON <em>companyfacts</em> dari SEC menggunakan CIK yang tepat, lalu unggah ke sini. Tidak diperlukan API key; tidak ada koneksi otomatis atau pengisian angka buatan.</p>
+            <form method="POST" action="{{ route('ii.fundamentals.sec-companyfacts.normalize') }}" enctype="multipart/form-data">@csrf
+                <div class="field"><label for="sec_companyfacts_json">SEC companyfacts JSON (maks. 20 MB)</label><input id="sec_companyfacts_json" type="file" name="sec_companyfacts_json" accept=".json,application/json" required></div>
+                <button type="submit">Unduh CSV normalisasi untuk review</button>
+            </form>
+            <p class="hint" style="margin-top:12px">CSV memakai kolom impor II yang sudah ada. Hanya fakta tahunan 10-K/10-K/A yang jelas unit, periode dan nomor aksesinya yang dipertimbangkan. Nilai yang tidak tersedia tetap kosong, termasuk utang, EBITDA dan harga pasar. Hasil belum diimpor ke database dan belum dinyatakan terverifikasi; periksa angka, tahun fiskal, saham, restatement, nama perusahaan, serta hak penggunaan sebelum mengunggah hasil ke <a href="{{ route('ii.fundamentals.index', ['workspace' => 'sources']) }}">formulir fundamental</a>.</p>
+            <p class="hint"><a href="https://www.sec.gov/search-filings/edgar-application-programming-interfaces" target="_blank" rel="noopener noreferrer">Dokumentasi resmi SEC EDGAR</a> · <a href="https://www.sec.gov/about/webmaster-frequently-asked-questions" target="_blank" rel="noopener noreferrer">Ketentuan akses dan User-Agent SEC</a>. File tidak disimpan permanen dalam proses konversi. Konversi ini tidak menyediakan data BEI atau harga EOD.</p>
+        </section>
         <section class="panel" aria-labelledby="coverage-queue-title" style="margin-top:16px">
             <h2 id="coverage-queue-title">Antrian cakupan berdasarkan data akun</h2>
             <p class="caption">Prioritas otomatis adalah kebutuhan bukti berikutnya, bukan verifikasi status sumber oleh pihak independen. Angka yang tidak tersedia tetap N/A.</p>
