@@ -17,6 +17,7 @@ use App\Services\MarketPriceQualityService;
 use App\Services\IssuerMarketPriceBatchImportService;
 use App\Services\IssuerShareBasisReconciliationService;
 use App\Services\SignalInsightService;
+use App\Services\SecCompanyFactsNormalizationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
@@ -54,6 +55,42 @@ class FundamentalHubController extends Controller
             : collect();
 
         return response()->view('ii.fundamentals', compact('records', 'market', 'documents', 'batches', 'marketPrices', 'priceReviews', 'coverage', 'corporateActions', 'shareBasisReviews'))->header('Cache-Control', 'private, no-store');
+    }
+
+    /**
+     * Explicit user-uploaded SEC companyfacts JSON -> reviewable normalized CSV.
+     * No network, DB/storage writes, source approval or trading permission.
+     */
+    public function normalizeSecCompanyFacts(Request $request, SecCompanyFactsNormalizationService $normalizer)
+    {
+        $data = $request->validate([
+            'sec_companyfacts_json' => ['required', 'file', 'mimes:json,txt', 'max:20480'],
+        ]);
+        try {
+            $result = $normalizer->convert($data['sec_companyfacts_json']);
+        } catch (\InvalidArgumentException $exception) {
+            return redirect()->route('ii.fundamentals.index', ['workspace' => 'activation'])
+                ->withErrors(['sec_companyfacts_json' => $exception->getMessage()]);
+        }
+
+        $writer = Writer::createFromString();
+        $fields = ['fiscal_year', 'period_end', 'restated', 'revenue',
+            'net_income_attributable', 'total_assets', 'total_equity',
+            'equity_attributable', 'operating_cash_flow', 'shares_outstanding',
+            'total_debt', 'cash_and_equivalents', 'ebitda', 'market_price', 'market_price_as_of'];
+        $writer->insertOne($fields);
+        foreach ($result['periods'] as $period) {
+            $writer->insertOne(array_map(fn ($key) => $this->csvCell($period[$key]), $fields));
+        }
+
+        return response($writer->toString(), 200, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="II_SEC_COMPANYFACTS_CIK'.$result['cik'].'_REVIEW.csv"',
+            'Cache-Control' => 'private, no-store',
+            'X-Content-Type-Options' => 'nosniff',
+            'X-II-Source-Sha256' => $result['source_sha256'],
+            'X-II-Review-Required' => 'true',
+        ]);
     }
 
     public function exportCoverage(FundamentalSnapshotService $fundamentals, MarketPriceQualityService $priceQuality, IssuerCoverageService $coverageService)
