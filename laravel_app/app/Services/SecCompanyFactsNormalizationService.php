@@ -32,7 +32,20 @@ class SecCompanyFactsNormalizationService
         }
 
         $raw = file_get_contents($file->getRealPath());
-        if (! is_string($raw) || $raw === '' || strlen($raw) > 20 * 1024 * 1024) {
+        if (! is_string($raw)) {
+            throw new \InvalidArgumentException('Berkas JSON tidak dapat dibaca.');
+        }
+
+        return $this->convertRaw($raw);
+    }
+
+    /**
+     * Same exact normalized CSV source for offline uploads and sanctioned
+     * official API responses. No DB or storage mutations.
+     */
+    public function convertRaw(string $raw): array
+    {
+        if ($raw === '' || strlen($raw) > 20 * 1024 * 1024) {
             throw new \InvalidArgumentException('Berkas JSON kosong atau melebihi 20 MB.');
         }
 
