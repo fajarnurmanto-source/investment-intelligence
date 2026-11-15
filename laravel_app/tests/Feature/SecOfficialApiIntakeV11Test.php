@@ -94,6 +94,9 @@ class SecOfficialApiIntakeV11Test extends TestCase
 
     public function test_sec_access_denial_and_not_found_are_reported_without_ingesting_any_data(): void
     {
+        // Test upstream responses independently of the separately tested
+        // route limiter (which correctly blocks request #3).
+        $this->withoutMiddleware(\Illuminate\Routing\Middleware\ThrottleRequests::class);
         $user = $this->analyst();
         foreach ([403, 429, 404] as $status) {
             Http::preventStrayRequests();
@@ -107,6 +110,7 @@ class SecOfficialApiIntakeV11Test extends TestCase
 
     public function test_malformed_cik_contact_and_missing_consent_never_trigger_sec_request(): void
     {
+        $this->withoutMiddleware(\Illuminate\Routing\Middleware\ThrottleRequests::class);
         Http::preventStrayRequests();
         Http::fake();
         $user = $this->analyst();
