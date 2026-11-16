@@ -81,6 +81,21 @@
             <p class="hint">Ketentuan BEI melarang web scraping/crawling serta penggunaan komersial atau penyebaran kembali data tanpa izin yang diperlukan. <a href="https://www.idx.co.id/id/syarat-penggunaan/" target="_blank" rel="noopener noreferrer">Baca syarat penggunaan BEI</a>. Metadata hak penggunaan yang diinput pengguna belum merupakan bukti lisensi komersial.</p>
             <p><a href="{{ route('ii.fundamentals.index', ['workspace' => 'sources']) }}">Buka unggah laporan dan batch →</a> · <a href="{{ route('ii.fundamentals.index', ['workspace' => 'prices']) }}">Buka harga EOD dan preview →</a></p>
         </section>
+        <section class="panel" aria-labelledby="sec-live-title" style="margin-top:16px">
+            <span class="badge blue">V11 · SEC OFFICIAL API · ON-DEMAND</span>
+            <h2 id="sec-live-title" style="margin-top:12px">Ambil laporan SEC langsung (CIK)</h2>
+            <p class="caption">Untuk emiten US-GAAP. Masukkan nomor CIK perusahaan yang telah Anda periksa dan alamat email kontak penelitian yang benar. II mengakses <code>data.sec.gov</code> untuk satu CIK atas permintaan Anda; tidak menjelajahi situs, membuat jadwal crawling, atau memasukkan data langsung ke portofolio.</p>
+            <form method="POST" action="{{ route('ii.fundamentals.sec-companyfacts.live') }}">@csrf
+                <div class="split">
+                    <div class="field"><label for="sec_cik">Nomor SEC CIK (1–10 digit)</label><input id="sec_cik" name="sec_cik" inputmode="numeric" pattern="[0-9]{1,10}" placeholder="0000320193" minlength="1" maxlength="10" required></div>
+                    <div class="field"><label for="sec_contact_email">Email kontak penelitian untuk User-Agent SEC</label><input id="sec_contact_email" name="sec_contact_email" type="email" placeholder="contact@example.org" maxlength="180" required></div>
+                </div>
+                <div class="field"><label class="checkline"><input type="checkbox" name="sec_contact_confirmed" value="1" required>Alamat kontak tersebut benar, dapat dihubungi, dan boleh dikirim kepada SEC sebagai identitas permintaan saya.</label></div>
+                <button type="submit">Ambil dari SEC dan unduh CSV untuk review</button>
+            </form>
+            <p class="hint" style="margin-top:12px">Paling banyak 2 permintaan/menit dari form ini; respons maks. 20 MB. Jika SEC mengembalikan 403/429 atau file terlalu besar, proses gagal tertutup dan tidak menyimpan data. File CSV memuat hanya fakta tahunan yang didukung dan tetap memerlukan review; tidak otomatis menjadi rekomendasi saham.</p>
+            <p class="hint"><a href="https://www.sec.gov/search-filings/edgar-application-programming-interfaces" target="_blank" rel="noopener noreferrer">API publik SEC</a> · <a href="https://www.sec.gov/about/webmaster-frequently-asked-questions" target="_blank" rel="noopener noreferrer">Kebijakan User-Agent dan fair access SEC</a>. Tidak membutuhkan API key. Alamat kontak dikirim ke SEC dalam header User-Agent, tidak disimpan oleh fitur ini di database.</p>
+        </section>
         <section class="panel" aria-labelledby="sec-normalize-title" style="margin-top:16px">
             <span class="badge blue">V10 · SEC US-GAAP · OFFLINE</span>
             <h2 id="sec-normalize-title" style="margin-top:12px">Normalisasi data riil SEC EDGAR</h2>

@@ -18,6 +18,7 @@ use App\Services\IssuerMarketPriceBatchImportService;
 use App\Services\IssuerShareBasisReconciliationService;
 use App\Services\SignalInsightService;
 use App\Services\SecCompanyFactsNormalizationService;
+use App\Services\SecOfficialCompanyFactsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
@@ -73,6 +74,34 @@ class FundamentalHubController extends Controller
                 ->withErrors(['sec_companyfacts_json' => $exception->getMessage()]);
         }
 
+        return $this->secCsvResponse($result);
+    }
+
+    public function fetchSecCompanyFacts(Request $request, SecOfficialCompanyFactsService $sec)
+    {
+        $data = $request->validate([
+            'sec_cik' => ['required', 'string', 'regex:/^\\d{1,10}$/'],
+            'sec_contact_email' => ['required', 'email:rfc', 'max:180'],
+            'sec_contact_confirmed' => ['accepted'],
+        ]);
+
+        try {
+            $result = $sec->downloadAndNormalize($data['sec_cik'], $data['sec_contact_email']);
+        } catch (\InvalidArgumentException $exception) {
+            return redirect()->route('ii.fundamentals.index', ['workspace' => 'activation'])
+                ->withErrors(['sec_cik' => $exception->getMessage()]);
+        } catch (\Throwable $exception) {
+            Log::warning('II SEC official source unavailable', ['type' => get_class($exception)]);
+
+            return redirect()->route('ii.fundamentals.index', ['workspace' => 'activation'])
+                ->withErrors(['sec_cik' => 'Pengambilan data SEC gagal; tidak ada data yang disimpan.']);
+        }
+
+        return $this->secCsvResponse($result);
+    }
+
+    private function secCsvResponse(array $result)
+    {
         $writer = Writer::createFromString();
         $fields = ['fiscal_year', 'period_end', 'restated', 'revenue',
             'net_income_attributable', 'total_assets', 'total_equity',
@@ -90,6 +119,7 @@ class FundamentalHubController extends Controller
             'X-Content-Type-Options' => 'nosniff',
             'X-II-Source-Sha256' => $result['source_sha256'],
             'X-II-Review-Required' => 'true',
+            'X-II-Source-Origin' => $result['fetch_origin'] ?? 'USER_PROVIDED_JSON',
         ]);
     }
 
