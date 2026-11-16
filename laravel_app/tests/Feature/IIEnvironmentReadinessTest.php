@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use App\Services\RuntimeCaBundleService;
 use App\Services\SecOfficialCompanyFactsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
@@ -59,9 +60,13 @@ class IIEnvironmentReadinessTest extends TestCase
         $directory = sys_get_temp_dir().DIRECTORY_SEPARATOR.'ii_ca_test_'.bin2hex(random_bytes(6));
         mkdir($directory.DIRECTORY_SEPARATOR.'certs', 0700, true);
         $ca = $directory.DIRECTORY_SEPARATOR.'certs'.DIRECTORY_SEPARATOR.'cacert.pem';
-        file_put_contents($ca, str_repeat('X', 100200));
+        $certificate = "-----BEGIN CERTIFICATE-----\n".str_repeat('A', 1240)."\n-----END CERTIFICATE-----\n";
+        file_put_contents($ca, str_repeat($certificate, 80));
+        $metadata = $directory.DIRECTORY_SEPARATOR.'certs'.DIRECTORY_SEPARATOR.'cacert.metadata.json';
+        file_put_contents($metadata, json_encode(['sha256' => hash_file('sha256', $ca)], JSON_THROW_ON_ERROR));
 
         try {
+            $this->assertTrue(RuntimeCaBundleService::inspect($directory)['ready']);
             $actual = SecOfficialCompanyFactsService::tlsOptions($directory, 'frankenphp');
             $this->assertSame(realpath($ca), $actual['verify']);
             $this->assertFalse($actual['allow_redirects']);
@@ -69,6 +74,7 @@ class IIEnvironmentReadinessTest extends TestCase
             $this->assertTrue($cli['verify']);
             $this->assertFalse($cli['allow_redirects']);
         } finally {
+            unlink($metadata);
             unlink($ca);
             rmdir($directory.DIRECTORY_SEPARATOR.'certs');
             rmdir($directory);

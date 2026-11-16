@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\User;
+use App\Services\RuntimeCaBundleService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -44,11 +45,21 @@ class IIEnvironmentDoctor extends Command
             return self::FAILURE;
         }
         $this->line('II_DOCTOR_USERS_TABLE=PASS');
+        $this->line('II_DOCTOR_USERS='.User::query()->count());
+        $this->line('II_DOCTOR_APP_KEY='.((string) config('app.key') !== '' ? 'PRESENT' : 'MISSING'));
+        $failed = $failed || (string) config('app.key') === '';
+        $this->line('II_DOCTOR_SESSION_DRIVER='.strtoupper((string) config('session.driver')));
+        $this->line('II_DOCTOR_QUEUE_CONNECTION='.strtoupper((string) config('queue.default')));
+        $this->line('II_DOCTOR_CACHE_STORE='.strtoupper((string) config('cache.default')));
 
         $docsTable = Schema::hasTable('ii_issuer_documents');
         $globalCount = $docsTable ? DB::table('ii_issuer_documents')->count() : 0;
         $this->line('II_DOCTOR_GLOBAL_DOCUMENTS='.$globalCount);
         $this->line('II_DOCTOR_DATA_SCOPE=PER_USER');
+        $orphanDocuments = $docsTable ? DB::table('ii_issuer_documents AS d')
+            ->leftJoin('users AS u', 'd.user_id', '=', 'u.id')->whereNull('u.id')->count() : 0;
+        $this->line('II_DOCTOR_ORPHAN_DOCUMENTS='.$orphanDocuments);
+        $failed = $failed || $orphanDocuments > 0;
 
         $email = strtolower(trim((string) $this->option('email')));
         if ($email !== '') {
@@ -80,10 +91,10 @@ class IIEnvironmentDoctor extends Command
 
         $runtime = (string) (getenv('II_RUNTIME_ROOT') ?: '');
         if ($runtime !== '' && PHP_OS_FAMILY === 'Windows') {
-            $pem = rtrim($runtime, "\\/ ").DIRECTORY_SEPARATOR.'certs'.DIRECTORY_SEPARATOR.'cacert.pem';
-            $caReady = is_file($pem) && is_readable($pem) && filesize($pem) > 100000;
-            $this->line('II_DOCTOR_SEC_CA='.($caReady ? 'PASS' : 'MISSING'));
-            $failed = $failed || ! $caReady;
+            $ca = RuntimeCaBundleService::inspect($runtime);
+            $this->line('II_DOCTOR_SEC_CA='.($ca['ready'] ? 'PASS' : $ca['reason']));
+            $this->line('II_DOCTOR_SEC_CA_CERTIFICATES='.$ca['certificate_count']);
+            $failed = $failed || ! $ca['ready'];
         } else {
             $this->line('II_DOCTOR_SEC_CA=NOT_APPLICABLE');
         }

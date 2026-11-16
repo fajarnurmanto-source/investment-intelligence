@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Contracts\OfficialDataConnector;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 
@@ -11,11 +12,16 @@ use Illuminate\Support\Facades\Http;
  * Fixed, canonical SEC HTTPS host only; no caller URL, redirect, scraper,
  * pagination, database writes, automated crawl or unapproved market prices.
  */
-class SecOfficialCompanyFactsService
+class SecOfficialCompanyFactsService implements OfficialDataConnector
 {
     public const MAX_BYTES = 20 * 1024 * 1024;
 
     public function __construct(private readonly SecCompanyFactsNormalizationService $normalizer) {}
+
+    public function sourceKey(): string
+    {
+        return 'SEC_COMPANYFACTS';
+    }
 
     public function downloadAndNormalize(string $inputCik, string $contactEmail): array
     {
@@ -49,14 +55,26 @@ class SecOfficialCompanyFactsService
             if (str_contains($exception->getMessage(), 'cURL error 60')) {
                 throw new \InvalidArgumentException('SEC_TLS_CA_INVALID: Sertifikat CA FrankenPHP gagal diverifikasi. Jalankan pemeriksaan lingkungan II; jangan matikan verifikasi SSL.');
             }
-            throw new \InvalidArgumentException('SEC_TRANSPORT_FAILURE: Koneksi SEC gagal pada runtime web. Periksa II environment doctor; data tidak disimpan.');
+            if (str_contains($exception->getMessage(), 'cURL error 6')) {
+                throw new \InvalidArgumentException('SEC_DNS_FAILURE: Nama host resmi SEC tidak dapat diresolusikan; data tidak disimpan.');
+            }
+            if (str_contains($exception->getMessage(), 'cURL error 28')) {
+                throw new \InvalidArgumentException('SEC_TIMEOUT: SEC tidak menyelesaikan respons dalam batas waktu; data tidak disimpan.');
+            }
+            throw new \InvalidArgumentException('SEC_TRANSPORT_FAILURE: Koneksi SEC gagal pada runtime web; data tidak disimpan.');
         }
 
         if ($response->status() === 404) {
             throw new \InvalidArgumentException('CIK tidak ditemukan pada API Companyfacts SEC.');
         }
-        if (in_array($response->status(), [403, 429], true)) {
-            throw new \InvalidArgumentException('SEC membatasi akses. Periksa identitas kontak dan aturan fair access; jangan mengulangi permintaan secara cepat.');
+        if ($response->status() === 403) {
+            throw new \InvalidArgumentException('SEC_HTTP_403: SEC menolak identitas atau pola akses; periksa kontak dan fair-access policy.');
+        }
+        if ($response->status() === 429) {
+            throw new \InvalidArgumentException('SEC_HTTP_429: Batas akses SEC tercapai; tunggu sebelum mencoba kembali.');
+        }
+        if ($response->serverError()) {
+            throw new \InvalidArgumentException('SEC_SOURCE_UNAVAILABLE: Layanan resmi SEC sedang gagal; data tidak disimpan.');
         }
         if ($response->status() !== 200) {
             throw new \InvalidArgumentException('API SEC mengembalikan status '.$response->status().'; tidak ada data yang disimpan.');
@@ -69,7 +87,7 @@ class SecOfficialCompanyFactsService
 
         $mime = strtolower((string) ($response->header('Content-Type') ?? ''));
         if ($mime !== '' && ! str_contains($mime, 'application/json') && ! str_contains($mime, '+json')) {
-            throw new \InvalidArgumentException('Respons SEC bukan JSON.');
+            throw new \InvalidArgumentException('SEC_INVALID_RESPONSE: Content-Type respons resmi bukan JSON.');
         }
 
         $body = $response->body();
@@ -77,7 +95,11 @@ class SecOfficialCompanyFactsService
             throw new \InvalidArgumentException('Respons SEC kosong atau lebih besar dari 20 MB.');
         }
 
-        $normalized = $this->normalizer->convertRaw($body);
+        try {
+            $normalized = $this->normalizer->convertRaw($body);
+        } catch (\InvalidArgumentException) {
+            throw new \InvalidArgumentException('SEC_INVALID_RESPONSE: Payload companyfacts tidak lolos validasi struktur dan fakta.');
+        }
         if ($normalized['cik'] !== $cik) {
             throw new \InvalidArgumentException('CIK pada respons SEC tidak cocok dengan CIK yang diminta.');
         }
@@ -106,12 +128,11 @@ class SecOfficialCompanyFactsService
         if (trim($runtimeRoot) === '') {
             throw new \InvalidArgumentException('SEC_TLS_CA_MISSING: II_RUNTIME_ROOT tidak tersedia pada FrankenPHP.');
         }
-        $candidate = rtrim($runtimeRoot, "\\\\/ ").DIRECTORY_SEPARATOR.'certs'.DIRECTORY_SEPARATOR.'cacert.pem';
-        $bundle = realpath($candidate);
-        if ($bundle === false || ! is_file($bundle) || ! is_readable($bundle) || filesize($bundle) < 100000) {
-            throw new \InvalidArgumentException('SEC_TLS_CA_MISSING: CA bundle Mozilla belum terpasang pada runtime FrankenPHP.');
+        $inspection = RuntimeCaBundleService::inspect($runtimeRoot);
+        if (! $inspection['ready']) {
+            throw new \InvalidArgumentException('SEC_TLS_CA_MISSING: CA bundle Mozilla runtime belum valid ('.$inspection['reason'].').');
         }
-        $options['verify'] = $bundle;
+        $options['verify'] = $inspection['path'];
 
         return $options;
     }

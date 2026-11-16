@@ -18,12 +18,15 @@ Run from PowerShell in the repository:
 
 ```text
 .\tools\production\Deploy-IIProduction.ps1
+.\tools\production\Install-IICaBundle.ps1
 .\start-ii.ps1
 .\stop-ii.ps1
 .\restart-ii.ps1
 ```
 
 The production launcher uses FrankenPHP/Caddy bound to localhost and supervises the web server, database queue worker, and scheduler through a PID manifest. It does not use `artisan serve`.
+
+Production deployment creates a current recovery point, preserves APP_KEY/SQLite/storage, and installs the official curl/Mozilla CA bundle with upstream SHA-256 verification. Local account operations are provided by `php artisan ii:user`; the read-only readiness gate is `php artisan ii:doctor --email=<account> --strict`.
 
 Use the tracked synchronization helper at `tools\sync-II.ps1`:
 

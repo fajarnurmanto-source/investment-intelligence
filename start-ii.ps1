@@ -17,8 +17,8 @@ if (-not (Test-Path -LiteralPath (Join-Path $context.VendorRoot 'autoload.php'))
 
 # Persistent runtime trust check. Offline features remain usable if SEC
 # trust is missing, but we never silently report SEC as healthy.
-$SecCaBundle = Join-Path $context.RuntimeRoot 'certs\cacert.pem'
-if ((Test-Path -LiteralPath $SecCaBundle) -and (Get-Item -LiteralPath $SecCaBundle).Length -gt 100000) {
+$SecCaBundle = $context.CaBundlePath
+if (Test-IICaBundle -Context $context) {
     Write-Host 'II_SEC_CA_BUNDLE=READY'
 } else {
     Write-Warning 'II_SEC_CA_BUNDLE=MISSING_OR_INVALID; SEC official API disabled until runtime CA repair. Run: php artisan ii:doctor'
