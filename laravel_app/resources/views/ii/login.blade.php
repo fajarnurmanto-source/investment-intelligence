@@ -18,10 +18,10 @@
 </head>
 <body>
 <main>
-    <div class="muted">Investment Intelligence · VS6</div>
+    <div class="muted">Investment Intelligence · {{ config('ii.release', 'V11') }}</div>
     <h1>Masuk ke ruang riset</h1>
-    <p class="muted">Akun lokal dengan peran ANALYST, REVIEWER, atau ADMIN.</p>
-    <div class="notice"><strong>Demo sintetis saja.</strong> NOT_ADMITTED · HOLD · Authority NONE.
+    <p class="muted">Masuk dengan akun yang terdaftar pada database produksi. Setiap akun hanya melihat data riset miliknya.</p>
+    <div class="notice"><strong>Data riset nyata dan demo harus dibedakan.</strong> NOT_ADMITTED · HOLD · Authority NONE.
         Akses akun tidak memberi izin transaksi.</div>
     <form method="POST" action="{{ route('ii.login.submit') }}">
         @csrf

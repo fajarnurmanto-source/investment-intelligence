@@ -1,6 +1,16 @@
 <?php
 
 return [
+    // Single UI release label, no scattered stale VS6-style strings.
+    'release' => env('II_PRODUCT_RELEASE', 'V11'),
+    'official_connectors' => [
+        'sec_companyfacts' => [
+            'host' => 'data.sec.gov',
+            'rate_limit_per_minute' => 2,
+            'usage' => 'user-initiated internal research review',
+            'redistribution' => false,
+        ],
+    ],
     'fred' => [
         'source_id' => 'FRED',
         'name' => 'Federal Reserve Economic Data',

@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\SignalInsightService;
 use App\Services\FundamentalSnapshotService;
 use App\Services\MacroAnalyticsService;
+use App\Services\SignalInsightService;
 use Illuminate\Support\Facades\DB;
 
 class ProductDashboardController extends Controller
@@ -12,7 +12,7 @@ class ProductDashboardController extends Controller
     public function index(SignalInsightService $signals, FundamentalSnapshotService $fundamentals, MacroAnalyticsService $macro)
     {
         $observations = $signals->list((int) auth()->id());
-        $cases = DB::table('ii_vs5_cases')->count();
+        $cases = DB::table('ii_vs5_cases')->where('ii_created_by', auth()->id())->count();
         $issuerCount = count($fundamentals->latestByTicker((int) auth()->id()));
         $macroDashboard = $macro->dashboard();
 

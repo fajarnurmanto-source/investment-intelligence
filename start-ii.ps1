@@ -15,6 +15,15 @@ if (-not (Test-Path -LiteralPath $context.EnvironmentPath)) {
 if (-not (Test-Path -LiteralPath $context.FrankenPhpPath)) { throw "FrankenPHP is missing: $($context.FrankenPhpPath)" }
 if (-not (Test-Path -LiteralPath (Join-Path $context.VendorRoot 'autoload.php'))) { throw "Composer dependencies are missing: $($context.VendorRoot)" }
 
+# Persistent runtime trust check. Offline features remain usable if SEC
+# trust is missing, but we never silently report SEC as healthy.
+$SecCaBundle = $context.CaBundlePath
+if (Test-IICaBundle -Context $context) {
+    Write-Host 'II_SEC_CA_BUNDLE=READY'
+} else {
+    Write-Warning 'II_SEC_CA_BUNDLE=MISSING_OR_INVALID; SEC official API disabled until runtime CA repair. Run: php artisan ii:doctor'
+}
+
 $existing = Read-IIProcessManifest -Context $context
 if ($existing) {
     $alive = @($existing.processes | Where-Object { $null -ne (Get-IIManagedProcess -Entry $_) })

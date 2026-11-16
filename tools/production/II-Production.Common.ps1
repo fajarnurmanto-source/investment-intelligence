@@ -22,9 +22,31 @@ function Get-IIProductionContext {
         ProcessManifest = Join-Path $server 'processes.json'
         LogRoot = Join-Path $runtime 'storage\logs\services'
         CaddyfilePath = Join-Path $repository 'deploy\Caddyfile'
+        CaBundlePath = Join-Path $runtime 'certs\cacert.pem'
+        CaMetadataPath = Join-Path $runtime 'certs\cacert.metadata.json'
         AppUrl = "http://127.0.0.1:$Port"
         BindAddress = "127.0.0.1:$Port"
     }
+}
+
+function Test-IICaBundle {
+    param([Parameter(Mandatory)]$Context)
+    if (-not (Test-Path -LiteralPath $Context.CaBundlePath) -or -not (Test-Path -LiteralPath $Context.CaMetadataPath)) {
+        return $false
+    }
+    try {
+        $metadata = Get-Content -LiteralPath $Context.CaMetadataPath -Raw | ConvertFrom-Json
+        $actual = (Get-FileHash -LiteralPath $Context.CaBundlePath -Algorithm SHA256).Hash.ToLowerInvariant()
+        $blocks = ([regex]::Matches((Get-Content -LiteralPath $Context.CaBundlePath -Raw), '-----BEGIN CERTIFICATE-----')).Count
+        return (Get-Item -LiteralPath $Context.CaBundlePath).Length -gt 100000 -and $blocks -ge 70 -and $actual -eq ([string]$metadata.sha256).ToLowerInvariant()
+    } catch { return $false }
+}
+
+function Get-IIDotEnvValue {
+    param([Parameter(Mandatory)][string]$Path, [Parameter(Mandatory)][string]$Name)
+    $line = Get-Content -LiteralPath $Path | Where-Object { $_ -match "^$([regex]::Escape($Name))=" } | Select-Object -First 1
+    if ($null -eq $line) { return $null }
+    return ($line -split '=', 2)[1].Trim().Trim('"')
 }
 
 function Initialize-IIProductionDirectories {
