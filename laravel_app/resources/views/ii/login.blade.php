@@ -18,7 +18,7 @@
 </head>
 <body>
 <main>
-    <div class="muted">Investment Intelligence · V11</div>
+    <div class="muted">Investment Intelligence · {{ config('ii.release', 'V11') }}</div>
     <h1>Masuk ke ruang riset</h1>
     <p class="muted">Masuk dengan akun yang terdaftar pada database produksi. Setiap akun hanya melihat data riset miliknya.</p>
     <div class="notice"><strong>Data riset nyata dan demo harus dibedakan.</strong> NOT_ADMITTED · HOLD · Authority NONE.
