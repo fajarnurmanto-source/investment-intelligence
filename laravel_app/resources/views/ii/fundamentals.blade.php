@@ -37,7 +37,7 @@
         <a href="{{ route('ii.fundamentals.index', ['workspace' => 'sources']) }}" @if($workspace === 'sources') aria-current="page" @endif>Sumber &amp; Batch ingestion</a>
         <a href="{{ route('ii.fundamentals.index', ['workspace' => 'prices']) }}" @if($workspace === 'prices') aria-current="page" @endif>Harga pasar</a>
         <a href="{{ route('ii.fundamentals.index', ['workspace' => 'reconciliation']) }}" @if($workspace === 'reconciliation') aria-current="page" @endif>Rekonsiliasi</a>
-        <a href="{{ route('ii.fundamentals.index', ['workspace' => 'activation']) }}" @if($workspace === 'activation') aria-current="page" @endif>Aktivasi Data V9</a>
+        <a href="{{ route('ii.fundamentals.index', ['workspace' => 'activation']) }}" @if($workspace === 'activation') aria-current="page" @endif>Aktivasi Data</a>
     </nav>
     <div class="workspace-summary" aria-label="Ringkasan data pengguna">
         <div class="stat"><span>Emiten</span><strong>{{ count($records) }}</strong></div>
@@ -50,7 +50,8 @@
         <section class="panel" aria-labelledby="v9-title">
             <span class="badge blue">V9 · EVIDENCE-LED INTAKE</span>
             <h2 id="v9-title" style="margin-top:12px">Aktivasi sumber dan cakupan emiten</h2>
-            <p class="caption">Cakupan dihitung hanya dari berkas dan harga yang sudah tersedia untuk akun ini, bukan dari seluruh emiten BEI. Status asal data dan rekonsiliasi adalah keterangan yang dilaporkan pengguna, bukan verifikasi independen atau izin redistribusi.</p>
+            <p class="hint">Akun aktif: <strong>{{ auth()->user()->email }}</strong>. Untuk menambahkan emiten, gunakan proses SEC V11 di bawah, review CSV, lalu impor melalui tab <a href="{{ route('ii.fundamentals.index', ['workspace' => 'sources']) }}">Sumber &amp; Batch ingestion</a>. Data hasil unduhan tidak otomatis tersimpan sebagai emiten.</p>
+            <p class="caption">Semua angka di bawah ini milik akun yang sedang login; tidak menghitung data milik akun lain. Jika akun baru, hasilnya bisa nol meskipun database sistem sudah menyimpan data dari akun berbeda. Data antarakun tidak dipindahkan otomatis karena isolasi kepemilikan. Status sumber adalah klaim pengguna, bukan verifikasi independen.</p>
             <div class="stat-grid">
                 <div class="stat"><span>Emiten dalam register akun</span><strong>{{ $coverage['issuer_count'] }}</strong></div>
                 <div class="stat"><span>Emiten dengan periode angka</span><strong>{{ $coverage['has_fundamentals'] }}</strong></div>
