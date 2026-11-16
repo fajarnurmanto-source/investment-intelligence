@@ -1,6 +1,8 @@
 <?php
 
 return [
+    // Single UI release label, no scattered stale VS6-style strings.
+    'release' => env('II_PRODUCT_RELEASE', 'V11'),
     'fred' => [
         'source_id' => 'FRED',
         'name' => 'Federal Reserve Economic Data',
