@@ -51,7 +51,7 @@
             <span class="badge blue">V9 · EVIDENCE-LED INTAKE</span>
             <h2 id="v9-title" style="margin-top:12px">Aktivasi sumber dan cakupan emiten</h2>
             <p class="hint">Akun aktif: <strong>{{ auth()->user()->email }}</strong>. Untuk menambahkan emiten, gunakan proses SEC V11 di bawah, review CSV, lalu impor melalui tab <a href="{{ route('ii.fundamentals.index', ['workspace' => 'sources']) }}">Sumber &amp; Batch ingestion</a>. Data hasil unduhan tidak otomatis tersimpan sebagai emiten.</p>
-            <p class="caption">Semua angka di bawah ini milik akun yang sedang login; tidak menghitung data milik akun lain. Jika akun baru, hasilnya bisa nol meskipun database sistem sudah menyimpan data dari akun berbeda. Data antarakun tidak dipindahkan otomatis karena isolasi kepemilikan. Status sumber adalah klaim pengguna, bukan verifikasi independen.</p>
+            <p class="caption">Semua angka di bawah ini milik akun yang sedang login; tidak menghitung data milik akun lain. Jika akun baru, hasilnya bisa nol meskipun database sistem sudah menyimpan data dari akun berbeda. Data antarakun tidak dipindahkan otomatis karena isolasi kepemilikan. Status sumber adalah keterangan yang dilaporkan pengguna, bukan verifikasi independen.</p>
             <div class="stat-grid">
                 <div class="stat"><span>Emiten dalam register akun</span><strong>{{ $coverage['issuer_count'] }}</strong></div>
                 <div class="stat"><span>Emiten dengan periode angka</span><strong>{{ $coverage['has_fundamentals'] }}</strong></div>
