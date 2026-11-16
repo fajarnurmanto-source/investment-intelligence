@@ -68,8 +68,10 @@ class IIEnvironmentDoctor extends Command
                 $this->line('II_DOCTOR_ACCOUNT_DOCUMENTS='.($docsTable
                     ? DB::table('ii_issuer_documents')->where('user_id', $user->id)->count()
                     : 0));
-                $this->line('II_DOCTOR_ACCOUNT_PERIODS='.(Schema::hasTable('ii_issuer_periods')
-                    ? DB::table('ii_issuer_periods')->where('user_id', $user->id)->count()
+                $this->line('II_DOCTOR_ACCOUNT_PERIODS='.(Schema::hasTable('ii_issuer_periods') && $docsTable
+                    ? DB::table('ii_issuer_periods AS p')
+                        ->join('ii_issuer_documents AS d', 'p.document_id', '=', 'd.id')
+                        ->where('d.user_id', $user->id)->count()
                     : 0));
                 $failed = $failed || ! $validRole;
             }
