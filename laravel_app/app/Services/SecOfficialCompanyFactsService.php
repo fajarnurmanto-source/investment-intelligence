@@ -31,6 +31,9 @@ class SecOfficialCompanyFactsService
 
         $cik = str_pad($cikInput, 10, '0', STR_PAD_LEFT);
         $url = 'https://data.sec.gov/api/xbrl/companyfacts/CIK'.$cik.'.json';
+        // Pin trust explicitly for the Windows FrankenPHP web SAPI; do not
+        // depend on cURL's different CLI/web CA autodiscovery behavior.
+        $tlsOptions = self::tlsOptions();
         try {
             $response = Http::withHeaders([
                 // SEC's published fair-access pattern identifies the
@@ -38,10 +41,15 @@ class SecOfficialCompanyFactsService
                 'User-Agent' => 'Investment Intelligence Research '.$contact,
                 'Accept' => 'application/json',
             ])->connectTimeout(5)->timeout(15)
-                ->withOptions(['allow_redirects' => false, 'verify' => true])
+                ->withOptions($tlsOptions)
                 ->get($url);
-        } catch (ConnectionException) {
-            throw new \InvalidArgumentException('API SEC tidak dapat dihubungi. Coba lagi kemudian atau gunakan unggah JSON manual.');
+        } catch (ConnectionException $exception) {
+            // Do not log user contact or raw exception text. Expose a useful,
+            // non-sensitive root-cause category rather than vague outages.
+            if (str_contains($exception->getMessage(), 'cURL error 60')) {
+                throw new \InvalidArgumentException('SEC_TLS_CA_INVALID: Sertifikat CA FrankenPHP gagal diverifikasi. Jalankan pemeriksaan lingkungan II; jangan matikan verifikasi SSL.');
+            }
+            throw new \InvalidArgumentException('SEC_TRANSPORT_FAILURE: Koneksi SEC gagal pada runtime web. Periksa II environment doctor; data tidak disimpan.');
         }
 
         if ($response->status() === 404) {
@@ -79,5 +87,32 @@ class SecOfficialCompanyFactsService
             'fetch_url' => $url,
             'fetched_at' => now()->toIso8601String(),
         ];
+    }
+
+    /**
+     * The existing Laravel HTTP client already uses Guzzle. A runtime CA
+     * bundle is the only missing web-SAPI dependency, not a new HTTP engine.
+     * Explicit VERIFY path still verifies hostnames and certificate chains.
+     */
+    public static function tlsOptions(?string $runtimeRoot = null, ?string $sapi = null): array
+    {
+        $sapi ??= PHP_SAPI;
+        $runtimeRoot ??= (string) (getenv('II_RUNTIME_ROOT') ?: '');
+        $options = ['allow_redirects' => false, 'verify' => true];
+
+        if ($sapi !== 'frankenphp') {
+            return $options;
+        }
+        if (trim($runtimeRoot) === '') {
+            throw new \InvalidArgumentException('SEC_TLS_CA_MISSING: II_RUNTIME_ROOT tidak tersedia pada FrankenPHP.');
+        }
+        $candidate = rtrim($runtimeRoot, "\\\\/ ").DIRECTORY_SEPARATOR.'certs'.DIRECTORY_SEPARATOR.'cacert.pem';
+        $bundle = realpath($candidate);
+        if ($bundle === false || ! is_file($bundle) || ! is_readable($bundle) || filesize($bundle) < 100000) {
+            throw new \InvalidArgumentException('SEC_TLS_CA_MISSING: CA bundle Mozilla belum terpasang pada runtime FrankenPHP.');
+        }
+        $options['verify'] = $bundle;
+
+        return $options;
     }
 }
