@@ -25,6 +25,20 @@ jobs:
       - run: touch database/database.sqlite
       - run: php artisan key:generate
       - run: php artisan migrate --force
+      - name: Parse PowerShell Windows test runner
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            '../tools/testing/Invoke-II-AutomatedTests.ps1',
+            [ref]$tokens,
+            [ref]$errors
+          ) | Out-Null
+          if ($errors.Count -gt 0) {
+            $errors | ForEach-Object { Write-Error $_.Message }
+            exit 1
+          }
       - name: Verify Laravel Tinker one-shot execution
         run: php artisan tinker --execute="echo 'II_TINKER_CI=PASS';"
       - run: php artisan test
