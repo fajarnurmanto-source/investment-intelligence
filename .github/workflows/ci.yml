@@ -45,3 +45,19 @@ jobs:
       - run: php artisan route:list
       - name: Assert active Laravel app has no Python runtime bridge
         run: '! grep -R -E "127\.0\.0\.1:8811|FastAPI|subprocess.*python|python(3)? " app config routes resources --exclude-dir=vendor'
+
+  windows-isolated-tinker-and-phpunit:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, sqlite3, pdo_sqlite, intl, openssl, zip
+          tools: composer:v2
+          coverage: none
+      - name: Run real Windows isolated Tinker + PHPUnit runner
+        shell: pwsh
+        run: |
+          pwsh -NoProfile -ExecutionPolicy Bypass -File ".\\tools\\testing\\Invoke-II-AutomatedTests.ps1"
