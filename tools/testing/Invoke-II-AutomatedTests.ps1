@@ -127,7 +127,20 @@ try {
     if ($env:DB_DATABASE -ne ':memory:' -or $env:II_RUNTIME_ROOT -ne $testRoot) {
         throw 'II_TEST_DATABASE_GUARD=FAIL'
     }
-    & php artisan test --stop-on-failure
+    # PHPUnit's checked-in xml assumes vendor/ lives inside laravel_app.
+    # Build a private XML copy for the isolated vendor and absolute test roots;
+    # do not create source symlinks or modify the checked-in phpunit.xml.
+    [xml]$xml = Get-Content -LiteralPath (Join-Path $appRoot 'phpunit.xml') -Raw
+    $xml.DocumentElement.SetAttribute('bootstrap', (Join-Path $vendor 'autoload.php').Replace('\', '/'))
+    $xml.DocumentElement.SetAttribute('noNamespaceSchemaLocation', 'http://www.w3.org/2001/XMLSchema-instance',
+        (Join-Path $vendor 'phpunit\phpunit\phpunit.xsd').Replace('\', '/'))
+    foreach ($node in $xml.SelectNodes('/phpunit/testsuites/testsuite/directory | /phpunit/source/include/directory')) {
+        $node.InnerText = (Join-Path $appRoot $node.InnerText).Replace('\', '/')
+    }
+    $testConfig = Join-Path $testRoot 'phpunit.xml'
+    $xml.Save($testConfig)
+    Write-Host 'II_TEST_PHPUNIT_CONFIG=ISOLATED'
+    & php artisan test "--configuration=$testConfig" --stop-on-failure
     if ($LASTEXITCODE -ne 0) { throw 'II_AUTOMATED_REGRESSION=FAIL' }
     Write-Host 'II_AUTOMATED_REGRESSION=PASS'
     Write-Host 'II_TEST_PRODUCTION_DATABASE_UNTOUCHED_BY_RUNNER=YES'
