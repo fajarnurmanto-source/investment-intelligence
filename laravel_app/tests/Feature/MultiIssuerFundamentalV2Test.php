@@ -105,6 +105,9 @@ class MultiIssuerFundamentalV2Test extends TestCase
 
     public function test_failed_batch_item_can_be_retried_only_by_owner_and_keeps_item_level_error(): void
     {
+        // The invalid CSV is intentional. Suppress its expected exception
+        // trace for this test only; preserve regular logging in production.
+        config()->set('logging.default', 'null');
         Storage::fake('local');
         $owner = $this->analyst();
         $other = $this->analyst();
@@ -119,7 +122,7 @@ class MultiIssuerFundamentalV2Test extends TestCase
         $this->assertSame('FAILED', $batch->status);
         $item = IssuerImportItem::firstOrFail();
         $this->assertSame(1, $item->attempts);
-        $this->assertNotNull($item->error_message);
+        $this->assertSame('CSV memuat kolom yang tidak dikenal.', $item->error_message);
 
         $this->actingAs($other)->post('/ii/fundamentals/batches/'.$batch->id.'/retry')->assertNotFound();
         $this->actingAs($owner)->post('/ii/fundamentals/batches/'.$batch->id.'/retry')->assertRedirect('/ii/fundamentals');
