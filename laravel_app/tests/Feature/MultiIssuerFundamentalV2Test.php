@@ -127,6 +127,7 @@ class MultiIssuerFundamentalV2Test extends TestCase
         $this->actingAs($other)->post('/ii/fundamentals/batches/'.$batch->id.'/retry')->assertNotFound();
         $this->actingAs($owner)->post('/ii/fundamentals/batches/'.$batch->id.'/retry')->assertRedirect('/ii/fundamentals');
         $this->assertSame(2, $item->fresh()->attempts);
+        $this->assertSame('CSV memuat kolom yang tidak dikenal.', $item->fresh()->error_message);
         $this->assertSame('FAILED', $batch->fresh()->status);
         $this->assertDatabaseCount('ii_issuer_documents', 0);
     }
