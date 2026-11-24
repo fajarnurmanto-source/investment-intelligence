@@ -157,6 +157,41 @@ final class LocalLineageRegistryTest extends TestCase
             ->get('/ii/fundamentals/coverage/export.csv')->assertOk();
     }
 
+    public function test_market_price_write_adds_metadata_only_source_and_rejects_restricted_provider(): void
+    {
+        $owner = User::factory()->create();
+        $owner->forceFill(['ii_research_role' => 'admin'])->save();
+        $payload = [
+            'ticker' => 'AAPL', 'observed_on' => '2025-01-02',
+            'currency' => 'USD', 'price' => '123.45',
+            'unit' => 'per_share', 'adjustment_status' => 'unadjusted_close',
+            'source_name' => 'Independent EOD', 'publisher' => 'Fixture',
+            'source_url' => 'https://example.test/eod/AAPL',
+            'license_status' => 'user_provided', 'usage_rights' => 'internal_research',
+            'source_authenticity_status' => 'user_attested',
+            'provenance_confidence' => 'low', 'rights_confirmed' => '1',
+        ];
+        $this->actingAs($owner)->post('/ii/fundamentals/market-prices', $payload)
+            ->assertRedirect()->assertSessionHasNoErrors();
+        $observation = \App\Models\IssuerMarketPrice::where('user_id', $owner->id)->firstOrFail();
+        $node = app(LocalLineageRegistry::class)->find(
+            $owner->id, 'issuer_market_price', $observation->id, 'ACQUIRED_SOURCE'
+        );
+        $this->assertNotNull($node);
+        $this->assertSame($observation->sha256, $node['evidence_sha256']);
+        $this->assertFalse($node['can_export']);
+        $stored = DB::table('ii_lineage_nodes')->where('id', $node['id'])->first();
+        $this->assertStringNotContainsString('123.45', $stored->source_metadata);
+        $this->assertStringNotContainsString('/eod/AAPL', $stored->source_metadata);
+
+        $payload['source_name'] = 'MarketData.app BYOK';
+        $payload['observed_on'] = '2025-01-03';
+        $this->post('/ii/fundamentals/market-prices', $payload)
+            ->assertRedirect()->assertSessionHasErrors();
+        $this->assertDatabaseCount('ii_issuer_market_prices', 1);
+        $this->assertDatabaseCount('ii_lineage_nodes', 1);
+    }
+
     public function test_actual_issuer_import_registers_source_and_normalization_atomically(): void
     {
         Storage::fake('local');
