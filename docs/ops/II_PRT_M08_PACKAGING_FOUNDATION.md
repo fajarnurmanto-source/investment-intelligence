@@ -19,3 +19,17 @@ Existing launcher and deployment scripts use PHP from PATH, FrankenPHP in habita
 5. Never merge or deploy by inference from synthetic test results.
 
 Canonical product direction: [II PRT Master Roadmap](II_PRT_MASTER_ROADMAP_AND_MANDATORY_DECISION_20261124.md).
+
+## M08-B incremental staged payload builder (24 November 2026)
+- `tools/installer/Build-IIPersonalStagingPayload.ps1` stages only an explicit allowlist of Laravel app directories, Composer vendor autoload tree, built frontend assets, Caddyfile, PHP CLI/FrankenPHP binaries/extensions and CA root.
+- An output folder must be new and separate from the source/runtime. The builder rejects symbolic links/reparse points, credentials and database files inside selected input locations. It does not bundle existing `.env`, personal SQLite, uploads, writable logs or market evidence.
+- The staged package has `payload-manifest.json`, `payload-manifest.sha256`, per-file size and SHA-256 plus explicit `STAGED_UNSIGNED_NOT_INSTALLABLE` state. It is **not signed and not a Windows installer**.
+- `tools/installer/tests/Test-IIPersonalStagingPayload.ps1` provides a synthetic complete payload with private fixtures, recomputes hashes, ensures sensitive files never ship, rejects overwriting the output, and tests an intentionally forbidden `.env` placed in selected input.
+- Windows GitHub Actions invokes both preflight and staged payload tests. CI must PASS at the exact commit before considering staging code accepted. A full owner-runtime stage requires separate review of package licensing/redistribution and runtime portability.
+- No first-run device initialization, migration, independent secrets generation, owner enrollment, service install, signed installer or clean VM acceptance is claimed here.
+
+## Suggested read-only manual preflight (not deployment)
+```powershell
+& .\tools\installer\Test-IIPersonalPackageInputs.ps1 -RepositoryRoot "D:\Research\INVESTMENT RESEARCH\II\repository" -RuntimeRoot "D:\Research\INVESTMENT RESEARCH\II\runtime" -Strict
+```
+The script reports only presence/absence of input prerequisites. It does not read secrets, deploy, build or start services.
