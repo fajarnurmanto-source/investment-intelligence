@@ -18,24 +18,31 @@ final class DerivedAnalyticsLineageService
         ?array $documentParent,
         ?array $priceParent,
         bool $externalPriceExpected,
-        bool $priceConflict = false
+        bool $priceConflict = false,
+        ?array $shareBasisParent = null
     ): array {
         $record['lineage_valuation_node_id'] = null;
         $record['lineage_valuation_status'] = 'PENDING_INPUT_REVIEW';
         if (app(ByokSnapshotLineage::class)->isRestricted($record)
             || ($documentParent['rights_basis'] ?? null) === 'RESTRICTED_BYOK'
-            || ($priceParent['rights_basis'] ?? null) === 'RESTRICTED_BYOK') {
+            || ($priceParent['rights_basis'] ?? null) === 'RESTRICTED_BYOK'
+            || ($shareBasisParent['rights_basis'] ?? null) === 'RESTRICTED_BYOK') {
             $record['lineage_valuation_status'] = 'DENIED_RESTRICTED_ANCESTRY';
 
             return $record;
         }
         if ($documentParent === null || ($externalPriceExpected && $priceParent === null)
+            || ($record['share_basis_status'] ?? null) === 'ALIGNED_USER_ATTESTED'
+                && $shareBasisParent === null
             || $priceConflict) {
             return $record;
         }
         $parentIds = [$documentParent['id']];
         if ($priceParent !== null) {
             $parentIds[] = $priceParent['id'];
+        }
+        if ($shareBasisParent !== null && ($record['share_basis_status'] ?? '') === 'ALIGNED_USER_ATTESTED') {
+            $parentIds[] = $shareBasisParent['id'];
         }
         $fields = [
             'ticker', 'latest_year', 'report_period', 'valuation_status',
