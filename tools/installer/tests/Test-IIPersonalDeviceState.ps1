@@ -65,6 +65,25 @@ try {
         if ($meta.database_migrated -ne $false -or $meta.owner_enrolled -ne $false) { throw 'DEVICE_META_FALSE_ACCEPTANCE' }
     }
 
+    # Migration must fail closed against incomplete synthetic staging; no
+    # mutation of either device's private key or database is permitted.
+    $migrate = Join-Path (Split-Path -Parent $PSScriptRoot) 'Invoke-IIPersonalDeviceMigration.ps1'
+    $beforeMeta = Get-Content -LiteralPath (Join-Path $first 'device.json') -Raw
+    $beforeEnv = Get-Content -LiteralPath (Join-Path $first '.env') -Raw
+    $migrationDenied = $false
+    try { & $migrate -PackageRoot $package -DeviceDataRoot $first | Out-Null } catch { $migrationDenied=$true }
+    if (-not $migrationDenied) { throw 'MIGRATION_NO_OPT_IN_NOT_BLOCKED' }
+    $missingPhpDenied = $false
+    try {
+        & $migrate -PackageRoot $package -DeviceDataRoot $first -AllowUnsignedStagingForTest -RunIsolatedMigration | Out-Null
+    } catch { $missingPhpDenied=$true }
+    if (-not $missingPhpDenied) { throw 'MIGRATION_MISSING_RUNTIME_NOT_BLOCKED' }
+    if ((Get-Content -LiteralPath (Join-Path $first 'device.json') -Raw) -ne $beforeMeta -or
+        (Get-Content -LiteralPath (Join-Path $first '.env') -Raw) -ne $beforeEnv -or
+        (Get-Item -LiteralPath (Join-Path $first 'database\ii.sqlite')).Length -ne 0) {
+        throw 'MIGRATION_DENIED_BUT_DEVICE_MUTATED'
+    }
+
     $deniedRepeat = $false
     try { & $initializer -PackageRoot $package -DeviceDataRoot $first -AllowUnsignedStagingForTest | Out-Null } catch { $deniedRepeat=$true }
     if (-not $deniedRepeat) { throw 'DEVICE_REINITIALIZATION_NOT_BLOCKED' }
