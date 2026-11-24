@@ -37,7 +37,31 @@ class FredPipelineTest extends TestCase
         $user = User::factory()->create();
         $user->forceFill(['ii_research_role' => 'analyst'])->save();
         $this->actingAs($user)->get('/ii/macro')->assertOk()->assertSee('Inflasi YoY')->assertSee('CPIAUCSL');
-        $this->actingAs($user)->get('/ii/macro/report.csv')->assertOk()->assertHeader('Content-Type', 'text/csv; charset=UTF-8');
+        $this->actingAs($user)->get('/ii/macro/report/rights')->assertOk()
+            ->assertJsonPath('status', 'DENIED')
+            ->assertJsonPath('issues.0', 'CPIAUCSL:RIGHTS_REVIEW_REQUIRED');
+        $this->get('/ii/macro/report.csv')->assertForbidden();
+        $this->assertDatabaseCount('ii_lineage_nodes', 0);
+
+        // This is a synthetic CI-only policy receipt. Deployment MUST obtain
+        // a genuine, scoped rights review before setting this configuration.
+        config()->set('ii.fred.report_rights.CPIAUCSL', [
+            'status' => 'REVIEWED_ALLOWED',
+            'scope' => 'LOCAL_PERSONAL_NONCOMMERCIAL_CSV',
+            'receipt_sha256' => hash('sha256', 'synthetic-ci-only-rights-review'),
+            'source_owner' => 'U.S. Bureau of Labor Statistics',
+        ]);
+        $response = $this->get('/ii/macro/report.csv')->assertOk()
+            ->assertHeader('Content-Type', 'text/csv; charset=UTF-8')
+            ->assertHeader('X-II-Rights-Scope', 'LOCAL_PERSONAL_NONCOMMERCIAL_CSV');
+        $nodeId = $response->headers->get('X-II-Lineage-Node');
+        $this->assertNotEmpty($nodeId);
+        $this->assertSame(hash('sha256', $response->getContent()),
+            $response->headers->get('X-II-Content-SHA256'));
+        $registry = app(\App\Services\LocalLineageRegistry::class);
+        $this->assertTrue($registry->verifyTrace($user->id, $nodeId));
+        $this->assertCount(2, $registry->trace($user->id, $nodeId)['nodes']);
+        $this->assertFalse($registry->allows($user->id, $nodeId, 'cloud'));
     }
 
     public function test_failed_source_is_recorded_without_observations(): void
