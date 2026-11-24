@@ -82,6 +82,28 @@
             <p class="hint">Ketentuan BEI melarang web scraping/crawling serta penggunaan komersial atau penyebaran kembali data tanpa izin yang diperlukan. <a href="https://www.idx.co.id/id/syarat-penggunaan/" target="_blank" rel="noopener noreferrer">Baca syarat penggunaan BEI</a>. Metadata hak penggunaan yang diinput pengguna belum merupakan bukti lisensi komersial.</p>
             <p><a href="{{ route('ii.fundamentals.index', ['workspace' => 'sources']) }}">Buka unggah laporan dan batch →</a> · <a href="{{ route('ii.fundamentals.index', ['workspace' => 'prices']) }}">Buka harga EOD dan preview →</a></p>
         </section>
+        <section class="panel" aria-labelledby="idx-v12-title" style="margin-top:16px">
+            <span class="badge blue">V12 · IDX/BEI FILING · EVIDENCE ONLY</span>
+            <h2 id="idx-v12-title" style="margin-top:12px">Simpan bukti laporan emiten BEI</h2>
+            <p class="caption">Unggah PDF laporan keuangan yang Anda peroleh secara sah dari <a href="https://www.idx.co.id/id/perusahaan-tercatat/laporan-keuangan-dan-tahunan/" target="_blank" rel="noopener noreferrer">arsip resmi BEI</a>. Sertakan tautan langsung PDF pada domain BEI dan identitas emiten. II memeriksa struktur dasar file, menyimpan SHA-256 dan bukti secara immutable dalam akun Anda, serta menandai sumber sebagai <strong>USER_ATTESTED</strong>, bukan terverifikasi independen. Tidak ada scraping atau pengambilan otomatis.</p>
+            <form method="POST" action="{{ route('ii.fundamentals.idx-filings.import') }}" enctype="multipart/form-data">@csrf
+                <div class="split">
+                    <div class="field"><label for="idx_ticker">Kode emiten (contoh BBCA)</label><input id="idx_ticker" name="idx_ticker" maxlength="9" pattern="[A-Za-z0-9]{4,6}(\.JK)?" placeholder="BBCA" required></div>
+                    <div class="field"><label for="idx_issuer_name">Nama emiten sesuai laporan</label><input id="idx_issuer_name" name="idx_issuer_name" maxlength="200" required></div>
+                </div>
+                <div class="split">
+                    <div class="field"><label for="idx_report_period">Periode laporan</label><input id="idx_report_period" name="idx_report_period" maxlength="7" placeholder="FY 2025 / Q1 2026 / H1 2026" required></div>
+                    <div class="field"><label for="idx_report_date">Tanggal publikasi/pelaporan</label><input id="idx_report_date" name="idx_report_date" type="date" required></div>
+                </div>
+                <div class="field"><label for="idx_currency">Mata uang dalam dokumen</label><select id="idx_currency" name="idx_currency" required><option value="IDR">IDR</option><option value="USD">USD</option></select></div>
+                <div class="field"><label for="idx_source_url">URL langsung PDF pada BEI (HTTPS)</label><input id="idx_source_url" name="idx_source_url" type="url" placeholder="https://www.idx.co.id/StaticData/.../report.pdf" maxlength="1000" required></div>
+                <div class="field"><label for="idx_filing_file">PDF resmi yang sudah Anda peroleh (maks. 20 MB)</label><input id="idx_filing_file" name="idx_filing_file" type="file" accept=".pdf,application/pdf" required></div>
+                <div class="field"><label class="checkline"><input type="checkbox" name="idx_consolidated" value="1">Laporan secara eksplisit menyatakan laporan keuangan konsolidasian</label></div>
+                <div class="field"><label class="checkline"><input type="checkbox" name="idx_rights_confirmed" value="1" required>Saya memiliki hak yang diperlukan untuk menyimpan dokumen ini bagi riset internal dan menyatakan URL sumber sesuai dengan file yang diunggah. Saya memahami dokumen tidak otomatis boleh didistribusikan kembali.</label></div>
+                <button type="submit">Simpan bukti laporan BEI (tanpa ekstraksi angka)</button>
+            </form>
+            <p class="hint">Hasil: DOCUMENT_ONLY, USER_ATTESTED, UNRECONCILED, tanpa harga saham dan tanpa angka fundamental otomatis. Kecocokan file terhadap URL belum diverifikasi oleh sistem. Untuk menormalisasi angka gunakan CSV yang sudah direkonsiliasi atau XBRL dengan taksonomi yang didukung; pemetaan taksonomi BEI belum dinyatakan tersedia.</p>
+        </section>
         <section class="panel" aria-labelledby="sec-live-title" style="margin-top:16px">
             <span class="badge blue">V11 · SEC OFFICIAL API · ON-DEMAND</span>
             <h2 id="sec-live-title" style="margin-top:12px">Ambil laporan SEC langsung (CIK)</h2>
