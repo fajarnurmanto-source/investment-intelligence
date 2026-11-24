@@ -166,6 +166,76 @@ final class LocalLineageRegistry
         return ['root_node_id' => $nodeId, 'nodes' => $nodes, 'edges' => $edges];
     }
 
+    /**
+     * Revalidate the stored claim hash on every ancestor and enforce basic
+     * parent-rights non-escalation. This detects accidental/unauthorized row
+     * edits that did not also forge the claim fingerprint. It is not a
+     * tamper-proof chain against a privileged SQLite administrator.
+     */
+    public function verifyTrace(int $userId, string $nodeId): bool
+    {
+        try {
+            $trace = $this->trace($userId, $nodeId);
+            $nodes = [];
+            foreach ($trace['nodes'] as $entry) {
+                $record = DB::table('ii_lineage_nodes')
+                    ->where('user_id', $userId)->where('id', $entry['id'])->first();
+                if ($record === null) {
+                    return false;
+                }
+                $parents = DB::table('ii_lineage_edges')
+                    ->where('user_id', $userId)->where('child_node_id', $record->id)
+                    ->orderBy('parent_node_id')->pluck('parent_node_id')->all();
+                $metadata = json_decode((string) $record->source_metadata, true, 32, JSON_THROW_ON_ERROR);
+                if (! is_array($metadata)
+                    || ($record->kind === 'SOURCE' && $parents !== [])
+                    || ($record->kind === 'TRANSFORMATION' && $parents === [])
+                    || ! in_array($record->kind, ['SOURCE', 'TRANSFORMATION'], true)) {
+                    return false;
+                }
+                $claim = [
+                    $record->kind, $record->reference_type, $record->reference_id,
+                    $record->operation, strtolower((string) $record->evidence_sha256),
+                    $metadata, $record->rights_profile, $record->rights_basis,
+                    [
+                        'display' => (bool) $record->can_display,
+                        'export' => (bool) $record->can_export,
+                        'cloud' => (bool) $record->can_cloud_transfer,
+                        'persist' => (bool) $record->can_persist_payload,
+                    ],
+                    $parents,
+                ];
+                $digest = hash('sha256', json_encode(
+                    $claim, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES
+                ));
+                if (! hash_equals((string) $record->fingerprint, $digest)) {
+                    return false;
+                }
+                $nodes[$record->id] = $record;
+            }
+            foreach ($trace['edges'] as $edge) {
+                $child = $nodes[$edge['child_node_id']] ?? null;
+                $parent = $nodes[$edge['parent_node_id']] ?? null;
+                if ($child === null || $parent === null) {
+                    return false;
+                }
+                foreach (['can_display', 'can_export', 'can_cloud_transfer', 'can_persist_payload'] as $key) {
+                    if ((bool) $child->{$key} && ! (bool) $parent->{$key}) {
+                        return false;
+                    }
+                }
+                if ($parent->rights_basis === 'RESTRICTED_BYOK'
+                    && $child->rights_basis !== 'RESTRICTED_BYOK') {
+                    return false;
+                }
+            }
+
+            return true;
+        } catch (\Throwable) {
+            return false;
+        }
+    }
+
     /** Effective permission is never inferred from a UI badge. */
     public function allows(int $userId, string $nodeId, string $capability): bool
     {
