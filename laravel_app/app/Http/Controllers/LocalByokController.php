@@ -7,6 +7,7 @@ use App\Services\LocalByokCredentialVault;
 use App\Services\MarketDataByokQuoteService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
 final class LocalByokController extends Controller
 {
@@ -33,11 +34,16 @@ final class LocalByokController extends Controller
     public function connect(Request $request, LocalByokCredentialVault $vault)
     {
         $this->localOnly($request);
-        $data = $request->validate([
+        // Never flash a provider secret into the Laravel session's _old_input.
+        $validation = Validator::make($request->only('provider', 'api_key', 'confirm_private_subscription'), [
             'provider' => ['required', 'in:marketdata'],
             'api_key' => ['required', 'string', 'max:512'],
             'confirm_private_subscription' => ['accepted'],
         ]);
+        if ($validation->fails()) {
+            return redirect()->route('ii.byok.index')->withErrors($validation->errors());
+        }
+        $data = $validation->validated();
         try {
             $vault->save((int) $request->user()->id, $data['provider'], $data['api_key']);
         } catch (\InvalidArgumentException) {
