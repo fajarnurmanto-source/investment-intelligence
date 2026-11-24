@@ -112,6 +112,18 @@ final class LocalLineageRegistry
         return $record === null ? null : $this->view($record);
     }
 
+    /** Lookup by ID only within the requesting owner's registry. */
+    public function owned(int $userId, string $nodeId): ?array
+    {
+        if ($userId < 1 || ! Str::isUuid($nodeId)) {
+            return null;
+        }
+        $record = DB::table('ii_lineage_nodes')
+            ->where('user_id', $userId)->where('id', $nodeId)->first();
+
+        return $record === null ? null : $this->view($record);
+    }
+
     /**
      * Read a bounded owner-only ancestry graph for audit/review.
      * No numeric payload or provider API key is returned.
