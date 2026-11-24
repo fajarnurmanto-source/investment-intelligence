@@ -16,6 +16,7 @@ use App\Http\Controllers\SignalCenterController;
 use App\Http\Controllers\StrategyLabController;
 use App\Http\Controllers\StrategyValidationController;
 use App\Http\Middleware\EnsureResearchRole;
+use App\Http\Middleware\BlockRestrictedByokExports;
 use Illuminate\Support\Facades\Route;
 
 // Local, synthetic-only application. Authentication does not grant trading authority.
@@ -48,7 +49,7 @@ Route::prefix('ii')->name('ii.')->group(function (): void {
             ->middleware('throttle:8,1')->name('signals.import');
         Route::get('/signals/example', [SignalCenterController::class, 'example'])->name('signals.example');
         Route::get('/fundamentals', [FundamentalHubController::class, 'index'])->name('fundamentals.index');
-        Route::get('/fundamentals/coverage/export.csv', [FundamentalHubController::class, 'exportCoverage'])->name('fundamentals.coverage.export');
+        Route::get('/fundamentals/coverage/export.csv', [FundamentalHubController::class, 'exportCoverage'])->middleware(BlockRestrictedByokExports::class)->name('fundamentals.coverage.export');
         Route::post('/fundamentals/sec-companyfacts/normalize', [FundamentalHubController::class, 'normalizeSecCompanyFacts'])
             ->middleware('throttle:3,1')->name('fundamentals.sec-companyfacts.normalize');
         Route::post('/fundamentals/sec-companyfacts/live', [FundamentalHubController::class, 'fetchSecCompanyFacts'])
@@ -72,9 +73,9 @@ Route::prefix('ii')->name('ii.')->group(function (): void {
             ->middleware('throttle:5,1')->name('fundamentals.share-basis.review');
         Route::get('/fundamentals/example', [FundamentalHubController::class, 'example'])->name('fundamentals.example');
         Route::get('/fundamentals/batch-example', [FundamentalHubController::class, 'batchExample'])->name('fundamentals.batch-example');
-        Route::get('/fundamentals/{ticker}/export.csv', [FundamentalHubController::class, 'export'])->name('fundamentals.export');
+        Route::get('/fundamentals/{ticker}/export.csv', [FundamentalHubController::class, 'export'])->middleware(BlockRestrictedByokExports::class)->name('fundamentals.export');
         Route::get('/screener', [FundamentalScreenerController::class, 'index'])->name('screener.index');
-        Route::get('/screener/export.csv', [FundamentalScreenerController::class, 'export'])->name('screener.export');
+        Route::get('/screener/export.csv', [FundamentalScreenerController::class, 'export'])->middleware(BlockRestrictedByokExports::class)->name('screener.export');
         Route::get('/strategy', [StrategyLabController::class, 'index'])->name('strategy.index');
         Route::get('/strategy/validate', [StrategyValidationController::class, 'index'])->name('strategy.validate');
         Route::get('/strategy/rolling', [RollingValidationController::class, 'index'])->name('strategy.rolling');
