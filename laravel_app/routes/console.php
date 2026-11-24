@@ -25,3 +25,16 @@ Schedule::command('ii:idxapi:sync')
         && trim((string) config('ii.idxapi.key', '')) !== ''
         && trim((string) config('ii.idxapi.tickers', '')) !== '')
     ->withoutOverlapping();
+
+
+/*
+ * IDX Edge PRO pilot: one financial-statements request per company, capped at
+ * 3 tickers weekly. Opt-in only, no automatic screener admission or trading.
+ */
+Schedule::command('ii:idxedge:pilot')
+    ->weeklyOn(1, '06:35')
+    ->timezone('Asia/Jakarta')
+    ->when(fn () => (bool) config('ii.idxedge.auto_sync', false)
+        && trim((string) config('ii.idxedge.key', '')) !== ''
+        && trim((string) config('ii.idxedge.tickers', '')) !== '')
+    ->withoutOverlapping();
