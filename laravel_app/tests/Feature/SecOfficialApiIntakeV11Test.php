@@ -71,6 +71,16 @@ class SecOfficialApiIntakeV11Test extends TestCase
         $this->assertStringContainsString('no-store', $r->headers->get('Cache-Control'));
         $this->assertStringContainsString('CIK0000320193_REVIEW.csv', $r->headers->get('Content-Disposition'));
         $this->assertSame(64, strlen((string) $r->headers->get('X-II-Source-Sha256')));
+        $r->assertHeader('X-II-Lineage-Status', 'SOURCE_OFFICIAL_REVIEW_REQUIRED')
+            ->assertHeader('X-II-Export-Scope', 'LOCAL_REVIEW_ONLY_NOT_CLEARED_FOR_REDISTRIBUTION');
+        $this->assertSame(hash('sha256', $r->getContent()),
+            $r->headers->get('X-II-Content-SHA256'));
+        $registry = app(\App\Services\LocalLineageRegistry::class);
+        $nodeId = $r->headers->get('X-II-Lineage-Node');
+        $this->assertTrue($registry->verifyTrace($user->id, $nodeId));
+        $this->assertCount(2, $registry->trace($user->id, $nodeId)['nodes']);
+        $this->assertFalse($registry->allows($user->id, $nodeId, 'export'));
+
 
         Http::assertSentCount(1);
         Http::assertSent(fn ($request) => $request->url() === $url
