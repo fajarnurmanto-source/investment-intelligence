@@ -72,13 +72,19 @@ class FundamentalSnapshotService
                             : 'INPUTS_REGISTERED_TRANSFORM_PENDING'));
                 $summary['lineage_rights_profile'] = $node['rights_profile'] ?? 'UNVERIFIED';
                 $summary['lineage_effective_export'] = false;
+                $basisNode = ! empty($summary['share_basis_review_id'])
+                    ? $registry->find($userId, 'issuer_share_basis_review',
+                        $summary['share_basis_review_id'], 'ACQUIRED_SOURCE')
+                    : null;
+                $summary['lineage_share_basis_node_id'] = $basisNode['id'] ?? null;
                 // Register derived valuation without persisting any numeric
                 // market payload, and only after both applicable parents
                 // have owner-scoped registry identities.
                 $summary = app(DerivedAnalyticsLineageService::class)->valuation(
                     $userId, $document->id, $summary, $node, $priceNode,
                     $observation !== null,
-                    (bool) $priceConflicts->get($document->issuer_code, false)
+                    (bool) $priceConflicts->get($document->issuer_code, false),
+                    $basisNode
                 );
                 $out[$document->issuer_code] = $summary;
             }
@@ -185,6 +191,7 @@ class FundamentalSnapshotService
             'market_price_source_url' => $marketObservation?->source_url ?? ($embeddedPrice !== null ? $document->source->source_url : null),
             'market_price_rights' => $priceRights,
             'share_basis_status' => $basis['status'] ?? 'NOT_APPLICABLE',
+            'share_basis_review_id' => $basis['review_id'] ?? null,
             'share_basis_factor' => $basis['factor'] ?? null,
             'share_basis_source' => $basis['source'] ?? null,
             'valuation_shares_outstanding' => $priceAligned ? $valuationShares : null,
