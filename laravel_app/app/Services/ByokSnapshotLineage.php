@@ -18,7 +18,7 @@ final class ByokSnapshotLineage
                 return true;
             }
         }
-        foreach (['source_url', 'market_price_source_url'] as $field) {
+        foreach (['source_url', 'terms_url', 'market_price_source_url'] as $field) {
             $url = trim((string) ($record[$field] ?? ''));
             if ($url === '') {
                 continue;
