@@ -46,16 +46,45 @@ class IIIdxEdgePilot extends Command
             try {
                 $result = $connector->fetch($code);
                 $hash = $result['source_sha256'];
-                $path = 'ii_idxedge_review/'.$code.'/'.$hash.'.json';
-                if (! Storage::disk('local')->exists($path)) {
-                    $body = json_encode($result, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
-                    if (! Storage::disk('local')->put($path, $body)) {
-                        throw new \RuntimeException('Private evidence storage failed.');
+                $prefix = 'ii_idxedge_review/'.$code.'/'.$hash;
+                $rawPath = $prefix.'.raw';
+                $manifestPath = $prefix.'.json';
+                $raw = $result['raw_response_body'];
+                unset($result['raw_response_body']);
+
+                // The checksum must describe the *stored original HTTP bytes*,
+                // not the reserialized JSON review manifest.
+                if (! hash_equals($hash, hash('sha256', $raw))) {
+                    throw new \\RuntimeException('IDXEDGE_SOURCE_HASH_MISMATCH');
+                }
+                $disk = Storage::disk('local');
+                if (! $disk->exists($rawPath)) {
+                    if (! $disk->put($rawPath, $raw)) {
+                        throw new \\RuntimeException('IDXEDGE_RAW_ARCHIVE_FAILED');
+                    }
+                }
+                if (! hash_equals($hash, hash('sha256', $disk->get($rawPath)))) {
+                    throw new \\RuntimeException('IDXEDGE_STORED_HASH_MISMATCH');
+                }
+
+                $result['raw_private_path'] = $rawPath;
+                $result['raw_hash_verified'] = true;
+                if (! $disk->exists($manifestPath)) {
+                    try {
+                        $manifest = json_encode($result, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
+                        if (! $disk->put($manifestPath, $manifest)) {
+                            throw new \\RuntimeException('IDXEDGE_MANIFEST_ARCHIVE_FAILED');
+                        }
+                    } catch (\\Throwable $error) {
+                        // Avoid leaving an untracked raw-only record after manifest failure.
+                        $disk->delete($rawPath);
+                        throw $error;
                     }
                     $saved++;
                     $this->line('II_IDXEDGE_REVIEW_SAVED='.$code.';SHA256='.$hash);
                 } else {
-                    $this->line('II_IDXEDGE_REVIEW_DUPLICATE='.$code);
+                    // Legacy manifest may exist; never silently assert it has the new receipt.
+                    $this->line('II_IDXEDGE_REVIEW_DUPLICATE='.$code.';RAW_VERIFIED=YES');
                 }
             } catch (\Throwable $e) {
                 $failed++;
