@@ -2,6 +2,16 @@
 
 Investment Intelligence (II) is a Laravel-only local research product. Its active backend, ingestion, analytics, authorization, queue, scheduler, dashboard, and reports run in PHP/Laravel; no Python or FastAPI runtime is required.
 
+## Active product direction — Personal Research Terminal (PRT)
+
+**Decision effective 2026-11-24:** II is a noncommercial, single-owner personal research application intended to be installable on multiple owner-owned devices in different locations. The canonical runtime stays Laravel-only and local-first. Per-device SQLite and credentials must be isolated; optional cross-device sync is gated by source-specific market-data rights. An installer and sync are **planned**, not yet shipped. Existing production acceptance and `NOT_ADMITTED / HOLD / TRADING_AUTHORITY=NONE` remain unchanged.
+
+- [Canonical product roadmap and mandatory decisions](docs/ops/II_PRT_MASTER_ROADMAP_AND_MANDATORY_DECISION_20261124.md)
+- [Milestones, latest capsule state, evidence and acceptance matrix](docs/ops/II_PRT_MILESTONES_CAPSULE_AND_ACCEPTANCE_20261124.md)
+- [V13 IDX Edge PRO evidence acceptance gates](docs/ops/II_V13_MANDATORY_DECISIONS_AND_ACCEPTANCE_GATES.md)
+
+Important: Noncommercial personal use does not independently authorize real-time exchange data, non-display analytics, simultaneous device sessions, copying feeds between devices, or redistribution. Confirm provider and exchange terms for each capability and device. No installer, live-data admission, code release, merge or deployment is claimed by this documentation.
+
 ## Canonical habitat
 
 - Habitat: `D:\Research\INVESTMENT RESEARCH\II`
