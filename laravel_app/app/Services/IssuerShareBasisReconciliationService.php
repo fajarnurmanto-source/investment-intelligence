@@ -35,6 +35,8 @@ class IssuerShareBasisReconciliationService
             throw new \InvalidArgumentException('Rasio aksi korporasi tidak boleh 1:1; gunakan review tanpa perubahan.');
         }
 
+        app(ByokIntakeFirewall::class)->assertIndependentSource($data);
+
         $payload = [
             'issuer_code' => strtoupper($data['ticker']),
             'effective_on' => $data['effective_on'],
@@ -57,7 +59,14 @@ class IssuerShareBasisReconciliationService
             throw new \InvalidArgumentException('Aksi korporasi identik atau bertentangan sudah tercatat pada tanggal tersebut.');
         }
 
-        return IssuerCorporateAction::create(['user_id' => $userId, ...$payload, 'sha256' => $sha]);
+        return DB::transaction(function () use ($userId, $payload, $sha): IssuerCorporateAction {
+            $action = IssuerCorporateAction::create(['user_id' => $userId, ...$payload, 'sha256' => $sha]);
+            app(LocalLineageRegistry::class)->registerSource(
+                $userId, 'issuer_corporate_action', $action->id, $sha, $payload
+            );
+
+            return $action;
+        }, 1);
     }
 
     public function attestCoverage(int $userId, array $input): IssuerShareBasisReview
@@ -73,6 +82,7 @@ class IssuerShareBasisReconciliationService
             'coverage_confirmed' => ['accepted'],
             'rights_confirmed' => ['accepted'],
         ])->validate();
+        app(ByokIntakeFirewall::class)->assertIndependentSource($data);
         $ticker = strtoupper($data['ticker']);
 
         $hasPeriod = DB::table('ii_issuer_periods')
@@ -108,7 +118,14 @@ class IssuerShareBasisReconciliationService
             throw new \InvalidArgumentException('Review basis saham dengan bukti dan daftar aksi yang sama sudah disimpan.');
         }
 
-        return IssuerShareBasisReview::create(['user_id' => $userId, ...$payload, 'sha256' => $sha]);
+        return DB::transaction(function () use ($userId, $payload, $sha): IssuerShareBasisReview {
+            $review = IssuerShareBasisReview::create(['user_id' => $userId, ...$payload, 'sha256' => $sha]);
+            app(LocalLineageRegistry::class)->registerSource(
+                $userId, 'issuer_share_basis_review', $review->id, $sha, $payload
+            );
+
+            return $review;
+        }, 1);
     }
 
     /** @return array{status: string, shares: ?float, factor: ?float, source: ?string} */
@@ -148,6 +165,7 @@ class IssuerShareBasisReconciliationService
             'shares' => $shares * $factor,
             'factor' => $factor,
             'source' => $review->source_name,
+            'review_id' => $review->id,
         ];
     }
 
