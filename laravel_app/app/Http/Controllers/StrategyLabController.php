@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\SignalInsightService;
+use App\Services\SignalAnalyticsLineageService;
 use App\Services\StrategyReplayService;
 use Illuminate\Http\Request;
 
@@ -32,6 +33,10 @@ class StrategyLabController extends Controller
             } else {
                 try {
                     $result = $engine->replay($document, $fast, $slow, $fee, $slippage);
+                    $result = app(SignalAnalyticsLineageService::class)->strategy(
+                        (int) auth()->id(), $document,
+                        ['fast' => $fast, 'slow' => $slow, 'fee_bps' => $fee, 'slippage_bps' => $slippage], $result
+                    );
                 } catch (\InvalidArgumentException $exception) {
                     $warning = $exception->getMessage();
                 }
