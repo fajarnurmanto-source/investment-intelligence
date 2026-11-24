@@ -29,6 +29,10 @@ return [
         'endpoint' => env('II_FRED_CSV_ENDPOINT', 'https://fred.stlouisfed.org/graph/fredgraph.csv?id={series}'),
         'terms_url' => 'https://fred.stlouisfed.org/docs/api/terms_of_use.html',
         'attribution' => 'This product uses FRED data but is not endorsed or certified by the Federal Reserve Bank of St. Louis.',
+        // Empty by default: FRED access is not a data-redistribution license.
+        // A per-series reviewed receipt with explicit use scope is required
+        // before the CSV endpoint may return source-derived numbers.
+        'report_rights' => [],
         'series' => [
             'CPIAUCSL' => [
                 'title' => 'Consumer Price Index for All Urban Consumers',
