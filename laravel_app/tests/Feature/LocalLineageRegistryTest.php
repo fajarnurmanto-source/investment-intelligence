@@ -74,6 +74,30 @@ final class LocalLineageRegistryTest extends TestCase
         $this->assertDatabaseCount('ii_lineage_nodes', 2);
     }
 
+    public function test_verifier_rejects_modified_stored_rights_and_requires_owned_ancestor(): void
+    {
+        $owner = User::factory()->create();
+        $foreign = User::factory()->create();
+        $registry = app(LocalLineageRegistry::class);
+        $source = $registry->registerSource(
+            $owner->id, 'issuer_document', 'integrity-source',
+            hash('sha256', 'integrity-source'), $this->source()
+        );
+        $derived = $registry->registerTransformation(
+            $owner->id, 'issuer_document', 'integrity-result',
+            'NORMALIZE_ISSUER_PERIODS_V1', hash('sha256', 'integrity-result'), [$source['id']]
+        );
+        $this->assertTrue($registry->verifyTrace($owner->id, $derived['id']));
+        $this->assertFalse($registry->verifyTrace($foreign->id, $derived['id']));
+        $this->assertFalse($registry->verifyTrace($owner->id, 'not-a-node'));
+
+        // Simulate a faulty local DB edit without recomputing its fingerprint.
+        DB::table('ii_lineage_nodes')->where('id', $source['id'])
+            ->update(['can_export' => true]);
+        $this->assertFalse($registry->verifyTrace($owner->id, $source['id']));
+        $this->assertFalse($registry->verifyTrace($owner->id, $derived['id']));
+    }
+
     public function test_restricted_source_rights_cannot_be_widened_by_mixed_transforms(): void
     {
         $a = User::factory()->create();
