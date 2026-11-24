@@ -44,6 +44,14 @@ final class DerivedAnalyticsLineageService
         if ($shareBasisParent !== null && ($record['share_basis_status'] ?? '') === 'ALIGNED_USER_ATTESTED') {
             $parentIds[] = $shareBasisParent['id'];
         }
+        $registry = app(LocalLineageRegistry::class);
+        foreach ($parentIds as $parentId) {
+            if (! $registry->verifyTrace($userId, $parentId)) {
+                $record['lineage_valuation_status'] = 'FAILED_PARENT_INTEGRITY';
+
+                return $record;
+            }
+        }
         $fields = [
             'ticker', 'latest_year', 'report_period', 'valuation_status',
             'net_margin_pct', 'revenue_growth_pct', 'earnings_growth_pct',
@@ -87,7 +95,8 @@ final class DerivedAnalyticsLineageService
                 || $parent['operation'] !== 'DERIVE_ISSUER_VALUATION_V1'
                 || $parent['kind'] !== 'TRANSFORMATION'
                 || $parent['rights_basis'] === 'RESTRICTED_BYOK'
-                || ! $parent['can_persist_payload']) {
+                || ! $parent['can_persist_payload']
+                || ! $registry->verifyTrace($userId, (string) $row['lineage_valuation_node_id'])) {
                 continue;
             }
 
