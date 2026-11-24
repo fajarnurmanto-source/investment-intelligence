@@ -97,6 +97,32 @@ class FredPipelineTest extends TestCase
         $this->assertDatabaseCount('ii_lineage_nodes', 0);
     }
 
+    public function test_macro_report_rejects_modified_ingestion_receipt_even_with_policy_approval(): void
+    {
+        Event::fake([EconomicDataUpdated::class]);
+        Cache::flush();
+        Http::fake([
+            'fred.stlouisfed.org/*' => Http::response($this->cpiCsv(), 200, ['Content-Type' => 'text/csv']),
+        ]);
+        $run = app(FredIngestionService::class)->ingest('CPIAUCSL');
+        config()->set('ii.fred.report_rights.CPIAUCSL', [
+            'status' => 'REVIEWED_ALLOWED',
+            'scope' => 'LOCAL_PERSONAL_NONCOMMERCIAL_CSV',
+            'receipt_sha256' => hash('sha256', 'test-not-a-real-review'),
+            'source_owner' => 'U.S. Bureau of Labor Statistics',
+        ]);
+        $user = User::factory()->create();
+        $user->forceFill(['ii_research_role' => 'analyst'])->save();
+        $this->actingAs($user);
+        \App\Models\IngestionRun::query()->whereKey($run->id)
+            ->update(['response_sha256' => hash('sha256', 'mismatched-receipt')]);
+        $this->get('/ii/macro/report/rights')->assertOk()
+            ->assertJsonPath('status', 'DENIED')
+            ->assertJsonPath('issues.0', 'CPIAUCSL:INGESTION_RECEIPT_MISMATCH');
+        $this->get('/ii/macro/report.csv')->assertForbidden();
+        $this->assertDatabaseCount('ii_lineage_nodes', 0);
+    }
+
     public function test_failed_source_is_recorded_without_observations(): void
     {
         Http::fake(['fred.stlouisfed.org/*' => Http::response('unavailable', 503)]);
