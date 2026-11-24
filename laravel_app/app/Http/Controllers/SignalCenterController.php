@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Services\SignalInsightService;
 use App\Services\FundamentalSnapshotService;
 use App\Services\MarketSourceMetadataService;
+use App\Services\ByokIntakeFirewall;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -33,6 +34,12 @@ class SignalCenterController extends Controller
             'price_adjustment' => ['nullable', 'in:unknown,adjusted,unadjusted'],
             'session_timezone' => ['nullable', 'in:UTC,Asia/Jakarta,Asia/Singapore,Asia/Hong_Kong,Asia/Tokyo,Europe/London,America/New_York,Australia/Sydney'],
         ]);
+
+        try {
+            app(ByokIntakeFirewall::class)->assertIndependentSource($input);
+        } catch (\InvalidArgumentException) {
+            return back()->withErrors(['source_name' => 'Sumber data BYOK terbatas tidak boleh diimpor sebagai arsip OHLCV.']);
+        }
 
         $ticker = strtoupper($input['ticker']);
         if ($input['kind'] === 'synthetic' && !str_starts_with($ticker, 'DEMO')) {
