@@ -55,3 +55,11 @@ Implementation state: **PARTIAL; draft PR only; no live-key/provider acceptance*
 6. **A6** independent legal/provider review for any non-display, backtesting, provider historical caches or commercial software distribution.
 
 No merger, source-rights admission or production deployment is implied by this document.
+
+## Rights boundary increment — 24 November 2026
+
+- Added `ByokIntakeFirewall` on market-price single-record writes, CSV batch imports **before file storage**, and fundamental metadata validation. An explicitly declared MarketData.app BYOK origin is refused rather than being relabeled `licensed_internal` and entering existing exportable canonical tables.
+- Added `BlockRestrictedByokExports` to issuer/fundamental coverage CSV and screener CSV endpoints. Historical `ii_issuer_market_prices` rows identifying MarketData.app prevent CSV generation for that owner, while independent owners remain isolated.
+- Synthetic tests `ByokDataBoundaryTest` and `ByokLegacyExportFirewallTest` enforce the above and check that denied batch import leaves neither price rows nor persisted CSV evidence.
+- **Known limitation:** these rules enforce known/declarative provenance, not forensic detection of user-retyped values. They do not yet implement immutable end-to-end lineage across portfolio, strategy, macro and all downloadable report formats. The in-app UI cannot technically stop manual screenshots/typing; the system provides no export mechanism for the vendor feed.
+- No claim of vendor licensing clearance, native DPAPI vault, live feed validation, signed installer, launch-ready release or multi-device support. `NOT_ADMITTED / HOLD / TRADING_AUTHORITY=NONE` remains mandatory.
