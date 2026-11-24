@@ -88,3 +88,9 @@ No CI, deployment, live data, rights approval or installer acceptance is asserte
 - Follow-up code: fail-closed legacy manifest and tampered raw archive handling, avoid deleting pre-existing raw evidence during manifest failure, plus two new synthetic feature tests. New HEAD must earn its own CI success.
 - Open: deliberately simulated storage-write failures, provider-live receipt, license/rights review, original issuer filing reconciliation, owner Windows machine smoke, installer MVP.
 - Release gate unchanged: `NOT_ADMITTED / HOLD / TRADING_AUTHORITY=NONE`, no merge/deploy.
+
+## Acceptance continuation — write-failure simulation
+- GitHub Actions run 45377310529 (workflow #85) reported SUCCESS for 7cbfd8085ad92242a3c58eb208f5e83f1e2cbda8, with Linux and Windows-hosted jobs PASS.
+- Later commits introduce two isolated synthetic storage failure tests (raw `.raw` write and manifest `.json` write) and cleanup logic for partial writes. **These new commits are not covered by run #85**; CI on the resulting HEAD must be verified independently.
+- The current archive sequence is not a multi-file transactional filesystem guarantee; abrupt process termination and concurrency remain hazards to address with temp files, atomic rename/locking and recovery. No claim of physical disk-full test.
+- Source-live, legal rights, owner Windows-local, and financial-admission gates remain pending; no production deployment or merge.
