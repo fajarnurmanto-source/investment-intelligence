@@ -64,6 +64,39 @@ class FredPipelineTest extends TestCase
         $this->assertFalse($registry->allows($user->id, $nodeId, 'cloud'));
     }
 
+    public function test_macro_rights_preflight_rejects_spoofed_source_and_invalid_review_receipt(): void
+    {
+        Event::fake([EconomicDataUpdated::class]);
+        Cache::flush();
+        Http::fake([
+            'fred.stlouisfed.org/*' => Http::response($this->cpiCsv(), 200, ['Content-Type' => 'text/csv']),
+        ]);
+        app(FredIngestionService::class)->ingest('CPIAUCSL');
+        $user = User::factory()->create();
+        $user->forceFill(['ii_research_role' => 'analyst'])->save();
+        $this->actingAs($user);
+
+        config()->set('ii.fred.report_rights.CPIAUCSL', [
+            'status' => 'REVIEWED_ALLOWED',
+            'scope' => 'COMMERCIAL_REDISTRIBUTION', // explicitly not authorized
+            'receipt_sha256' => hash('sha256', 'fake-ci-receipt'),
+            'source_owner' => 'U.S. Bureau of Labor Statistics',
+        ]);
+        $this->get('/ii/macro/report.csv')->assertForbidden();
+        $this->assertDatabaseCount('ii_lineage_nodes', 0);
+
+        config()->set('ii.fred.report_rights.CPIAUCSL.scope', 'LOCAL_PERSONAL_NONCOMMERCIAL_CSV');
+        \App\Models\EconomicObservation::query()->where('series_id', 'CPIAUCSL')
+            ->where('observed_on', '2026-01-01')->update([
+                'source_url' => 'https://fred.stlouisfed.org.evil.example/graph/fredgraph.csv',
+            ]);
+        Cache::flush();
+        $this->get('/ii/macro/report/rights')->assertOk()
+            ->assertJsonPath('issues.0', 'CPIAUCSL:UNTRUSTED_SOURCE_URL');
+        $this->get('/ii/macro/report.csv')->assertForbidden();
+        $this->assertDatabaseCount('ii_lineage_nodes', 0);
+    }
+
     public function test_failed_source_is_recorded_without_observations(): void
     {
         Http::fake(['fred.stlouisfed.org/*' => Http::response('unavailable', 503)]);
