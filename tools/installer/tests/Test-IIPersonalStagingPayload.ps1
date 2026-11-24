@@ -69,6 +69,25 @@ try {
     if (Test-Path -LiteralPath (Join-Path $output 'payload\app\public\uploads')) { throw 'STAGE_LEAK_UPLOADS' }
     if (Test-Path -LiteralPath (Join-Path $output 'payload\app\storage')) { throw 'STAGE_LEAK_STORAGE' }
 
+    # Independent manifest verification must reject both tampering and extra files.
+    $verify = Join-Path (Split-Path -Parent $PSScriptRoot) 'Test-IIPersonalStagingIntegrity.ps1'
+    $checked = (& $verify -PackageRoot $output | ConvertFrom-Json)
+    if ($checked.status -ne 'STAGED_PAYLOAD_INTEGRITY_VERIFIED' -or $checked.installable -ne $false) {
+        throw 'STAGE_VERIFIER_EXPECTED_PASS'
+    }
+    $chosen = Join-Path $output 'payload\app\artisan'
+    [IO.File]::AppendAllText($chosen, 'TAMPER')
+    $tamperRejected = $false
+    try { & $verify -PackageRoot $output | Out-Null } catch { $tamperRejected = $true }
+    if (-not $tamperRejected) { throw 'STAGE_TAMPER_NOT_REJECTED' }
+    [IO.File]::WriteAllText($chosen, 'synthetic')
+    $extra = Join-Path $output 'payload\app\undeclared.txt'
+    [IO.File]::WriteAllText($extra, 'extra')
+    $extraRejected = $false
+    try { & $verify -PackageRoot $output | Out-Null } catch { $extraRejected = $true }
+    if (-not $extraRejected) { throw 'STAGE_UNDECLARED_FILE_NOT_REJECTED' }
+    Remove-Item -LiteralPath $extra -Force
+
     # Refuse accidental overwrite and do not alter previous staged artifact.
     $refused = $false
     try {
