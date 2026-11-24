@@ -57,6 +57,37 @@ class LocalByokArchitectureTest extends TestCase
         app(LocalByokCredentialVault::class)->key($owner->id, 'marketdata');
     }
 
+    public function test_windows_legacy_ciphertext_requires_reconnection_and_never_displays_secret(): void
+    {
+        if (PHP_OS_FAMILY !== 'Windows') {
+            $this->markTestSkipped('Windows DPAPI transition only.');
+        }
+        $owner = $this->owner();
+        DB::table('ii_byok_credentials')->insert([
+            'user_id' => $owner->id,
+            'provider' => 'marketdata',
+            'encrypted_api_key' => 'old-laravel-crypt-format',
+            'rights_profile' => ByokRightsPolicy::RESTRICTED,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $vault = app(LocalByokCredentialVault::class);
+        $this->assertFalse($vault->connected($owner->id, 'marketdata'));
+        $this->actingAs($owner)->get('/ii/data-sources')->assertOk()
+            ->assertSee('Belum terhubung')
+            ->assertDontSee('old-laravel-crypt-format');
+
+        // A user-entered replacement upgrades only this local owner's row.
+        $this->post('/ii/data-sources/connect', [
+            'provider' => 'marketdata',
+            'api_key' => 'new-private-token-with-dpapi',
+            'confirm_private_subscription' => '1',
+        ])->assertRedirect('/ii/data-sources');
+        $this->assertTrue($vault->connected($owner->id, 'marketdata'));
+        $this->assertSame('new-private-token-with-dpapi', $vault->key($owner->id, 'marketdata'));
+    }
+
     public function test_local_only_credential_endpoints_reject_nonlocal_ip(): void
     {
         $this->actingAs($this->owner())
