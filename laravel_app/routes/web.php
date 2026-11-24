@@ -19,7 +19,7 @@ use App\Http\Middleware\EnsureResearchRole;
 use App\Http\Middleware\BlockRestrictedByokExports;
 use Illuminate\Support\Facades\Route;
 
-// Local, synthetic-only application. Authentication does not grant trading authority.
+// Local BYOK research terminal; provider quotes are view-only and never grant trading authority.
 Route::redirect('/', '/ii/dashboard');
 
 Route::prefix('ii')->name('ii.')->group(function (): void {
