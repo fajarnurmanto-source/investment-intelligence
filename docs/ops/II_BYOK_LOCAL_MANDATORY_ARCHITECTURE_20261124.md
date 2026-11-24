@@ -88,3 +88,11 @@ No merger, source-rights admission or production deployment is implied by this d
 - The legacy compatibility writer `FundamentalSnapshotService::save()` now refuses restricted BYOK payloads before any JSON file is stored. `ByokIntakeFirewall` reuses the same classifier, removing duplicate PHP matching logic between write and read paths.
 - `ByokSnapshotLineageTest` covers source-derived metrics removal, independent-source preservation, actual imported legacy issuer document quarantine and forbidden legacy JSON storage. New tests also cover restriction detected solely by provider price URL or terms URL.
 - **Boundary limitation:** classification detects declared/known provenance, not deliberate value retyping, mathematically reconstructed numbers or data that lost its source metadata. This is not proof of a complete immutable numeric lineage graph, third-party legal permission or a signed Windows release. No live provider key, market-data import or production database was modified.
+
+## Screener quarantine and legacy storage protection — 24 November 2026
+
+- `FundamentalScreenerService` now excludes `RESTRICTED_BYOK_SOURCE_DETECTED` snapshots **before** scoring, filtering or ranking. A known contaminated legacy BYOK document cannot produce a derived screener score, even if it was ingested before the cutover.
+- `ByokSnapshotLineageTest` confirms quarantined values do not enter the screener while an independent-source record remains eligible.
+- `FundamentalSnapshotService::save()` now refuses known restricted provider data **before** writing legacy JSON snapshots. Tests confirm rejected uploads leave no file, while independent user-owned snapshots remain supported.
+- Source detection is consolidated via `ByokSnapshotLineage::isRestricted` and reused by `ByokIntakeFirewall`; this removes duplicate matching logic while preserving import guard behavior.
+- Data lineage remains metadata-dependent; this is not a forensic guarantee against user-misrepresented sources, no license grant and no approval for downstream external model transmission.
