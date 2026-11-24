@@ -20,7 +20,7 @@ Definitions:
 | M00 | Laravel-only core and local runtime | VERIFIED_IN_REPO, production behavior not revalidated | README describes FrankenPHP + Laravel local-only, queue, scheduler, private runtime | health and launcher on pinned deployment |
 | M01 | Existing fundamentals, screener, VaR/CVaR, FRED | VERIFIED_IN_REPO / regression pending | existing documented features | non-regression on current release candidate |
 | M02 | idxapi.io third-party source review | VERIFIED_IN_REPO / real data pending | PR #25 previously merged; keep provider independent | real evidence and provider rights reviewed |
-| M03 | IDX Edge PRO V13 source adapter and isolated tests | PARTIAL | PR #26 open; synthetic HTTP tests; original raw byte archival missing | exact-byte private archive + hash, provider live proof and tests |
+| M03 | IDX Edge PRO V13 source adapter and isolated tests | PARTIAL — code implemented, acceptance pending | PR #26 now includes private `.raw` sidecar, SHA-256 verification and fixture byte-preservation tests; CI/Windows/live-provider acceptance still unverified | green CI, Windows-local test, authentic provider receipt and rights review |
 | M04 | Real BEI fundamentals schema + normalization | BLOCKED | provider schema, currency/scale, filings and rights not accepted | schema and official FY period reconciliation; separate guarded normalizer |
 | M05 | BEI market-price feed rights and access | PLANNED | no automatic real-time entitlement assumed | source-specific entitlement and controlled live pilot |
 | M06 | US market data real-time limited pilot | PLANNED | investigate Alpaca IEX real-time and vendor non-display permission | bounded lawful feed, venue/time labels and regression |
@@ -54,12 +54,12 @@ The canonical list in II_PRT_MASTER_ROADMAP_AND_MANDATORY_DECISION_20261124.md i
 - Subsequent documentation commits: 33359a104159adb175d863e6eadd739da6a6f1cc and 08edbafeb5cbe335e3e0d8a636efb8bb3fcccb53. Newly amended HEAD requires separate CI verification.
 - V13 adapter source: laravel_app/app/Services/IdxEdgeFinancialEvidenceService.php
 - Pilot command: php artisan ii:idxedge:pilot; default BBCA/TLKM/ASII; private Laravel local storage
-- Gaps: source response SHA-256 currently hashes HTTP body but persisted wrapper is reserialized JSON, not exact raw bytes; no authenticated live receipt reviewed; period/currency rights and schema normalization remain unverified.
+- Update (24 Nov): code now passes exact upstream bytes internally to a private `.raw` sidecar, checks the stored SHA-256 and keeps raw bytes out of UI review JSON. Synthetic tests include whitespace-preservation assertions. **At this writing no CI or Windows acceptance at the newest commit has been observed.** Still no authenticated provider-live receipt, period/currency/rights reconciliation or accepted numeric schema normalizer.
 - Persist current gates: NOT_ADMITTED / HOLD / TRADING_AUTHORITY=NONE; no production market-value promotion.
 - No installer, second-device acceptance, or cross-location sync is evidenced by this change.
  
 ## Follow-up implementation tickets
-T01: Private byte-exact raw evidence sidecar and manifest; atomic write, failure rollback, content hash from persisted bytes, dedupe tests.
+T01: Private byte-exact raw evidence sidecar + manifest, stored-byte hash verification, duplicate scenario and fixture regression **implemented in PR #26, pending CI/Windows QA**. Legacy manifest backfill, simulated disk-write failures and strict atomicity remain acceptance follow-ups.
 T02: Provider-authenticated test (secrets local only), real raw schema map, rights review and official filing reconciliation.
 T03: Source entitlement/capability matrix implementation (per source, plan, device, usage, date).
 T04: Windows runtime packaging spike: installer technology, Laravel/FrankenPHP binaries/license, boot process, service recovery, ports, migrations, encrypted app key, uninstaller safety.
