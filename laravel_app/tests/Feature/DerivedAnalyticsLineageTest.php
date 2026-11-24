@@ -109,12 +109,11 @@ final class DerivedAnalyticsLineageTest extends TestCase
         $this->assertSame('PENDING_INPUT_REVIEW', $conflicted['lineage_valuation_status']);
         $this->assertDatabaseCount('ii_lineage_edges', 0);
 
-        try {
-            $analytics->valuation($owner->id, 'safe-A', $base, $independent, $foreign, true);
-            $this->fail('A foreign account parent must be rejected by registry.');
-        } catch (\InvalidArgumentException $e) {
-            $this->assertSame('II_LINEAGE_PARENT_NOT_OWNED_OR_MISSING', $e->getMessage());
-        }
+        $foreignDenied = $analytics->valuation(
+            $owner->id, 'safe-A', $base, $independent, $foreign, true
+        );
+        $this->assertSame('FAILED_PARENT_INTEGRITY', $foreignDenied['lineage_valuation_status']);
+        $this->assertNull($foreignDenied['lineage_valuation_node_id']);
         $this->assertDatabaseCount('ii_lineage_edges', 0);
 
         // Even if a caller attempts to forge a displayed lineage status,
