@@ -19,3 +19,4 @@ jobs:
         shell: pwsh
         run: |
           & ./tools/installer/tests/Test-IIPersonalPackageInputs.ps1
+          & ./tools/installer/tests/Test-IIPersonalStagingPayload.ps1
