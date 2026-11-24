@@ -124,6 +124,27 @@ final class LocalLineageRegistryTest extends TestCase
         $this->assertStringNotContainsString('/document', $stored->source_metadata);
     }
 
+    public function test_registry_restricted_rights_block_csv_even_after_mutable_source_labels_change(): void
+    {
+        $owner = User::factory()->create();
+        $owner->forceFill(['ii_research_role' => 'analyst'])->save();
+        $other = User::factory()->create();
+        $other->forceFill(['ii_research_role' => 'analyst'])->save();
+        $registry = app(LocalLineageRegistry::class);
+        $legacy = $registry->registerSource(
+            $owner->id, 'legacy_source', 'vendor-source-1',
+            hash('sha256', 'synthetic-vendor-source'),
+            $this->source('MarketData.app BYOK')
+        );
+        $this->assertFalse($legacy['can_export']);
+        $this->actingAs($owner)
+            ->get('/ii/fundamentals/coverage/export.csv')->assertForbidden();
+        $this->get('/ii/screener/export.csv')->assertForbidden();
+
+        $this->actingAs($other)
+            ->get('/ii/fundamentals/coverage/export.csv')->assertOk();
+    }
+
     public function test_actual_issuer_import_registers_source_and_normalization_atomically(): void
     {
         Storage::fake('local');
