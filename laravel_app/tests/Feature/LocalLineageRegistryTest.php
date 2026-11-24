@@ -249,6 +249,17 @@ final class LocalLineageRegistryTest extends TestCase
         $this->assertSame($derived['id'], $priced['lineage_node_id']);
         $this->assertNotNull($priced['lineage_market_price_node_id']);
         $this->assertFalse($priced['lineage_effective_export']);
+        $this->assertSame('REGISTERED_RESEARCH_ONLY', $priced['lineage_valuation_status']);
+        $this->assertNotNull($priced['lineage_valuation_node_id']);
+        $valuationTrace = $registry->trace($owner->id, $priced['lineage_valuation_node_id']);
+        $this->assertCount(4, $valuationTrace['nodes']);
+        $this->assertCount(3, $valuationTrace['edges']);
+        $this->assertFalse($registry->allows($owner->id, $priced['lineage_valuation_node_id'], 'export'));
+        $this->actingAs($owner)->get('/ii/screener')->assertOk();
+        $this->assertSame(1, \Illuminate\Support\Facades\DB::table('ii_lineage_nodes')
+            ->where('user_id', $owner->id)
+            ->where('operation', 'SCORE_FUNDAMENTAL_SCREEN_V1')->count());
+
 
     }
 }
