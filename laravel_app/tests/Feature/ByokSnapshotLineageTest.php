@@ -49,6 +49,24 @@ final class ByokSnapshotLineageTest extends TestCase
         $this->assertFalse($result['trading_authorized']);
     }
 
+    public function test_restricted_vendor_is_detected_from_price_url_and_terms_even_with_generic_source_name(): void
+    {
+        $policy = app(ByokSnapshotLineage::class);
+        $this->assertTrue($policy->isRestricted([
+            'source_name' => 'Generic EOD data',
+            'market_price_source' => 'Example broker',
+            'market_price_source_url' => 'https://api.marketdata.app/v1/stocks/quotes/AAPL/',
+        ]));
+        $this->assertTrue($policy->isRestricted([
+            'source_name' => 'Generic financial API',
+            'terms_url' => 'https://marketdata.app/terms',
+        ]));
+        $this->assertFalse($policy->isRestricted([
+            'source_name' => 'Independent SEC filing',
+            'terms_url' => 'https://example.test/marketdata.app/policy',
+        ]));
+    }
+
     public function test_non_marketdata_sources_are_not_falsely_granted_export_rights(): void
     {
         $record = ['ticker' => 'AAPL', 'source_name' => 'Independent filings',
