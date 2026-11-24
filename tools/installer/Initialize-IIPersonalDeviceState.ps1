@@ -72,6 +72,33 @@ $installMeta = [ordered]@{
 $staging = Join-Path $parent ('.ii-prt-device-pending-'+[Guid]::NewGuid().ToString('N'))
 try {
     New-Item -ItemType Directory -Path $staging -ErrorAction Stop | Out-Null
+    # Restrict access BEFORE any APP_KEY material is written. Fail closed if
+    # the current Windows identity or DACL cannot be established.
+    if ($IsWindows) {
+        $currentSid = [Security.Principal.WindowsIdentity]::GetCurrent().User
+        if ($null -eq $currentSid) { throw 'II_DEVICE_WINDOWS_OWNER_SID_MISSING' }
+        $acl = Get-Acl -LiteralPath $staging
+        $acl.SetAccessRuleProtection($true, $false)
+        foreach ($rule in @($acl.Access)) { [void]$acl.RemoveAccessRuleAll($rule) }
+        $inheritance = [Security.AccessControl.InheritanceFlags]'ContainerInherit, ObjectInherit'
+        $propagation = [Security.AccessControl.PropagationFlags]::None
+        foreach ($sidValue in @($currentSid.Value,'S-1-5-18')) {
+            $sid = [Security.Principal.SecurityIdentifier]::new($sidValue)
+            $rule = [Security.AccessControl.FileSystemAccessRule]::new(
+                $sid,
+                [Security.AccessControl.FileSystemRights]::FullControl,
+                $inheritance,
+                $propagation,
+                [Security.AccessControl.AccessControlType]::Allow
+            )
+            $acl.AddAccessRule($rule)
+        }
+        Set-Acl -LiteralPath $staging -AclObject $acl
+        $effective = Get-Acl -LiteralPath $staging
+        if (-not $effective.AreAccessRulesProtected) { throw 'II_DEVICE_ACL_INHERITANCE_NOT_DISABLED' }
+    } else {
+        throw 'II_DEVICE_WINDOWS_ONLY'
+    }
     foreach ($relative in @('database','bootstrap-cache','storage\app\private','storage\app\public',
         'storage\framework\cache\data','storage\framework\sessions','storage\framework\views','storage\logs')) {
         New-Item -ItemType Directory -Path (Join-Path $staging $relative) -Force | Out-Null
