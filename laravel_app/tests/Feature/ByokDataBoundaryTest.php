@@ -83,4 +83,31 @@ final class ByokDataBoundaryTest extends TestCase
         $this->assertDatabaseCount('ii_issuer_market_prices', 0);
         $this->assertSame([], Storage::disk('local')->allFiles('ii_price_batches'));
     }
+    public function test_restricted_byok_provider_cannot_be_registered_as_fundamental_document(): void
+    {
+        Storage::fake('local');
+        $csv = "fiscal_year,period_end,restated,revenue,net_income_attributable,total_assets,total_equity,equity_attributable,operating_cash_flow,shares_outstanding,total_debt,cash_and_equivalents,ebitda,market_price,market_price_as_of\n".
+            "2024,2024-12-31,false,100,10,500,300,250,50,1000,100,20,40,,\n";
+        $this->actingAs($this->owner())
+            ->post('/ii/fundamentals/import', [
+                'ticker' => 'AAPL', 'issuer_name' => 'Synthetic issuer',
+                'sector' => 'Technology', 'kind' => 'user_supplied',
+                'report_period' => 'FY2024', 'fiscal_period_type' => 'annual',
+                'report_date' => '2025-03-01', 'currency' => 'USD',
+                'multiplier' => '1', 'consolidated' => '1',
+                'source_name' => 'MarketData.app BYOK',
+                'publisher' => 'MarketData.app',
+                'source_url' => 'https://api.marketdata.app/v1/stocks/quotes/AAPL/',
+                'license_status' => 'licensed',
+                'usage_rights' => 'licensed_internal',
+                'source_authenticity_status' => 'licensed_provider',
+                'numeric_reconciliation_status' => 'unreconciled',
+                'provenance_confidence' => 'low',
+                'rights_confirmed' => '1',
+                'fundamental_file' => UploadedFile::fake()->createWithContent('fundamentals.csv', $csv),
+            ])->assertRedirect()->assertSessionHasErrors();
+        $this->assertDatabaseCount('ii_issuer_documents', 0);
+        $this->assertDatabaseCount('ii_issuer_periods', 0);
+    }
+
 }
