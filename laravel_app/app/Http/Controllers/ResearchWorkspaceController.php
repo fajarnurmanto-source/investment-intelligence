@@ -2,6 +2,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\CompanyResearchService;
+use App\Services\SyntheticReportLineageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
@@ -68,6 +69,16 @@ class ResearchWorkspaceController extends Controller
         }
         $lines[] = '';
         $content = implode("\n", $lines);
-        return response($content, 200, ['Content-Type' => 'text/markdown; charset=UTF-8', 'Content-Disposition' => 'attachment; filename="II_VS4_' . $ticker . '_SYNTHETIC.md"', 'Cache-Control' => 'no-store']);
+        $lineage = app(SyntheticReportLineageService::class)->attest(
+            (int) auth()->id(), 'WORKSPACE_VS4', $data, $content
+        );
+        return response($content, 200, [
+            'Content-Type' => 'text/markdown; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="II_VS4_' . $ticker . '_SYNTHETIC.md"',
+            'Cache-Control' => 'private, no-store',
+            'X-II-Lineage-Node' => $lineage['node_id'],
+            'X-II-Lineage-Status' => $lineage['status'],
+            'X-II-Content-SHA256' => $lineage['content_sha256'],
+        ]);
     }
 }
