@@ -117,6 +117,23 @@ final class DerivedAnalyticsLineageTest extends TestCase
         }
         $this->assertDatabaseCount('ii_lineage_edges', 0);
 
+        // Even if a caller attempts to forge a displayed lineage status,
+        // no restricted or foreign-account node can become a score parent.
+        $spoofed = $analytics->screener($owner->id, [
+            ['ticker' => 'AAPL',
+                'lineage_valuation_status' => 'REGISTERED_RESEARCH_ONLY',
+                'lineage_valuation_node_id' => $restricted['id'],
+                'quality_score' => 99.0],
+            ['ticker' => 'MSFT',
+                'lineage_valuation_status' => 'REGISTERED_RESEARCH_ONLY',
+                'lineage_valuation_node_id' => $foreign['id'],
+                'quality_score' => 95.0],
+        ], []);
+        foreach ($spoofed as $record) {
+            $this->assertNull($record['lineage_screener_node_id']);
+            $this->assertSame('PENDING_VALUATION_LINEAGE', $record['lineage_screener_status']);
+        }
+
         $rows = $analytics->screener($owner->id, [
             $blocked + ['byok_lineage' => 'RESTRICTED_BYOK_SOURCE_DETECTED'],
             $missing,
