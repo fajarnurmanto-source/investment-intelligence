@@ -18,6 +18,11 @@ class FundamentalSnapshotService
     /** Compatibility path for snapshots imported before Issuer Intelligence V1. */
     public function save(int $userId, array $document): void
     {
+        // Legacy JSON compatibility must not become a bypass around the
+        // restricted provider's no-storage and no-export policy.
+        if (app(ByokSnapshotLineage::class)->isRestricted($document)) {
+            throw new \InvalidArgumentException('II_BYOK_RESTRICTED_SNAPSHOT_STORAGE_DENIED');
+        }
         $path = $this->directory($userId).'/'.$document['ticker'].'__'.bin2hex(random_bytes(12)).'.json';
         if (! Storage::disk('local')->put($path, json_encode($document, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES))) {
             throw new \RuntimeException('Could not store issuer data.');
