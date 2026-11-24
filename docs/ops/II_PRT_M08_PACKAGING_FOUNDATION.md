@@ -33,3 +33,11 @@ Canonical product direction: [II PRT Master Roadmap](II_PRT_MASTER_ROADMAP_AND_M
 & .\tools\installer\Test-IIPersonalPackageInputs.ps1 -RepositoryRoot "D:\Research\INVESTMENT RESEARCH\II\repository" -RuntimeRoot "D:\Research\INVESTMENT RESEARCH\II\runtime" -Strict
 ```
 The script reports only presence/absence of input prerequisites. It does not read secrets, deploy, build or start services.
+
+## M08 packaging implementation and milestone state — updated 24 Nov 2026
+- **M08-A input inventory:** executable preflight and Windows synthetic acceptance PASS on PR #27, run [#4](https://github.com/fajarnurmanto-source/investment-intelligence/actions/runs/45382231626). Base Laravel CI run [#101](https://github.com/fajarnurmanto-source/investment-intelligence/actions/runs/45382231513) also PASS.
+- **M08-B unsigned staging payload:** `Build-IIPersonalStagingPayload.ps1` copies only explicit code/runtime inputs into a new destination with per-file SHA-256 and manifest. Intentional status `STAGED_UNSIGNED_NOT_INSTALLABLE`. Excludes .env, active SQLite, personal storage, credentials and uploads. Cannot overwrite an existing package destination.
+- **M08-B independent verification:** `Test-IIPersonalStagingIntegrity.ps1` checks manifest hash, all file hashes/sizes, exact file inventory and refuses undeclared files or unsafe paths. Tests inject tampering and extra files.
+- Latest tests for verifier are subject to CI run #7 and general regression #104; **do not infer PASS before observing their completed outcomes**.
+- **M08-C** device-local APP_KEY, SQLite, first-run enrollment and launcher, **M08-D** signed installer and update/rollback, **M08-E** actual two-device acceptance remain NOT_IMPLEMENTED.
+- Packaging script produces a staging artifact, **not an installer**, and has not been run against owner's live Windows machine in this chat. Licensing and redistribution rights remain unverified.
