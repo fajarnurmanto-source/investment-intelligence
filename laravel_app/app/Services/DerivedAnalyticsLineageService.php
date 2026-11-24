@@ -75,6 +75,14 @@ final class DerivedAnalyticsLineageService
                 || empty($row['lineage_valuation_node_id'])) {
                 continue;
             }
+            $parent = $registry->owned($userId, (string) $row['lineage_valuation_node_id']);
+            if ($parent === null
+                || $parent['operation'] !== 'DERIVE_ISSUER_VALUATION_V1'
+                || $parent['kind'] !== 'TRANSFORMATION'
+                || $parent['rights_basis'] === 'RESTRICTED_BYOK'
+                || ! $parent['can_persist_payload']) {
+                continue;
+            }
 
             // Scoring depends on financial and quality indicators, all
             // represented by the parent valuation projection. Filter inputs
