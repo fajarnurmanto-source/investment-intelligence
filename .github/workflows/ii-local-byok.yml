@@ -1,0 +1,55 @@
+name: II Local BYOK Cutover CI
+
+on:
+  pull_request:
+    paths:
+      - 'laravel_app/**'
+      - 'tools/installer/**'
+      - 'docs/ops/II_BYOK_LOCAL_MANDATORY_ARCHITECTURE_20261124.md'
+      - '.github/workflows/ii-local-byok.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  byok-laravel:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: laravel_app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, sqlite3, pdo_sqlite
+          coverage: none
+      - run: composer install --no-interaction --prefer-dist --no-progress
+      - run: cp .env.example .env
+      - run: touch database/database.sqlite
+      - run: php artisan key:generate
+      - run: php artisan migrate --force
+      - run: php artisan test
+      - run: php artisan route:list
+      - name: Prove legacy shared-key feed is gone
+        run: |
+          ! grep -R 'II_IDXAPI_KEY\|ii:idxapi:sync\|fundamentals.idxapi.free-review' app config routes resources
+      - name: Audit forbidden bridge runtime
+        run: '! grep -R -E "FastAPI|127\.0\.0\.1:8811|subprocess.*python" app config routes resources --exclude-dir=vendor'
+  byok-windows:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, sqlite3, pdo_sqlite, intl, openssl, zip, fileinfo
+          tools: composer:v2
+          coverage: none
+      - name: Windows isolated Laravel regression
+        shell: pwsh
+        run: |
+          pwsh -NoProfile -ExecutionPolicy Bypass -File ".\tools\testing\Invoke-II-AutomatedTests.ps1"
