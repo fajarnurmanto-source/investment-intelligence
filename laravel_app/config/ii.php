@@ -11,6 +11,15 @@ return [
             'redistribution' => false,
         ],
     ],
+    'idxapi' => [
+        // Third-party IDX fundamentals provider: free 1,000 calls/month at
+        // time of integration. Never embed secrets in Git or the UI.
+        'key' => env('II_IDXAPI_KEY', ''),
+        'auto_sync' => filter_var(env('II_IDXAPI_AUTO_SYNC', false), FILTER_VALIDATE_BOOLEAN),
+        'tickers' => env('II_IDXAPI_TICKERS', ''),
+        'max_tickers_per_run' => 10,
+        'terms_url' => 'https://idxapi.io/terms',
+    ],
     'fred' => [
         'source_id' => 'FRED',
         'name' => 'Federal Reserve Economic Data',
