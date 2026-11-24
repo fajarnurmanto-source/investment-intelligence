@@ -36,8 +36,8 @@ try {
     if ($a.device_id -eq $b.device_id) { throw 'DEVICE_ID_NOT_UNIQUE' }
     $envA = Get-Content -LiteralPath (Join-Path $first '.env') -Raw
     $envB = Get-Content -LiteralPath (Join-Path $second '.env') -Raw
-    $keyA = [regex]::Match($envA,'(?m)^APP_KEY=(base64:[A-Za-z0-9+/=]+)\r?).Groups[1].Value
-    $keyB = [regex]::Match($envB,'(?m)^APP_KEY=(base64:[A-Za-z0-9+/=]+)$').Groups[1].Value
+    $keyA = [regex]::Match($envA,'(?m)^APP_KEY=(base64:[A-Za-z0-9+/=]+)\r?$').Groups[1].Value
+    $keyB = [regex]::Match($envB,'(?m)^APP_KEY=(base64:[A-Za-z0-9+/=]+)\r?$').Groups[1].Value
     if ($keyA.Length -lt 40 -or $keyB.Length -lt 40 -or $keyA -eq $keyB) { throw 'DEVICE_KEYS_NOT_DISTINCT' }
     if ($a.PSObject.Properties.Name -contains 'APP_KEY' -or $envA.Contains('test-provider-key')) { throw 'BOOTSTRAP_KEY_EXPOSURE' }
     foreach ($r in @($first,$second)) {
