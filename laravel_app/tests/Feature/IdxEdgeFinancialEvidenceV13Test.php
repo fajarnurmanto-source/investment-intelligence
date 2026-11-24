@@ -127,7 +127,7 @@ class IdxEdgeFinancialEvidenceV13Test extends TestCase
         Http::fake(function (ClientRequest $request) {
             $ticker = substr((string) parse_url($request->url(), PHP_URL_PATH), -4);
 
-            return Http::response($this->fixture($ticker), 200, ['Content-Type' => 'application/json']);
+            return Http::response(json_encode($this->fixture($ticker), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES), 200, ['Content-Type' => 'application/json']);
         });
 
         $this->assertSame(0, Artisan::call('ii:idxedge:pilot'));
@@ -147,6 +147,7 @@ class IdxEdgeFinancialEvidenceV13Test extends TestCase
             $this->assertTrue($stored['raw_hash_verified']);
             $this->assertArrayNotHasKey('raw_response_body', $stored);
             $this->assertSame($this->fixture($ticker), json_decode($raw, true));
+            $this->assertSame(json_encode($this->fixture($ticker), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES), $raw);
         }
         Http::assertSentCount(3);
         $this->assertSame(0, Artisan::call('ii:idxedge:pilot', ['--ticker' => 'BBCA']));
