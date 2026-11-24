@@ -14,8 +14,15 @@ final class LocalByokCredentialVault
 {
     public function connected(int $userId, string $provider): bool
     {
-        return DB::table('ii_byok_credentials')
-            ->where('user_id', $userId)->where('provider', $provider)->exists();
+        $row = DB::table('ii_byok_credentials')
+            ->where('user_id', $userId)->where('provider', $provider)->first(['encrypted_api_key']);
+        if ($row === null) {
+            return false;
+        }
+        // Old APP_KEY-encrypted credentials must be explicitly reconnected on
+        // Windows. Do not advertise an undecryptable key as connected.
+        return PHP_OS_FAMILY !== 'Windows'
+            || str_starts_with((string) $row->encrypted_api_key, WindowsDpapiCredentialProtector::PREFIX);
     }
 
     public function save(int $userId, string $provider, string $key): void
