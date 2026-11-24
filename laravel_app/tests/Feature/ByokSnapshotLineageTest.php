@@ -7,6 +7,7 @@ use App\Models\IssuerSource;
 use App\Models\User;
 use App\Services\ByokSnapshotLineage;
 use App\Services\FundamentalSnapshotService;
+use App\Services\FundamentalScreenerService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -75,6 +76,27 @@ final class ByokSnapshotLineageTest extends TestCase
         $this->assertSame(8.5, $result['eps']);
         $this->assertSame('NO_RESTRICTED_BYOK_SOURCE_IDENTIFIED', $result['byok_lineage']);
         $this->assertSame('NOT_ASSESSED', $result['byok_export_clearance']);
+    }
+
+    public function test_quarantined_vendor_snapshot_does_not_enter_screener_ranking(): void
+    {
+        $policy = app(ByokSnapshotLineage::class);
+        $restricted = $policy->apply([
+            'ticker' => 'AAPL', 'source_name' => 'MarketData.app BYOK',
+            'net_margin_pct' => 25, 'data_quality_score' => 95,
+            'income_positive' => true, 'cash_flow_positive' => true,
+        ]);
+        $independent = $policy->apply([
+            'ticker' => 'MSFT', 'source_name' => 'Independent filings',
+            'net_margin_pct' => 20, 'data_quality_score' => 90,
+            'income_positive' => true, 'cash_flow_positive' => true,
+        ]);
+        $results = app(FundamentalScreenerService::class)->screen(
+            ['AAPL' => $restricted, 'MSFT' => $independent], []
+        );
+        $this->assertCount(1, $results);
+        $this->assertSame('MSFT', $results[0]['ticker']);
+        $this->assertGreaterThan(0, $results[0]['quality_score']);
     }
 
     public function test_legacy_snapshot_writer_fails_before_persisting_restricted_byok_data(): void
