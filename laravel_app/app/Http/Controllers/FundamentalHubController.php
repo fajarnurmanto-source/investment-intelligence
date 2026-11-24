@@ -19,6 +19,7 @@ use App\Services\IssuerShareBasisReconciliationService;
 use App\Services\SignalInsightService;
 use App\Services\SecCompanyFactsNormalizationService;
 use App\Services\SecOfficialCompanyFactsService;
+use App\Services\SecReviewLineageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
@@ -112,7 +113,12 @@ class FundamentalHubController extends Controller
             $writer->insertOne(array_map(fn ($key) => $this->csvCell($period[$key]), $fields));
         }
 
-        return response($writer->toString(), 200, [
+        $csv = $writer->toString();
+        $audit = app(SecReviewLineageService::class)->attest(
+            (int) auth()->id(), $result, $csv
+        );
+
+        return response($csv, 200, [
             'Content-Type' => 'text/csv; charset=UTF-8',
             'Content-Disposition' => 'attachment; filename="II_SEC_COMPANYFACTS_CIK'.$result['cik'].'_REVIEW.csv"',
             'Cache-Control' => 'private, no-store',
@@ -120,6 +126,10 @@ class FundamentalHubController extends Controller
             'X-II-Source-Sha256' => $result['source_sha256'],
             'X-II-Review-Required' => 'true',
             'X-II-Source-Origin' => $result['fetch_origin'] ?? 'USER_PROVIDED_JSON',
+            'X-II-Lineage-Node' => $audit['node_id'],
+            'X-II-Content-SHA256' => $audit['content_sha256'],
+            'X-II-Lineage-Status' => $audit['status'],
+            'X-II-Export-Scope' => 'LOCAL_REVIEW_ONLY_NOT_CLEARED_FOR_REDISTRIBUTION',
         ]);
     }
 
