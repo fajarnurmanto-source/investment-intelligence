@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Services\FundamentalScreenerService;
 use App\Services\FundamentalSnapshotService;
+use App\Services\DerivedAnalyticsLineageService;
 use Illuminate\Http\Request;
 use League\Csv\Writer;
 use Symfony\Component\HttpFoundation\Response;
@@ -66,7 +67,12 @@ class FundamentalScreenerController extends Controller
         $sectors = collect($records)->pluck('sector')->filter()->unique()->sort()->values()->all();
         $periods = collect($records)->pluck('latest_year')->filter()->unique()->sortDesc()->values()->all();
 
-        return [$filters, $screener->screen($records, $filters), $sectors, $periods];
+        $rows = $screener->screen($records, $filters);
+        $rows = app(DerivedAnalyticsLineageService::class)->screener(
+            (int) auth()->id(), $rows, $filters
+        );
+
+        return [$filters, $rows, $sectors, $periods];
     }
 
     private function csvCell(mixed $value): string
