@@ -19,6 +19,8 @@ class IssuerFundamentalImportService
 
     public function import(int $userId, array $metadata, UploadedFile $file): IssuerDocument
     {
+        // Defense in depth for callers bypassing the HTTP metadata validator.
+        app(ByokIntakeFirewall::class)->assertIndependentSource($metadata);
         $extension = strtolower($file->getClientOriginalExtension());
         if (! in_array($extension, ['csv', 'xbrl', 'xml', 'pdf'], true)) {
             throw new \InvalidArgumentException('Format yang didukung: CSV, XBRL/XML, atau PDF.');
@@ -105,6 +107,21 @@ class IssuerFundamentalImportService
                 }
 
                 $this->assessConflicts($document);
+
+                // Commit source + normalized transform lineage atomically with
+                // the imported document and periods. No raw content copied to
+                // the registry; only independently supplied SHA-256 digests.
+                $lineage = app(LocalLineageRegistry::class);
+                $sourceNode = $lineage->registerSource(
+                    $userId, 'issuer_document', $id, $sha256, $metadata
+                );
+                $normalizedPayloadHash = hash('sha256', $document->periods()
+                    ->orderBy('fiscal_year')->orderBy('period_end')->get()
+                    ->map(fn ($period) => $period->getAttributes())->toJson(JSON_THROW_ON_ERROR));
+                $lineage->registerTransformation(
+                    $userId, 'issuer_document', $id, 'NORMALIZE_ISSUER_PERIODS_V1',
+                    $normalizedPayloadHash, [$sourceNode['id']]
+                );
 
                 return $document->load(['source', 'periods']);
             });
