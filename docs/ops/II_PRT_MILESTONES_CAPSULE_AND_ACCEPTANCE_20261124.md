@@ -82,3 +82,9 @@ T07: Regression, release signing, rollback and recovery exercise.
 - explicit owner approval where required
 
 No CI, deployment, live data, rights approval or installer acceptance is asserted solely from writing this state document.
+
+## Incremental acceptance update — 24 November 2026
+- CI evidence: GitHub Actions run `45376739761`, result SUCCESS for prior HEAD `ff23d2d6bbff0ddfb423dc6c9468d0e1fd1ad322`; Linux Laravel and Windows hosted isolated Tinker/PHPUnit jobs both succeeded. This is **CI-runner Windows**, not owner-machine acceptance.
+- Follow-up code: fail-closed legacy manifest and tampered raw archive handling, avoid deleting pre-existing raw evidence during manifest failure, plus two new synthetic feature tests. New HEAD must earn its own CI success.
+- Open: deliberately simulated storage-write failures, provider-live receipt, license/rights review, original issuer filing reconciliation, owner Windows machine smoke, installer MVP.
+- Release gate unchanged: `NOT_ADMITTED / HOLD / TRADING_AUTHORITY=NONE`, no merge/deploy.
