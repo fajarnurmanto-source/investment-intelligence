@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\DB;
+
 /**
  * Binds a single on-demand SEC normalization REVIEW CSV to source evidence.
  * This is a local, user-initiated review artifact, not a commercial
@@ -28,6 +30,7 @@ final class SecReviewLineageService
         ) {
             throw new \RuntimeException('II_SEC_REVIEW_SOURCE_BOUNDARY_DENIED');
         }
+        return DB::transaction(function () use ($ownerId, $result, $csv, $cik, $sha, $origin): array {
         $registry = app(LocalLineageRegistry::class);
         $source = $registry->registerSource(
             $ownerId,
@@ -64,5 +67,6 @@ final class SecReviewLineageService
             'status' => $origin === 'SEC_OFFICIAL_API'
                 ? 'SOURCE_OFFICIAL_REVIEW_REQUIRED' : 'USER_UPLOAD_REVIEW_REQUIRED',
         ];
+        }, 1);
     }
 }
