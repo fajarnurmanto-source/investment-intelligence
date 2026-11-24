@@ -34,6 +34,24 @@ try {
     if ($a.status -ne 'PENDING_DATABASE_MIGRATION_AND_OWNER_ENROLLMENT') { throw 'BOOTSTRAP_FALSE_ACTIVATION' }
     if ($a.database_migrated -ne $false -or $a.login_ready -ne $false) { throw 'BOOTSTRAP_UNVERIFIED_CLAIM' }
     if ($a.device_id -eq $b.device_id) { throw 'DEVICE_ID_NOT_UNIQUE' }
+    foreach ($deviceRoot in @($first,$second)) {
+        $protectedAcl = Get-Acl -LiteralPath $deviceRoot
+        if (-not $protectedAcl.AreAccessRulesProtected) { throw 'DEVICE_DACL_INHERITANCE_NOT_PROTECTED' }
+        $allowedSids = @(
+            [Security.Principal.WindowsIdentity]::GetCurrent().User.Value,
+            'S-1-5-18'
+        )
+        foreach ($access in @($protectedAcl.Access)) {
+            if ($access.AccessControlType -eq [Security.AccessControl.AccessControlType]::Allow) {
+                $sid = $access.IdentityReference.Translate([Security.Principal.SecurityIdentifier]).Value
+                if ($sid -notin $allowedSids) { throw 'DEVICE_DACL_UNEXPECTED_PRINCIPAL' }
+            }
+        }
+        $secretAcl = Get-Acl -LiteralPath (Join-Path $deviceRoot '.env')
+        if (-not $secretAcl.AreAccessRulesProtected -and -not $protectedAcl.AreAccessRulesProtected) {
+            throw 'DEVICE_SECRET_ACL_NOT_RESTRICTED'
+        }
+    }
     $envA = Get-Content -LiteralPath (Join-Path $first '.env') -Raw
     $envB = Get-Content -LiteralPath (Join-Path $second '.env') -Raw
     $keyA = [regex]::Match($envA,'(?m)^APP_KEY=(base64:[A-Za-z0-9+/=]+)\r?$').Groups[1].Value
