@@ -156,4 +156,40 @@ class IdxEdgeFinancialEvidenceV13Test extends TestCase
         $this->assertDatabaseCount('ii_issuer_periods', 0);
         $this->assertDatabaseCount('ii_issuer_market_prices', 0);
     }
+    public function test_legacy_manifest_cannot_be_silently_promoted_to_verified_raw_evidence(): void
+    {
+        Storage::fake('local');
+        config()->set('ii.idxedge.key', 'test-provider-key');
+        Http::preventStrayRequests();
+
+        $body = json_encode($this->fixture(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+        $hash = hash('sha256', $body);
+        $prefix = 'ii_idxedge_review/BBCA/'.$hash;
+        Storage::disk('local')->put($prefix.'.json', '{"source_sha256":"'.$hash.'","status":"SCHEMA_REVIEW_REQUIRED"}');
+        Http::fake(['https://stock.arjum.com/*' => Http::response($body, 200, ['Content-Type' => 'application/json'])]);
+
+        $this->assertSame(1, Artisan::call('ii:idxedge:pilot', ['--ticker' => 'BBCA']));
+        $this->assertFalse(Storage::disk('local')->exists($prefix.'.raw'));
+        $this->assertSame('{"source_sha256":"'.$hash.'","status":"SCHEMA_REVIEW_REQUIRED"}', Storage::disk('local')->get($prefix.'.json'));
+        $this->assertDatabaseCount('ii_issuer_periods', 0);
+    }
+
+    public function test_tampered_existing_raw_archive_fails_closed_without_overwrite(): void
+    {
+        Storage::fake('local');
+        config()->set('ii.idxedge.key', 'test-provider-key');
+        Http::preventStrayRequests();
+
+        $body = json_encode($this->fixture(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+        $hash = hash('sha256', $body);
+        $prefix = 'ii_idxedge_review/BBCA/'.$hash;
+        Storage::disk('local')->put($prefix.'.raw', '{"tampered":true}');
+        Http::fake(['https://stock.arjum.com/*' => Http::response($body, 200, ['Content-Type' => 'application/json'])]);
+
+        $this->assertSame(1, Artisan::call('ii:idxedge:pilot', ['--ticker' => 'BBCA']));
+        $this->assertSame('{"tampered":true}', Storage::disk('local')->get($prefix.'.raw'));
+        $this->assertFalse(Storage::disk('local')->exists($prefix.'.json'));
+        $this->assertDatabaseCount('ii_issuer_periods', 0);
+    }
+
 }
