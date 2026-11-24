@@ -40,6 +40,26 @@ final class BlockRestrictedByokExports
             }
         }
 
+        // Older imported fundamental documents may refer to a restricted
+        // issuer source even when no market-price row was persisted. Protect
+        // all existing fundamental/screener CSV exports in that case too.
+        if (Schema::hasTable('ii_issuer_documents') && Schema::hasTable('ii_issuer_sources')) {
+            $restrictedDocument = DB::table('ii_issuer_documents as documents')
+                ->join('ii_issuer_sources as sources', 'documents.source_id', '=', 'sources.id')
+                ->where('documents.user_id', $userId)
+                ->where(function ($query): void {
+                    $query->whereRaw('LOWER(sources.source_url) LIKE ?', ['%marketdata.app%'])
+                        ->orWhereRaw('LOWER(sources.terms_url) LIKE ?', ['%marketdata.app%'])
+                        ->orWhereRaw('LOWER(sources.name) LIKE ?', ['%marketdata.app%'])
+                        ->orWhereRaw('LOWER(sources.name) LIKE ?', ['%marketdata byok%'])
+                        ->orWhereRaw('LOWER(sources.publisher) LIKE ?', ['%marketdata.app%']);
+                })->exists();
+
+            if ($restrictedDocument) {
+                abort(403, 'II_BYOK_LEGACY_RESTRICTED_DOCUMENT_EXPORT_BLOCKED');
+            }
+        }
+
         return $next($request);
     }
 }
