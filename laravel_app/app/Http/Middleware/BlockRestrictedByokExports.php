@@ -60,6 +60,19 @@ final class BlockRestrictedByokExports
             }
         }
 
+        // An immutable registry claim must continue to block export even if
+        // someone later edits the display name/URL on a legacy source row.
+        // Never accept a mutable source label as an override of recorded rights.
+        if (Schema::hasTable('ii_lineage_nodes')) {
+            $restrictedLineage = DB::table('ii_lineage_nodes')
+                ->where('user_id', $userId)
+                ->where('rights_basis', 'RESTRICTED_BYOK')
+                ->where('can_export', false)->exists();
+            if ($restrictedLineage) {
+                abort(403, 'II_LINEAGE_RESTRICTED_ANCESTRY_EXPORT_BLOCKED');
+            }
+        }
+
         return $next($request);
     }
 }
