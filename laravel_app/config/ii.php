@@ -11,14 +11,17 @@ return [
             'redistribution' => false,
         ],
     ],
-    'idxapi' => [
-        // Third-party IDX fundamentals provider: free 1,000 calls/month at
-        // time of integration. Never embed secrets in Git or the UI.
-        'key' => env('II_IDXAPI_KEY', ''),
-        'auto_sync' => filter_var(env('II_IDXAPI_AUTO_SYNC', false), FILTER_VALIDATE_BOOLEAN),
-        'tickers' => env('II_IDXAPI_TICKERS', ''),
-        'max_tickers_per_run' => 10,
-        'terms_url' => 'https://idxapi.io/terms',
+    // BYOK local: zero application-wide vendor credentials and no device sync.
+    'connectivity_mode' => 'BYOK_LOCAL',
+    'multi_device_sync' => false,
+    'shared_market_data_key' => false,
+    'marketdata' => [
+        'provider' => 'marketdata',
+        'byok' => true,
+        'local_only' => true,
+        'export_allowed' => false,
+        'raw_archival_allowed' => false,
+        'cloud_transfer_allowed' => false,
     ],
     'fred' => [
         'source_id' => 'FRED',
