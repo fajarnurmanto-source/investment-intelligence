@@ -95,9 +95,11 @@ class LocalByokArchitectureTest extends TestCase
             ->post('/ii/data-sources/quote', ['symbol' => 'AAPL'])
             ->assertRedirect()->assertSessionHasErrors('symbol');
         $this->post('/ii/data-sources/connect', [
-            'provider' => 'other', 'api_key' => 'anything',
+            'provider' => 'other', 'api_key' => 'SENSITIVE_API_KEY_NEVER_FLASH',
             'confirm_private_subscription' => '1',
         ])->assertSessionHasErrors('provider');
+        $this->assertStringNotContainsString('SENSITIVE_API_KEY_NEVER_FLASH', json_encode(session()->all()));
+        $this->assertDatabaseCount('ii_byok_credentials', 0);
         Http::assertNothingSent();
     }
 }
