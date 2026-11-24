@@ -62,7 +62,11 @@ try {
         if ($value -match '(?i)II_IDXEDGE_AUTO_SYNC|II_IDXAPI_KEY|II_SHARED_BYOK_KEY') {
             throw 'DEVICE_LEGACY_SHARED_FEED_ENV_PRESENT'
         }
-        if ($value -notmatch '(?m)^DB_CONNECTION=sqlite\r?
+        if ($value -notmatch '(?m)^DB_CONNECTION=sqlite\r?$' -or
+            $value -notmatch '(?m)^APP_DEBUG=false\r?$') {
+            throw 'DEVICE_LOCAL_ENV_GUARD_MISSING'
+        }
+    }
     foreach ($r in @($first,$second)) {
         $db = Join-Path $r 'database\ii.sqlite'
         if (-not (Test-Path -LiteralPath $db) -or (Get-Item $db).Length -ne 0) { throw 'DEVICE_DATABASE_STATE_INVALID' }
