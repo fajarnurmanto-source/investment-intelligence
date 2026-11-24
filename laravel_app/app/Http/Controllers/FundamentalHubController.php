@@ -9,6 +9,7 @@ use App\Models\IssuerCorporateAction;
 use App\Models\IssuerShareBasisReview;
 use App\Services\FundamentalSnapshotService;
 use App\Services\IssuerCoverageService;
+use App\Services\IdxApiFreeFundamentalsService;
 use App\Services\IssuerBatchIngestionService;
 use App\Services\IssuerFundamentalImportService;
 use App\Services\IssuerImportMetadataService;
@@ -151,6 +152,39 @@ class FundamentalHubController extends Controller
             'Content-Disposition' => 'attachment; filename="II_ISSUER_SOURCE_ACTIVATION_V9.csv"',
             'Cache-Control' => 'private, no-store',
             'X-Content-Type-Options' => 'nosniff',
+        ]);
+    }
+
+    /**
+     * Free third-party API acquisition (not official IDX). All three statements
+     * are fetched automatically; returned native concepts require reconciliation.
+     * No user DB writes, order placement, or credential exposure.
+     */
+    public function fetchIdxApiAnnual(Request $request, IdxApiFreeFundamentalsService $connector)
+    {
+        $data = $request->validate([
+            'idxapi_ticker' => ['required', 'string', 'regex:/^[A-Za-z0-9]{4,6}$/'],
+            'idxapi_year' => ['required', 'integer', 'between:2000,2100'],
+        ]);
+        try {
+            $result = $connector->fetchAnnual($data['idxapi_ticker'], (int) $data['idxapi_year']);
+        } catch (\InvalidArgumentException $exception) {
+            return redirect()->route('ii.fundamentals.index', ['workspace' => 'activation'])
+                ->withErrors(['idxapi_ticker' => $exception->getMessage()]);
+        } catch (\Throwable $exception) {
+            Log::warning('II free IDXAPI read-only fetch failed', ['type' => get_class($exception)]);
+            return redirect()->route('ii.fundamentals.index', ['workspace' => 'activation'])
+                ->withErrors(['idxapi_ticker' => 'Penyedia fundamental belum dapat diakses; tidak ada data yang disimpan.']);
+        }
+
+        $json = json_encode($result, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+        return response($json, 200, [
+            'Content-Type' => 'application/json; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="II_IDXAPI_'.$result['ticker'].'_FY'.$result['year'].'_REVIEW.json"',
+            'Cache-Control' => 'private, no-store',
+            'X-Content-Type-Options' => 'nosniff',
+            'X-II-Review-Required' => 'true',
+            'X-II-Source-Origin' => 'IDXAPI_THIRD_PARTY_FREE',
         ]);
     }
 
