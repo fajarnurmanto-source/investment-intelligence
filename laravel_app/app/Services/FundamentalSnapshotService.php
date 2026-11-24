@@ -52,16 +52,26 @@ class FundamentalSnapshotService
                 if ($document->periods->isEmpty()) {
                     continue;
                 }
-                $summary = $this->summarizeDocument($document, (int) $versions[$document->issuer_code], $prices->get($document->issuer_code), (bool) $priceConflicts->get($document->issuer_code, false));
-                $node = app(LocalLineageRegistry::class)->find(
+                $observation = $prices->get($document->issuer_code);
+                $summary = $this->summarizeDocument($document, (int) $versions[$document->issuer_code], $observation, (bool) $priceConflicts->get($document->issuer_code, false));
+                $registry = app(LocalLineageRegistry::class);
+                $node = $registry->find(
                     $userId, 'issuer_document', $document->id, 'NORMALIZE_ISSUER_PERIODS_V1'
                 );
-                // Explicit immutable transform link. Legacy documents with no
-                // migration registry remain UNREGISTERED, never auto-approved.
+                $priceNode = $observation
+                    ? $registry->find($userId, 'issuer_market_price', $observation->id, 'ACQUIRED_SOURCE')
+                    : null;
+                // Normalization has a registered transform ID. Valuation
+                // combines separate inputs dynamically and is NOT yet a
+                // materialized transform; do not mislabel it as audited.
                 $summary['lineage_node_id'] = $node['id'] ?? null;
-                $summary['lineage_status'] = $node === null ? 'UNREGISTERED' : 'REGISTERED';
+                $summary['lineage_market_price_node_id'] = $priceNode['id'] ?? null;
+                $summary['lineage_status'] = $node === null ? 'UNREGISTERED'
+                    : ($observation === null ? 'REGISTERED'
+                        : ($priceNode === null ? 'PARTIAL_UNREGISTERED_PRICE'
+                            : 'INPUTS_REGISTERED_TRANSFORM_PENDING'));
                 $summary['lineage_rights_profile'] = $node['rights_profile'] ?? 'UNVERIFIED';
-                $summary['lineage_effective_export'] = $node['can_export'] ?? false;
+                $summary['lineage_effective_export'] = false;
                 $out[$document->issuer_code] = $summary;
             }
         }
