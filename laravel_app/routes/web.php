@@ -8,6 +8,7 @@ use App\Http\Controllers\PortfolioSandboxController;
 use App\Http\Controllers\ProductDashboardController;
 use App\Http\Controllers\ResearchCaseController;
 use App\Http\Controllers\ResearchLoginController;
+use App\Http\Controllers\LocalByokController;
 use App\Http\Controllers\ResearchWorkspaceController;
 use App\Http\Controllers\RiskBudgetController;
 use App\Http\Controllers\RollingValidationController;
@@ -33,6 +34,15 @@ Route::prefix('ii')->name('ii.')->group(function (): void {
     Route::middleware(['auth', EnsureResearchRole::class])->group(function (): void {
 
         Route::get('/dashboard', [ProductDashboardController::class, 'index'])->name('dashboard');
+        // Local-user BYOK; no provider key or market payload leaves this device.
+        Route::get('/data-sources', [LocalByokController::class, 'index'])->name('byok.index');
+        Route::post('/data-sources/connect', [LocalByokController::class, 'connect'])
+            ->middleware('throttle:3,1')->name('byok.connect');
+        Route::post('/data-sources/disconnect', [LocalByokController::class, 'disconnect'])
+            ->middleware('throttle:3,1')->name('byok.disconnect');
+        Route::post('/data-sources/quote', [LocalByokController::class, 'quote'])
+            ->middleware('throttle:6,1')->name('byok.quote');
+
         Route::get('/signals', [SignalCenterController::class, 'index'])->name('signals.index');
         Route::post('/signals/import', [SignalCenterController::class, 'import'])
             ->middleware('throttle:8,1')->name('signals.import');
