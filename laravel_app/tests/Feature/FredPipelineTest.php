@@ -87,7 +87,7 @@ class FredPipelineTest extends TestCase
 
         config()->set('ii.fred.report_rights.CPIAUCSL.scope', 'LOCAL_PERSONAL_NONCOMMERCIAL_CSV');
         \App\Models\EconomicObservation::query()->where('series_id', 'CPIAUCSL')
-            ->where('observed_on', '2026-01-01')->update([
+            ->orderByDesc('observed_on')->firstOrFail()->update([
                 'source_url' => 'https://fred.stlouisfed.org.evil.example/graph/fredgraph.csv',
             ]);
         Cache::flush();
