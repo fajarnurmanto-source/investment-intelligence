@@ -50,6 +50,12 @@ class FundamentalSnapshotService
                 $out[$document->issuer_code] = $this->summarizeDocument($document, (int) $versions[$document->issuer_code], $prices->get($document->issuer_code), (bool) $priceConflicts->get($document->issuer_code, false));
             }
         }
+        // Apply source rights at the shared data boundary, before the same
+        // snapshot can feed screener, coverage, valuation or Blade views.
+        $lineage = app(ByokSnapshotLineage::class);
+        foreach ($out as $ticker => $record) {
+            $out[$ticker] = $lineage->apply($record);
+        }
         ksort($out);
 
         return $out;
@@ -142,6 +148,7 @@ class FundamentalSnapshotService
             'market_price_as_of' => $marketPriceAsOf,
             'valuation_market_price' => $price,
             'market_price_source' => $marketObservation?->source_name ?? ($embeddedPrice !== null ? $document->source->name : null),
+            'market_price_source_url' => $marketObservation?->source_url ?? ($embeddedPrice !== null ? $document->source->source_url : null),
             'market_price_rights' => $priceRights,
             'share_basis_status' => $basis['status'] ?? 'NOT_APPLICABLE',
             'share_basis_factor' => $basis['factor'] ?? null,
