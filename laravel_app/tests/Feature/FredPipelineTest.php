@@ -72,6 +72,14 @@ class FredPipelineTest extends TestCase
         $this->assertTrue($registry->verifyTrace($user->id, $nodeId));
         $this->assertCount(2, $registry->trace($user->id, $nodeId)['nodes']);
         $this->assertFalse($registry->allows($user->id, $nodeId, 'cloud'));
+        // Removing/changing the actual local review evidence revokes future
+        // downloads even though the old immutable report claim remains.
+        Storage::disk('local')->put('ii-rights-reviews/ci-synthetic-receipt.txt', 'tampered-review');
+        $this->get('/ii/macro/report/rights')->assertOk()
+            ->assertJsonPath('status', 'DENIED')
+            ->assertJsonPath('issues.0', 'CPIAUCSL:RIGHTS_REVIEW_REQUIRED');
+        $this->get('/ii/macro/report.csv')->assertForbidden();
+        $this->assertDatabaseCount('ii_lineage_nodes', 2);
     }
 
     public function test_macro_rights_preflight_rejects_spoofed_source_and_invalid_review_receipt(): void
