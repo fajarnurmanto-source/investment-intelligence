@@ -216,6 +216,29 @@ final class LocalLineageRegistryTest extends TestCase
         $this->assertDatabaseCount('ii_lineage_nodes', 1);
     }
 
+    public function test_issuer_csv_export_fails_closed_on_tampered_independent_lineage(): void
+    {
+        $owner = User::factory()->create();
+        $owner->forceFill(['ii_research_role' => 'analyst'])->save();
+        $registry = app(LocalLineageRegistry::class);
+        $source = $registry->registerSource(
+            $owner->id, 'issuer_document', 'synthetic-issuer-export-audit',
+            hash('sha256', 'synthetic-independent-issuer'), $this->source()
+        );
+        $this->actingAs($owner)
+            ->get('/ii/fundamentals/coverage/export.csv')->assertOk();
+        DB::table('ii_lineage_nodes')->where('id', $source['id'])
+            ->update(['can_cloud_transfer' => true]);
+        $this->get('/ii/fundamentals/coverage/export.csv')->assertForbidden();
+        $this->get('/ii/screener/export.csv')->assertForbidden();
+        $this->assertFalse($registry->verifyTrace($owner->id, $source['id']));
+
+        $other = User::factory()->create();
+        $other->forceFill(['ii_research_role' => 'analyst'])->save();
+        $this->actingAs($other)
+            ->get('/ii/fundamentals/coverage/export.csv')->assertOk();
+    }
+
     public function test_actual_issuer_import_registers_source_and_normalization_atomically(): void
     {
         Storage::fake('local');
