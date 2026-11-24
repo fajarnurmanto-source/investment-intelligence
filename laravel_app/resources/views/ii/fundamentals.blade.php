@@ -82,6 +82,21 @@
             <p class="hint">Ketentuan BEI melarang web scraping/crawling serta penggunaan komersial atau penyebaran kembali data tanpa izin yang diperlukan. <a href="https://www.idx.co.id/id/syarat-penggunaan/" target="_blank" rel="noopener noreferrer">Baca syarat penggunaan BEI</a>. Metadata hak penggunaan yang diinput pengguna belum merupakan bukti lisensi komersial.</p>
             <p><a href="{{ route('ii.fundamentals.index', ['workspace' => 'sources']) }}">Buka unggah laporan dan batch →</a> · <a href="{{ route('ii.fundamentals.index', ['workspace' => 'prices']) }}">Buka harga EOD dan preview →</a></p>
         </section>
+        <section class="panel" aria-labelledby="idxedge-v13-title" style="margin-top:16px">
+            <span class="badge blue">V13 PILOT · IDX EDGE PRO · FREE API</span>
+            <h2 id="idxedge-v13-title" style="margin-top:12px">Konektor alternatif fundamental BEI</h2>
+            <p class="caption">Mengakses <a href="https://stock.arjum.com/api-docs" target="_blank" rel="noopener noreferrer">IDX Edge PRO</a>, penyedia pihak ketiga (bukan layanan resmi BEI), lewat endpoint laporan keuangan <code>/api/financial-statements/{code}</code>. Paket Free saat implementasi diiklankan 1.000 permintaan/hari. Setiap klik memakai satu permintaan dan mengunduh bukti JSON untuk pemeriksaan.</p>
+            @if(config('ii.idxedge.key'))
+                <div class="success">API key IDX Edge PRO terkonfigurasi pada runtime. Nilainya tidak ditampilkan.</div>
+            @else
+                <div class="boundary">API key belum terkonfigurasi. Daftarkan akun gratis di <a href="https://stock.arjum.com/" target="_blank" rel="noopener noreferrer">IDX Edge PRO</a>, kemudian atur <code>II_IDXEDGE_KEY</code> pada <code>.env</code> runtime. Jangan mengunggah key ke Git atau mengirimkannya melalui chat.</div>
+            @endif
+            <form method="POST" action="{{ route('ii.fundamentals.idxedge.free-review') }}">@csrf
+                <div class="field"><label for="idxedge_ticker">Kode emiten BEI (tanpa .JK)</label><input id="idxedge_ticker" name="idxedge_ticker" maxlength="6" pattern="[A-Za-z0-9]{4,6}" placeholder="BBCA" required></div>
+                <button type="submit" @disabled(!config('ii.idxedge.key'))>Ambil laporan fundamental — JSON review</button>
+            </form>
+            <p class="hint">Pilot BBCA, TLKM, ASII. Struktur, periode laporan, angka, mata uang, dan hak redistribusi perlu diperiksa terhadap sumber aslinya. Respons disimpan sebagai <strong>SCHEMA_REVIEW_REQUIRED</strong> dan tidak otomatis masuk ke fundamental, screener, atau sistem trading. Sinkronisasi mingguan baru aktif bila <code>II_IDXEDGE_AUTO_SYNC=true</code>.</p>
+        </section>
         <section class="panel" aria-labelledby="idxapi-v12-title" style="margin-top:16px">
             <span class="badge blue">V12 · FUNDAMENTAL BEI · API GRATIS (PIHAK KETIGA)</span>
             <h2 id="idxapi-v12-title" style="margin-top:12px">Ambil tiga laporan keuangan emiten otomatis</h2>
