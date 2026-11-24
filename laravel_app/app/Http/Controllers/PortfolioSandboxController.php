@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Services\PortfolioScenarioService;
 use App\Services\SignalInsightService;
+use App\Services\SignalAnalyticsLineageService;
 use Illuminate\Http\Request;
 
 class PortfolioSandboxController extends Controller
@@ -56,6 +57,9 @@ class PortfolioSandboxController extends Controller
                     $documents[$ticker] = $document;
                 }
                 $result = $portfolio->analyze($documents, $selections);
+                $result = app(SignalAnalyticsLineageService::class)->portfolio(
+                    (int) auth()->id(), $documents, $selections, $result
+                );
             } catch (\InvalidArgumentException $exception) {
                 $warning = $exception->getMessage();
             }
