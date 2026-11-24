@@ -74,7 +74,7 @@ class FundamentalSnapshotService
                 $summary['lineage_effective_export'] = false;
                 $basisNode = ! empty($summary['share_basis_review_id'])
                     ? $registry->find($userId, 'issuer_share_basis_review',
-                        $summary['share_basis_review_id'], 'ACQUIRED_SOURCE')
+                        $summary['share_basis_review_id'], 'RECONCILE_SHARE_BASIS_V1')
                     : null;
                 $summary['lineage_share_basis_node_id'] = $basisNode['id'] ?? null;
                 // Register derived valuation without persisting any numeric
