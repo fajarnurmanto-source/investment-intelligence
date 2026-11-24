@@ -61,7 +61,9 @@ class FundamentalHubController extends Controller
 
     /**
      * Explicit user-uploaded SEC companyfacts JSON -> reviewable normalized CSV.
-     * No network, DB/storage writes, source approval or trading permission.
+     * No network or raw financial payload persistence. A digest-only, owner-
+     * scoped source→CSV review audit is recorded in SQLite; no source approval,
+     * redistribution permission or trading authority is inferred.
      */
     public function normalizeSecCompanyFacts(Request $request, SecCompanyFactsNormalizationService $normalizer)
     {
