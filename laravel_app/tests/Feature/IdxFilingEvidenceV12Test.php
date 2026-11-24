@@ -74,6 +74,10 @@ class IdxFilingEvidenceV12Test extends TestCase
 
     public function test_idx_source_url_is_exact_https_pdf_on_official_host_with_no_fetch(): void
     {
+        // This table-driven security test sends multiple malformed URLs in one
+        // test method. Keep auth and role middleware; bypass only the rate
+        // limiter, which is tested independently by Laravel's middleware.
+        $this->withoutMiddleware(\Illuminate\Routing\Middleware\ThrottleRequests::class);
         Storage::fake('local');
         $owner = $this->analyst();
         foreach ([
