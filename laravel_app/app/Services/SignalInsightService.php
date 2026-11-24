@@ -73,17 +73,23 @@ class SignalInsightService
                 || count($document['rows']) < 60) {
                 continue;
             }
+            // Historical JSON can predate the BYOK firewall. Refuse known
+            // restricted sources before indicators/portfolio/strategy use it.
+            if (app(ByokSnapshotLineage::class)->isRestricted($document)) {
+                continue;
+            }
             $ticker = $document['ticker'];
+            $jsonHash = hash('sha256', $disk->get($path));
             $node = app(LocalLineageRegistry::class)->find(
                 $userId, 'signal_ohlcv_document',
-                hash('sha256', $disk->get($path)), 'ACQUIRED_SOURCE'
+                $jsonHash, 'ACQUIRED_SOURCE'
             );
             $document['lineage_source_node_id'] = null;
             $document['lineage_source_status'] = 'UNREGISTERED';
             // Independently rehash the physical JSON file before using the
             // source node. Legacy sources remain identifiable as unregistered.
             if ($node !== null && app(LocalLineageRegistry::class)->verifyTrace($userId, $node['id'])
-                && hash_equals($node['evidence_sha256'], hash('sha256', $disk->get($path)))) {
+                && hash_equals($node['evidence_sha256'], $jsonHash)) {
                 $document['lineage_source_node_id'] = $node['id'];
                 $document['lineage_source_status'] = 'REGISTERED';
             }
