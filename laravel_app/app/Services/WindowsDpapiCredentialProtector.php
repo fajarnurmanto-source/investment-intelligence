@@ -58,28 +58,39 @@ final class WindowsDpapiCredentialProtector
             throw new \RuntimeException('II_DPAPI_INPUT_INVALID');
         }
 
-        try {
-            $process = new Process([
-                $powerShell, '-NoLogo', '-NoProfile', '-NonInteractive',
-                '-ExecutionPolicy', 'Bypass', '-File', $script, $operation,
-            ]);
-            // stdin only. Symfony Process never interpolates the secret into
-            // process arguments. Do not forward stderr/stdout to application logs.
-            $process->setInput(base64_encode($raw));
-            $process->setTimeout(15);
-            $process->run();
-            if (! $process->isSuccessful()) {
-                throw new \RuntimeException('II_DPAPI_OPERATION_FAILED');
-            }
-            $output = trim($process->getOutput());
-            if (! $this->isBase64($output)) {
-                throw new \RuntimeException('II_DPAPI_OUTPUT_INVALID');
-            }
+        // Windows PowerShell startup and the DPAPI user profile can be
+        // transiently unavailable under cold-start CI / interactive login.
+        // Retry a bounded local-only operation once; never fall back to
+        // plaintext, Laravel Crypt, or a different Windows user identity.
+        for ($attempt = 1; $attempt <= 2; $attempt++) {
+            try {
+                $process = new Process([
+                    $powerShell, '-NoLogo', '-NoProfile', '-NonInteractive',
+                    '-ExecutionPolicy', 'Bypass', '-File', $script, $operation,
+                ]);
+                // Stdin only. No plaintext in arguments, env or temp files.
+                $process->setInput(base64_encode($raw));
+                $process->setTimeout(45);
+                $process->run();
+                if (! $process->isSuccessful()) {
+                    throw new \RuntimeException('II_DPAPI_OPERATION_FAILED');
+                }
+                $output = trim($process->getOutput());
+                if (! $this->isBase64($output)) {
+                    throw new \RuntimeException('II_DPAPI_OUTPUT_INVALID');
+                }
 
-            return $output;
-        } catch (\Throwable) {
-            throw new \RuntimeException('II_DPAPI_OPERATION_FAILED');
+                return $output;
+            } catch (\Throwable) {
+                if ($attempt === 2) {
+                    throw new \RuntimeException('II_DPAPI_OPERATION_FAILED');
+                }
+
+                usleep(200_000);
+            }
         }
+
+        throw new \RuntimeException('II_DPAPI_OPERATION_FAILED');
     }
 
     private function isBase64(string $value): bool
