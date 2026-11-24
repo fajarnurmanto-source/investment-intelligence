@@ -111,6 +111,8 @@ class IdxEdgeFinancialEvidenceService
             'quota_remaining_claim' => ctype_digit((string) ($response->header('X-RateLimit-Remaining') ?? ''))
                 ? (int) $response->header('X-RateLimit-Remaining') : null,
             'raw_provider_payload' => $payload,
+            // Internal evidence transport only: exact upstream bytes, not a reserialized JSON object.
+            'raw_response_body' => $body,
             'status' => 'SCHEMA_REVIEW_REQUIRED',
             'numeric_reconciliation' => 'UNRECONCILED',
             'gate' => 'NOT_ADMITTED',
