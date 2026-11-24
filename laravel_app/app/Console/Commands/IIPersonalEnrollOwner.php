@@ -37,6 +37,15 @@ class IIPersonalEnrollOwner extends Command
                 $this->error('II_PRT_DEVICE_MIGRATION_OR_IDENTITY_NOT_READY');
                 return self::FAILURE;
             }
+            // Never stamp one device as enrolled after inserting a user into
+            // some unrelated SQLite database selected through stale config.
+            $db = realpath((string) config('database.connections.sqlite.database'));
+            $expected = realpath(rtrim($root, '\\/').DIRECTORY_SEPARATOR.'database'.DIRECTORY_SEPARATOR.'ii.sqlite');
+            if (config('database.default') !== 'sqlite' || $db === false
+                || $expected === false || ! hash_equals($expected, $db)) {
+                $this->error('II_PRT_DEVICE_DATABASE_MISMATCH');
+                return self::FAILURE;
+            }
         }
         if (! Schema::hasTable('users') || ! Schema::hasColumn('users', 'ii_research_role')) {
             $this->error('II_PRT_MIGRATION_REQUIRED');
