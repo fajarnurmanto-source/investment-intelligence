@@ -118,10 +118,27 @@ class IssuerShareBasisReconciliationService
             throw new \InvalidArgumentException('Review basis saham dengan bukti dan daftar aksi yang sama sudah disimpan.');
         }
 
-        return DB::transaction(function () use ($userId, $payload, $sha): IssuerShareBasisReview {
+        return DB::transaction(function () use ($userId, $payload, $sha, $actions): IssuerShareBasisReview {
+            $registry = app(LocalLineageRegistry::class);
             $review = IssuerShareBasisReview::create(['user_id' => $userId, ...$payload, 'sha256' => $sha]);
-            app(LocalLineageRegistry::class)->registerSource(
+            $reviewSource = $registry->registerSource(
                 $userId, 'issuer_share_basis_review', $review->id, $sha, $payload
+            );
+            $parents = [$reviewSource['id']];
+            foreach ($actions as $action) {
+                $registeredAction = $registry->find(
+                    $userId, 'issuer_corporate_action', $action->id, 'ACQUIRED_SOURCE'
+                );
+                if ($registeredAction === null
+                    || ! hash_equals((string) $action->sha256, $registeredAction['evidence_sha256'])) {
+                    throw new \RuntimeException('II_SHARE_BASIS_ACTION_LINEAGE_MISSING');
+                }
+                $parents[] = $registeredAction['id'];
+            }
+            $registry->registerTransformation(
+                $userId, 'issuer_share_basis_review', $review->id,
+                'RECONCILE_SHARE_BASIS_V1',
+                hash('sha256', $sha.'|'.$payload['events_sha256']), $parents
             );
 
             return $review;
