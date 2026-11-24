@@ -102,6 +102,19 @@ class IssuerShareBasisV4Test extends TestCase
         $this->assertSame('AVAILABLE_USER_RECONCILED_AS_OF_2025-01-31', $aligned['valuation_status']);
         $this->assertSame(2000.0, $aligned['valuation_shares_outstanding']);
         $this->assertNotNull($aligned['pe_ratio']);
+        $registry = app(\App\Services\LocalLineageRegistry::class);
+        $action = IssuerCorporateAction::where('user_id', $owner->id)->firstOrFail();
+        $review = IssuerShareBasisReview::where('user_id', $owner->id)->firstOrFail();
+        $actionNode = $registry->find($owner->id, 'issuer_corporate_action', $action->id, 'ACQUIRED_SOURCE');
+        $reviewNode = $registry->find($owner->id, 'issuer_share_basis_review', $review->id, 'ACQUIRED_SOURCE');
+        $this->assertNotNull($actionNode);
+        $this->assertNotNull($reviewNode);
+        $this->assertSame($reviewNode['id'], $aligned['lineage_share_basis_node_id']);
+        $this->assertSame('REGISTERED_RESEARCH_ONLY', $aligned['lineage_valuation_status']);
+        $this->assertTrue($registry->verifyTrace($owner->id, $aligned['lineage_valuation_node_id']));
+        $ancestry = $registry->trace($owner->id, $aligned['lineage_valuation_node_id']);
+        $this->assertContains($reviewNode['id'], array_column($ancestry['nodes'], 'id'));
+        $this->assertFalse($registry->allows($owner->id, $aligned['lineage_valuation_node_id'], 'export'));
         $this->assertSame('HOLD', $aligned['decision']);
         $this->assertSame('NONE', $aligned['trading_authority']);
 
