@@ -118,6 +118,18 @@ final class LocalLineageRegistryTest extends TestCase
         $this->assertFalse($grandchild['can_export']);
         $this->assertFalse($grandchild['can_persist_payload']);
         $this->assertDatabaseCount('ii_lineage_edges', 3);
+        $trace = $registry->trace($a->id, $grandchild['id']);
+        $this->assertSame($grandchild['id'], $trace['root_node_id']);
+        $this->assertCount(4, $trace['nodes']);
+        $this->assertCount(3, $trace['edges']);
+        $this->assertFalse($registry->allows($a->id, $grandchild['id'], 'export'));
+        try {
+            $registry->trace($b->id, $grandchild['id']);
+            $this->fail('Cross-owner trace must be blocked.');
+        } catch (\InvalidArgumentException $e) {
+            $this->assertSame('II_LINEAGE_TRACE_NOT_OWNED_OR_MISSING', $e->getMessage());
+        }
+
 
         $stored = DB::table('ii_lineage_nodes')->where('id', $restricted['id'])->first();
         $this->assertStringNotContainsString('synthetic-only', $stored->source_metadata);
