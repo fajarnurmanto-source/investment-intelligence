@@ -20,6 +20,15 @@ return [
         'max_tickers_per_run' => 10,
         'terms_url' => 'https://idxapi.io/terms',
     ],
+    'idxedge' => [
+        // Independent third-party pilot. Requires user-owned free API key.
+        // No official IDX licensing is implied. Disable automation by default.
+        'key' => env('II_IDXEDGE_KEY', ''),
+        'auto_sync' => filter_var(env('II_IDXEDGE_AUTO_SYNC', false), FILTER_VALIDATE_BOOLEAN),
+        'tickers' => env('II_IDXEDGE_TICKERS', 'BBCA,TLKM,ASII'),
+        'max_tickers_per_run' => 3,
+        'documentation_url' => 'https://stock.arjum.com/api-docs',
+    ],
     'fred' => [
         'source_id' => 'FRED',
         'name' => 'Federal Reserve Economic Data',
