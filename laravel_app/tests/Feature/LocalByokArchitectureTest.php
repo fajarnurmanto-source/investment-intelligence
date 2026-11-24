@@ -8,7 +8,8 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request as ClientRequest;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Crypt;
+use App\Services\LocalByokCredentialVault;
+use App\Services\WindowsDpapiCredentialProtector;
 use Tests\TestCase;
 
 class LocalByokArchitectureTest extends TestCase
@@ -34,11 +35,26 @@ class LocalByokArchitectureTest extends TestCase
         $row = DB::table('ii_byok_credentials')->where('user_id', $owner->id)->first();
         $this->assertNotNull($row);
         $this->assertStringNotContainsString($secret, $row->encrypted_api_key);
-        $this->assertSame($secret, Crypt::decryptString($row->encrypted_api_key));
+        $this->assertSame($secret, app(LocalByokCredentialVault::class)->key($owner->id, 'marketdata'));
+        if (PHP_OS_FAMILY === 'Windows') {
+            $this->assertStringStartsWith(WindowsDpapiCredentialProtector::PREFIX, $row->encrypted_api_key);
+        } else {
+            $this->assertStringStartsWith('laravel-local-v1:', $row->encrypted_api_key);
+        }
         $this->get('/ii/data-sources')->assertOk()->assertDontSee($secret)
             ->assertSee('Kunci tersedia di perangkat');
         $this->post('/ii/data-sources/disconnect')->assertRedirect('/ii/data-sources');
         $this->assertDatabaseCount('ii_byok_credentials', 0);
+    }
+
+    public function test_corrupt_ciphertext_is_rejected_without_exposing_stored_key(): void
+    {
+        $owner = $this->owner();
+        app(LocalByokCredentialVault::class)->save($owner->id, 'marketdata', 'not-for-disclosure');
+        DB::table('ii_byok_credentials')->where('user_id', $owner->id)
+            ->update(['encrypted_api_key' => 'malformed-secret-format']);
+        $this->expectException(\RuntimeException::class);
+        app(LocalByokCredentialVault::class)->key($owner->id, 'marketdata');
     }
 
     public function test_local_only_credential_endpoints_reject_nonlocal_ip(): void
