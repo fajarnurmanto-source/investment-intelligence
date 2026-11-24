@@ -26,6 +26,7 @@ return new class extends Migration
             $table->json('source_metadata'); // sanitized names/URLs, no keys/numeric data
             $table->timestamp('created_at')->useCurrent();
             $table->unique(['user_id', 'fingerprint']);
+            $table->unique(['user_id', 'kind', 'reference_type', 'reference_id', 'operation'], 'ii_lineage_node_reference_unique');
             $table->index(['user_id', 'reference_type', 'reference_id']);
         });
 
