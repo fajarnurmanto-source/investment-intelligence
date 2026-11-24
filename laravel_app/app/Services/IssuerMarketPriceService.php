@@ -22,6 +22,7 @@ class IssuerMarketPriceService
             'provenance_confidence' => ['required', 'in:high,medium,low'],
             'redistribution_allowed' => ['nullable', 'boolean'], 'rights_confirmed' => ['accepted'],
         ])->validate();
+        app(ByokIntakeFirewall::class)->assertIndependentSource($data);
         if (($data['redistribution_allowed'] ?? false) && $data['usage_rights'] !== 'redistribution_permitted') {
             throw new \InvalidArgumentException('Harga tidak boleh ditandai dapat didistribusikan tanpa hak redistribusi.');
         }
