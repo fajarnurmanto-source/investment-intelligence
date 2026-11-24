@@ -55,16 +55,16 @@ class IIIdxEdgePilot extends Command
                 // The checksum must describe the *stored original HTTP bytes*,
                 // not the reserialized JSON review manifest.
                 if (! hash_equals($hash, hash('sha256', $raw))) {
-                    throw new \\RuntimeException('IDXEDGE_SOURCE_HASH_MISMATCH');
+                    throw new \RuntimeException('IDXEDGE_SOURCE_HASH_MISMATCH');
                 }
                 $disk = Storage::disk('local');
                 if (! $disk->exists($rawPath)) {
                     if (! $disk->put($rawPath, $raw)) {
-                        throw new \\RuntimeException('IDXEDGE_RAW_ARCHIVE_FAILED');
+                        throw new \RuntimeException('IDXEDGE_RAW_ARCHIVE_FAILED');
                     }
                 }
                 if (! hash_equals($hash, hash('sha256', $disk->get($rawPath)))) {
-                    throw new \\RuntimeException('IDXEDGE_STORED_HASH_MISMATCH');
+                    throw new \RuntimeException('IDXEDGE_STORED_HASH_MISMATCH');
                 }
 
                 $result['raw_private_path'] = $rawPath;
@@ -73,9 +73,9 @@ class IIIdxEdgePilot extends Command
                     try {
                         $manifest = json_encode($result, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
                         if (! $disk->put($manifestPath, $manifest)) {
-                            throw new \\RuntimeException('IDXEDGE_MANIFEST_ARCHIVE_FAILED');
+                            throw new \RuntimeException('IDXEDGE_MANIFEST_ARCHIVE_FAILED');
                         }
-                    } catch (\\Throwable $error) {
+                    } catch (\Throwable $error) {
                         // Avoid leaving an untracked raw-only record after manifest failure.
                         $disk->delete($rawPath);
                         throw $error;
