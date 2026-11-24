@@ -82,24 +82,13 @@
             <p class="hint">Ketentuan BEI melarang web scraping/crawling serta penggunaan komersial atau penyebaran kembali data tanpa izin yang diperlukan. <a href="https://www.idx.co.id/id/syarat-penggunaan/" target="_blank" rel="noopener noreferrer">Baca syarat penggunaan BEI</a>. Metadata hak penggunaan yang diinput pengguna belum merupakan bukti lisensi komersial.</p>
             <p><a href="{{ route('ii.fundamentals.index', ['workspace' => 'sources']) }}">Buka unggah laporan dan batch →</a> · <a href="{{ route('ii.fundamentals.index', ['workspace' => 'prices']) }}">Buka harga EOD dan preview →</a></p>
         </section>
-        <section class="panel" aria-labelledby="idxapi-v12-title" style="margin-top:16px">
-            <span class="badge blue">V12 · FUNDAMENTAL BEI · API GRATIS (PIHAK KETIGA)</span>
-            <h2 id="idxapi-v12-title" style="margin-top:12px">Ambil tiga laporan keuangan emiten otomatis</h2>
-            <p class="caption">Terhubung ke <a href="https://idxapi.io/docs" rel="noopener noreferrer" target="_blank">idxapi.io</a> (bukan API resmi milik BEI). Paket gratis yang diumumkan penyedia menyediakan 1.000 request/bulan; sekali pengambilan memakai tiga request: laba rugi, neraca, arus kas. Gunakan untuk riset internal sesuai <a href="https://idxapi.io/terms" target="_blank" rel="noopener noreferrer">ketentuan penyedia</a> dan hak data yang berlaku.</p>
-            @if(config('ii.idxapi.key'))
-                <div class="success">Konektor API key terkonfigurasi di runtime (nilainya tidak ditampilkan).</div>
-            @else
-                <div class="boundary">Belum aktif: API key gratis belum diatur di <code>II_IDXAPI_KEY</code>. <a href="https://idxapi.io/pricing" rel="noopener noreferrer" target="_blank">Daftar paket Free</a>, simpan API key di <code>.env</code> runtime dan muat ulang konfigurasi melalui deployment kanonis. Jangan masukkan kunci ke Git atau chat.</div>
-            @endif
-            <form method="POST" action="{{ route('ii.fundamentals.idxapi.free-review') }}">@csrf
-                <div class="split">
-                    <div class="field"><label for="idxapi_ticker">Kode emiten BEI</label><input id="idxapi_ticker" name="idxapi_ticker" maxlength="6" pattern="[A-Za-z0-9]{4,6}" placeholder="BBCA" required></div>
-                    <div class="field"><label for="idxapi_year">Tahun laporan FY</label><input id="idxapi_year" name="idxapi_year" type="number" min="2000" max="{{ now()->year }}" value="{{ now()->subYear()->year }}" required></div>
-                </div>
-                <button type="submit" @disabled(!config('ii.idxapi.key'))>Ambil laba rugi + neraca + arus kas (JSON review)</button>
-            </form>
-            <p class="hint">Pengambilan otomatis melalui HTTPS API resmi penyedia tanpa scraping BEI. Konsep dan skala angka dari penyedia dipertahankan bersama nomor dokumen dan SHA-256 respons. Belum otomatis dimasukkan ke tabel fundamental II sampai pemetaan taksonomi dan rekonsiliasi diverifikasi. Tidak menyimpan API key dalam hasil, tidak memakai data pasar berbayar, dan tidak memberi otoritas trading.</p>
+        <section class="panel" aria-labelledby="byok-local-title" style="margin-top:16px">
+            <h2 id="byok-local-title">Sumber pasar BYOK lokal</h2>
+            <p>Data pasar diperoleh melalui API key milik pengguna langsung dari komputer ini.
+            Feed BYOK berlisensi tidak dapat diekspor, disinkronkan, atau diarsipkan melalui alur fundamental.</p>
+            <a class="button" href="{{ route('ii.byok.index') }}">Kelola API key pribadi &amp; lihat quote</a>
         </section>
+
         <section class="panel" aria-labelledby="sec-live-title" style="margin-top:16px">
             <span class="badge blue">V11 · SEC OFFICIAL API · ON-DEMAND</span>
             <h2 id="sec-live-title" style="margin-top:12px">Ambil laporan SEC langsung (CIK)</h2>
