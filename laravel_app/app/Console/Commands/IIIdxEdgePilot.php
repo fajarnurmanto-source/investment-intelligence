@@ -58,6 +58,21 @@ class IIIdxEdgePilot extends Command
                     throw new \RuntimeException('IDXEDGE_SOURCE_HASH_MISMATCH');
                 }
                 $disk = Storage::disk('local');
+                // Lock is separate from ticker evidence listing and scoped to
+                // the exact checksum; concurrent invocations cannot interleave.
+                $lockDir = storage_path('app/private/ii_idxedge_locks');
+                if (! is_dir($lockDir) && ! mkdir($lockDir, 0700, true) && ! is_dir($lockDir)) {
+                    throw new \RuntimeException('IDXEDGE_LOCK_DIRECTORY_FAILED');
+                }
+                $lockFile = $lockDir.'/'.$hash.'.lock';
+                $lockHandle = fopen($lockFile, 'c');
+                if ($lockHandle === false) {
+                    throw new \RuntimeException('IDXEDGE_LOCK_OPEN_FAILED');
+                }
+                try {
+                    if (! flock($lockHandle, LOCK_EX | LOCK_NB)) {
+                        throw new \RuntimeException('IDXEDGE_ARCHIVE_BUSY');
+                    }
                 $manifestExists = $disk->exists($manifestPath);
                 $rawExists = $disk->exists($rawPath);
 
@@ -113,6 +128,10 @@ class IIIdxEdgePilot extends Command
                     $this->line('II_IDXEDGE_REVIEW_SAVED='.$code.';SHA256='.$hash);
                 } else {
                     $this->line('II_IDXEDGE_REVIEW_DUPLICATE='.$code.';RAW_VERIFIED=YES');
+                }
+                } finally {
+                    flock($lockHandle, LOCK_UN);
+                    fclose($lockHandle);
                 }
             } catch (\Throwable $e) {
                 $failed++;
