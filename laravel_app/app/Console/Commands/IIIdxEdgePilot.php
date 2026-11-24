@@ -78,6 +78,8 @@ class IIIdxEdgePilot extends Command
                 $rawCreated = false;
                 if (! $rawExists) {
                     if (! $disk->put($rawPath, $raw)) {
+                        // A failed write may have left a partial file.
+                        $disk->delete($rawPath);
                         throw new \RuntimeException('IDXEDGE_RAW_ARCHIVE_FAILED');
                     }
                     $rawCreated = true;
@@ -99,6 +101,8 @@ class IIIdxEdgePilot extends Command
                             throw new \RuntimeException('IDXEDGE_MANIFEST_ARCHIVE_FAILED');
                         }
                     } catch (\Throwable $error) {
+                        // Clean a possibly partial manifest before returning failure.
+                        $disk->delete($manifestPath);
                         // Only remove the raw file created by this attempt.
                         if ($rawCreated) {
                             $disk->delete($rawPath);
