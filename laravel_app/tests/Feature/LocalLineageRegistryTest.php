@@ -231,5 +231,24 @@ final class LocalLineageRegistryTest extends TestCase
         $this->assertSame($derived['id'], $snapshot['lineage_node_id']);
         $this->assertSame('SOURCE_RIGHTS_UNVERIFIED', $snapshot['lineage_rights_profile']);
         $this->assertFalse($snapshot['lineage_effective_export']);
+        $this->actingAs($owner)->post('/ii/fundamentals/market-prices', [
+            'ticker' => 'AAPL', 'observed_on' => '2025-01-02',
+            'currency' => 'USD', 'price' => '123.45', 'unit' => 'per_share',
+            'adjustment_status' => 'unadjusted_close',
+            'source_name' => 'Independent EOD',
+            'publisher' => 'Fixture',
+            'source_url' => 'https://example.test/eod/AAPL',
+            'license_status' => 'user_provided',
+            'usage_rights' => 'internal_research',
+            'source_authenticity_status' => 'user_attested',
+            'provenance_confidence' => 'low', 'rights_confirmed' => '1',
+        ])->assertRedirect()->assertSessionHasNoErrors();
+        $priced = app(\App\Services\FundamentalSnapshotService::class)
+            ->latestByTicker($owner->id)['AAPL'];
+        $this->assertSame('INPUTS_REGISTERED_TRANSFORM_PENDING', $priced['lineage_status']);
+        $this->assertSame($derived['id'], $priced['lineage_node_id']);
+        $this->assertNotNull($priced['lineage_market_price_node_id']);
+        $this->assertFalse($priced['lineage_effective_export']);
+
     }
 }
