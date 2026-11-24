@@ -58,6 +58,97 @@ try {
     $keyB = [regex]::Match($envB,'(?m)^APP_KEY=(base64:[A-Za-z0-9+/=]+)\r?$').Groups[1].Value
     if ($keyA.Length -lt 40 -or $keyB.Length -lt 40 -or $keyA -eq $keyB) { throw 'DEVICE_KEYS_NOT_DISTINCT' }
     if ($a.PSObject.Properties.Name -contains 'APP_KEY' -or $envA.Contains('test-provider-key')) { throw 'BOOTSTRAP_KEY_EXPOSURE' }
+    foreach ($value in @($envA,$envB)) {
+        if ($value -match '(?i)II_IDXEDGE_AUTO_SYNC|II_IDXAPI_KEY|II_SHARED_BYOK_KEY') {
+            throw 'DEVICE_LEGACY_SHARED_FEED_ENV_PRESENT'
+        }
+        if ($value -notmatch '(?m)^DB_CONNECTION=sqlite\r?
+    foreach ($r in @($first,$second)) {
+        $db = Join-Path $r 'database\ii.sqlite'
+        if (-not (Test-Path -LiteralPath $db) -or (Get-Item $db).Length -ne 0) { throw 'DEVICE_DATABASE_STATE_INVALID' }
+        $meta = Get-Content -LiteralPath (Join-Path $r 'device.json') -Raw | ConvertFrom-Json
+        if ($meta.database_migrated -ne $false -or $meta.owner_enrolled -ne $false) { throw 'DEVICE_META_FALSE_ACCEPTANCE' }
+    }
+
+    # Migration must fail closed against incomplete synthetic staging; no
+    # mutation of either device's private key or database is permitted.
+    $migrate = Join-Path (Split-Path -Parent $PSScriptRoot) 'Invoke-IIPersonalDeviceMigration.ps1'
+    $beforeMeta = Get-Content -LiteralPath (Join-Path $first 'device.json') -Raw
+    $beforeEnv = Get-Content -LiteralPath (Join-Path $first '.env') -Raw
+    $migrationDenied = $false
+    try { & $migrate -PackageRoot $package -DeviceDataRoot $first | Out-Null } catch { $migrationDenied=$true }
+    if (-not $migrationDenied) { throw 'MIGRATION_NO_OPT_IN_NOT_BLOCKED' }
+    $missingPhpDenied = $false
+    try {
+        & $migrate -PackageRoot $package -DeviceDataRoot $first -AllowUnsignedStagingForTest -RunIsolatedMigration | Out-Null
+    } catch { $missingPhpDenied=$true }
+    if (-not $missingPhpDenied) { throw 'MIGRATION_MISSING_RUNTIME_NOT_BLOCKED' }
+    if ((Get-Content -LiteralPath (Join-Path $first 'device.json') -Raw) -ne $beforeMeta -or
+        (Get-Content -LiteralPath (Join-Path $first '.env') -Raw) -ne $beforeEnv -or
+        (Get-Item -LiteralPath (Join-Path $first 'database\ii.sqlite')).Length -ne 0) {
+        throw 'MIGRATION_DENIED_BUT_DEVICE_MUTATED'
+    }
+
+    $deniedRepeat = $false
+    try { & $initializer -PackageRoot $package -DeviceDataRoot $first -AllowUnsignedStagingForTest | Out-Null } catch { $deniedRepeat=$true }
+    if (-not $deniedRepeat) { throw 'DEVICE_REINITIALIZATION_NOT_BLOCKED' }
+    if ((Get-Content -LiteralPath (Join-Path $first '.env') -Raw) -ne $envA) { throw 'DEVICE_EXISTING_KEY_MODIFIED' }
+
+    [IO.File]::AppendAllText($entry,'tamper')
+    $deniedTamper = $false
+    $third = Join-Path $root 'device-c'
+    try { & $initializer -PackageRoot $package -DeviceDataRoot $third -AllowUnsignedStagingForTest | Out-Null } catch { $deniedTamper=$true }
+    if (-not $deniedTamper -or (Test-Path -LiteralPath $third)) { throw 'DEVICE_TAMPERED_PACKAGE_ACCEPTED' }
+    Write-Host 'II_PRT_M08_DEVICE_BOOTSTRAP_TEST=PASS'
+} finally {
+    Remove-Item -LiteralPath $root -Recurse -Force -ErrorAction SilentlyContinue
+}
+ -or
+            $value -notmatch '(?m)^APP_DEBUG=false\r?
+    foreach ($r in @($first,$second)) {
+        $db = Join-Path $r 'database\ii.sqlite'
+        if (-not (Test-Path -LiteralPath $db) -or (Get-Item $db).Length -ne 0) { throw 'DEVICE_DATABASE_STATE_INVALID' }
+        $meta = Get-Content -LiteralPath (Join-Path $r 'device.json') -Raw | ConvertFrom-Json
+        if ($meta.database_migrated -ne $false -or $meta.owner_enrolled -ne $false) { throw 'DEVICE_META_FALSE_ACCEPTANCE' }
+    }
+
+    # Migration must fail closed against incomplete synthetic staging; no
+    # mutation of either device's private key or database is permitted.
+    $migrate = Join-Path (Split-Path -Parent $PSScriptRoot) 'Invoke-IIPersonalDeviceMigration.ps1'
+    $beforeMeta = Get-Content -LiteralPath (Join-Path $first 'device.json') -Raw
+    $beforeEnv = Get-Content -LiteralPath (Join-Path $first '.env') -Raw
+    $migrationDenied = $false
+    try { & $migrate -PackageRoot $package -DeviceDataRoot $first | Out-Null } catch { $migrationDenied=$true }
+    if (-not $migrationDenied) { throw 'MIGRATION_NO_OPT_IN_NOT_BLOCKED' }
+    $missingPhpDenied = $false
+    try {
+        & $migrate -PackageRoot $package -DeviceDataRoot $first -AllowUnsignedStagingForTest -RunIsolatedMigration | Out-Null
+    } catch { $missingPhpDenied=$true }
+    if (-not $missingPhpDenied) { throw 'MIGRATION_MISSING_RUNTIME_NOT_BLOCKED' }
+    if ((Get-Content -LiteralPath (Join-Path $first 'device.json') -Raw) -ne $beforeMeta -or
+        (Get-Content -LiteralPath (Join-Path $first '.env') -Raw) -ne $beforeEnv -or
+        (Get-Item -LiteralPath (Join-Path $first 'database\ii.sqlite')).Length -ne 0) {
+        throw 'MIGRATION_DENIED_BUT_DEVICE_MUTATED'
+    }
+
+    $deniedRepeat = $false
+    try { & $initializer -PackageRoot $package -DeviceDataRoot $first -AllowUnsignedStagingForTest | Out-Null } catch { $deniedRepeat=$true }
+    if (-not $deniedRepeat) { throw 'DEVICE_REINITIALIZATION_NOT_BLOCKED' }
+    if ((Get-Content -LiteralPath (Join-Path $first '.env') -Raw) -ne $envA) { throw 'DEVICE_EXISTING_KEY_MODIFIED' }
+
+    [IO.File]::AppendAllText($entry,'tamper')
+    $deniedTamper = $false
+    $third = Join-Path $root 'device-c'
+    try { & $initializer -PackageRoot $package -DeviceDataRoot $third -AllowUnsignedStagingForTest | Out-Null } catch { $deniedTamper=$true }
+    if (-not $deniedTamper -or (Test-Path -LiteralPath $third)) { throw 'DEVICE_TAMPERED_PACKAGE_ACCEPTED' }
+    Write-Host 'II_PRT_M08_DEVICE_BOOTSTRAP_TEST=PASS'
+} finally {
+    Remove-Item -LiteralPath $root -Recurse -Force -ErrorAction SilentlyContinue
+}
+) {
+            throw 'DEVICE_LOCAL_ENV_GUARD_MISSING'
+        }
+    }
     foreach ($r in @($first,$second)) {
         $db = Join-Path $r 'database\ii.sqlite'
         if (-not (Test-Path -LiteralPath $db) -or (Get-Item $db).Length -ne 0) { throw 'DEVICE_DATABASE_STATE_INVALID' }
