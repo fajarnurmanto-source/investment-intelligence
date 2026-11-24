@@ -59,6 +59,33 @@ final class ByokSnapshotLineageTest extends TestCase
         $this->assertSame('NOT_ASSESSED', $result['byok_export_clearance']);
     }
 
+    public function test_legacy_snapshot_writer_fails_before_persisting_restricted_byok_data(): void
+    {
+        Storage::fake('local');
+        $service = app(FundamentalSnapshotService::class);
+        $this->assertSame([], Storage::disk('local')->allFiles('ii_fundamental_hub/u17'));
+        try {
+            $service->save(17, [
+                'ticker' => 'AAPL',
+                'source_name' => 'Legacy MarketData.app BYOK',
+                'source_url' => 'https://api.marketdata.app/v1/stocks/quotes/AAPL/',
+                'years' => [['year' => 2024, 'revenue' => 100]],
+            ]);
+            $this->fail('Restricted source must not reach raw snapshot storage.');
+        } catch (\InvalidArgumentException $e) {
+            $this->assertSame('II_BYOK_RESTRICTED_SNAPSHOT_STORAGE_DENIED', $e->getMessage());
+        }
+        $this->assertSame([], Storage::disk('local')->allFiles('ii_fundamental_hub/u17'));
+
+        $service->save(17, [
+            'ticker' => 'AAPL',
+            'source_name' => 'Independent research fixture',
+            'source_url' => 'https://example.test/report',
+            'years' => [['year' => 2024, 'revenue' => 100]],
+        ]);
+        $this->assertCount(1, Storage::disk('local')->allFiles('ii_fundamental_hub/u17'));
+    }
+
     public function test_snapshot_boundary_quarantines_old_issuer_document_before_screener_calculation(): void
     {
         Storage::fake('local');
