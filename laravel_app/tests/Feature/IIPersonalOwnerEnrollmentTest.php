@@ -49,6 +49,47 @@ class IIPersonalOwnerEnrollmentTest extends TestCase
         $this->assertDatabaseCount('users', 1);
     }
 
+    public function test_device_state_is_atomically_marked_enrolled_but_not_runtime_accepted(): void
+    {
+        $root = storage_path('framework/testing/ii-device-owner-'.bin2hex(random_bytes(5)));
+        \Illuminate\Support\Facades\File::ensureDirectoryExists($root);
+        $file = $root.DIRECTORY_SEPARATOR.'device.json';
+        $metadata = [
+            'schema' => 'ii.prt.device-bootstrap.v1',
+            'database_migrated' => true,
+            'owner_enrolled' => false,
+            'activation_status' => 'PENDING_OWNER_ENROLLMENT',
+            'device_id' => 'synthetic-device',
+        ];
+
+        try {
+            file_put_contents($file, json_encode($metadata, JSON_THROW_ON_ERROR));
+            $command = app(\App\Console\Commands\IIPersonalEnrollOwner::class);
+            // Unit-test the private filesystem transition in isolation:
+            // testing mode deliberately never mutates actual device.json.
+            $method = new \ReflectionMethod($command, 'publishOwnerEnrollmentState');
+            $method->invoke($command, $root);
+            $actual = json_decode((string) file_get_contents($file), true);
+            $this->assertTrue($actual['owner_enrolled']);
+            $this->assertFalse($actual['login_ready']);
+            $this->assertFalse($actual['runtime_accepted']);
+            $this->assertSame('OWNER_ENROLLED_PENDING_RUNTIME_ACCEPTANCE', $actual['activation_status']);
+            $this->assertSame('synthetic-device', $actual['device_id']);
+            $this->assertArrayNotHasKey('password', $actual);
+            $this->assertArrayNotHasKey('email', $actual);
+
+            try {
+                $method->invoke($command, $root);
+                $this->fail('Duplicate owner-state activation must fail closed.');
+            } catch (\ReflectionException | \RuntimeException $e) {
+                $this->assertStringContainsString('II_PRT_DEVICE_STATE_CHANGED', $e->getMessage());
+            }
+            $this->assertSame([], glob($file.'.owner-*.pending'));
+        } finally {
+            \Illuminate\Support\Facades\File::deleteDirectory($root);
+        }
+    }
+
     public function test_owner_password_mismatch_fails_closed(): void
     {
         $this->artisan('ii:prt:enroll-owner', ['--confirm-single-owner' => true])
