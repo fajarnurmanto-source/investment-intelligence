@@ -67,6 +67,7 @@ class IdxEdgeFinancialEvidenceV13Test extends TestCase
         $this->assertSame($this->fixture(), $data['raw_provider_payload']);
         $this->assertSame(64, strlen($data['source_sha256']));
         $this->assertStringNotContainsString('test-provider-key', $response->getContent());
+        $this->assertArrayNotHasKey('raw_response_body', $data);
 
         Http::assertSentCount(1);
         Http::assertSent(fn (ClientRequest $request) =>
@@ -132,15 +133,24 @@ class IdxEdgeFinancialEvidenceV13Test extends TestCase
         $this->assertSame(0, Artisan::call('ii:idxedge:pilot'));
         foreach (['BBCA', 'TLKM', 'ASII'] as $ticker) {
             $files = Storage::disk('local')->allFiles('ii_idxedge_review/'.$ticker);
-            $this->assertCount(1, $files);
-            $this->assertMatchesRegularExpression('~/[a-f0-9]{64}\.json$~', $files[0]);
-            $stored = json_decode(Storage::disk('local')->get($files[0]), true, 64, JSON_THROW_ON_ERROR);
+            $this->assertCount(2, $files);
+            $manifestPaths = array_values(array_filter($files, fn (string $p) => str_ends_with($p, '.json')));
+            $rawPaths = array_values(array_filter($files, fn (string $p) => str_ends_with($p, '.raw')));
+            $this->assertCount(1, $manifestPaths);
+            $this->assertCount(1, $rawPaths);
+            $stored = json_decode(Storage::disk('local')->get($manifestPaths[0]), true, 64, JSON_THROW_ON_ERROR);
+            $raw = Storage::disk('local')->get($rawPaths[0]);
             $this->assertSame($ticker, $stored['ticker_requested']);
             $this->assertSame('SCHEMA_REVIEW_REQUIRED', $stored['status']);
+            $this->assertSame($stored['source_sha256'], hash('sha256', $raw));
+            $this->assertSame($rawPaths[0], $stored['raw_private_path']);
+            $this->assertTrue($stored['raw_hash_verified']);
+            $this->assertArrayNotHasKey('raw_response_body', $stored);
+            $this->assertSame($this->fixture($ticker), json_decode($raw, true));
         }
         Http::assertSentCount(3);
         $this->assertSame(0, Artisan::call('ii:idxedge:pilot', ['--ticker' => 'BBCA']));
-        $this->assertCount(1, Storage::disk('local')->allFiles('ii_idxedge_review/BBCA'));
+        $this->assertCount(2, Storage::disk('local')->allFiles('ii_idxedge_review/BBCA'));
         $this->assertDatabaseCount('ii_issuer_documents', 0);
         $this->assertDatabaseCount('ii_issuer_periods', 0);
         $this->assertDatabaseCount('ii_issuer_market_prices', 0);
