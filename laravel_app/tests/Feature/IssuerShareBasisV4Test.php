@@ -109,11 +109,20 @@ class IssuerShareBasisV4Test extends TestCase
         $reviewNode = $registry->find($owner->id, 'issuer_share_basis_review', $review->id, 'ACQUIRED_SOURCE');
         $this->assertNotNull($actionNode);
         $this->assertNotNull($reviewNode);
-        $this->assertSame($reviewNode['id'], $aligned['lineage_share_basis_node_id']);
+        $reconciliation = $registry->find(
+            $owner->id, 'issuer_share_basis_review', $review->id, 'RECONCILE_SHARE_BASIS_V1'
+        );
+        $this->assertNotNull($reconciliation);
+        $this->assertTrue($registry->verifyTrace($owner->id, $reconciliation['id']));
+        $reviewTrace = $registry->trace($owner->id, $reconciliation['id']);
+        $this->assertCount(3, $reviewTrace['nodes']); // review source + action + reconciliation
+        $this->assertContains($actionNode['id'], array_column($reviewTrace['nodes'], 'id'));
+        $this->assertSame($reconciliation['id'], $aligned['lineage_share_basis_node_id']);
         $this->assertSame('REGISTERED_RESEARCH_ONLY', $aligned['lineage_valuation_status']);
         $this->assertTrue($registry->verifyTrace($owner->id, $aligned['lineage_valuation_node_id']));
         $ancestry = $registry->trace($owner->id, $aligned['lineage_valuation_node_id']);
         $this->assertContains($reviewNode['id'], array_column($ancestry['nodes'], 'id'));
+        $this->assertContains($actionNode['id'], array_column($ancestry['nodes'], 'id'));
         $this->assertFalse($registry->allows($owner->id, $aligned['lineage_valuation_node_id'], 'export'));
         $this->assertSame('HOLD', $aligned['decision']);
         $this->assertSame('NONE', $aligned['trading_authority']);
