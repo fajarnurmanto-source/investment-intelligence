@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\IssuerMarketPrice;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 
 class IssuerMarketPriceService
 {
@@ -41,7 +42,8 @@ class IssuerMarketPriceService
             throw new \InvalidArgumentException('Observasi harga identik sudah tersimpan.');
         }
 
-        return IssuerMarketPrice::create([
+        return DB::transaction(function () use ($userId, $payload, $sha256, $batchSha256, $batchOriginalFilename, $data): IssuerMarketPrice {
+            $observation = IssuerMarketPrice::create([
             'user_id' => $userId, 'issuer_code' => $payload['ticker'], 'observed_on' => $payload['observed_on'],
             'currency' => $payload['currency'], 'price' => $payload['price'], 'unit' => $payload['unit'],
             'adjustment_status' => strtoupper($payload['adjustment_status']), 'source_name' => $payload['source_name'],
@@ -52,6 +54,14 @@ class IssuerMarketPriceService
             'redistribution_allowed' => $payload['redistribution_allowed'], 'sha256' => $sha256,
             'batch_sha256' => $batchSha256, 'batch_original_filename' => $batchOriginalFilename,
             'imported_at' => now(),
-        ]);
+            ]);
+            // Bind the local observation to its claimed source and immutable
+            // evidence digest. The registry stores no raw numeric price.
+            app(LocalLineageRegistry::class)->registerSource(
+                $userId, 'issuer_market_price', $observation->id, $sha256, $data
+            );
+
+            return $observation;
+        }, 1);
     }
 }
