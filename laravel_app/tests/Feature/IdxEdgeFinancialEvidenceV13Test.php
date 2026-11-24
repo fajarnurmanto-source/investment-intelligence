@@ -192,4 +192,46 @@ class IdxEdgeFinancialEvidenceV13Test extends TestCase
         $this->assertDatabaseCount('ii_issuer_periods', 0);
     }
 
+    public function test_raw_disk_write_failure_leaves_no_partial_manifest_or_numeric_import(): void
+    {
+        Storage::fake('local');
+        config()->set('ii.idxedge.key', 'test-provider-key');
+        Http::preventStrayRequests();
+        $body = json_encode($this->fixture(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+        $hash = hash('sha256', $body);
+        $prefix = 'ii_idxedge_review/BBCA/'.$hash;
+        Http::fake(['https://stock.arjum.com/*' => Http::response($body, 200, ['Content-Type' => 'application/json'])]);
+
+        $disk = \Mockery::mock(Storage::disk('local'))->makePartial();
+        $disk->shouldReceive('put')->once()->with($prefix.'.raw', $body)->andReturn(false);
+        Storage::shouldReceive('disk')->with('local')->andReturn($disk);
+
+        $this->assertSame(1, Artisan::call('ii:idxedge:pilot', ['--ticker' => 'BBCA']));
+        $this->assertFalse($disk->exists($prefix.'.raw'));
+        $this->assertFalse($disk->exists($prefix.'.json'));
+        $this->assertDatabaseCount('ii_issuer_periods', 0);
+        $this->assertDatabaseCount('ii_issuer_market_prices', 0);
+    }
+
+    public function test_manifest_write_failure_rolls_back_only_newly_created_raw_evidence(): void
+    {
+        Storage::fake('local');
+        config()->set('ii.idxedge.key', 'test-provider-key');
+        Http::preventStrayRequests();
+        $body = json_encode($this->fixture(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+        $hash = hash('sha256', $body);
+        $prefix = 'ii_idxedge_review/BBCA/'.$hash;
+        Http::fake(['https://stock.arjum.com/*' => Http::response($body, 200, ['Content-Type' => 'application/json'])]);
+
+        $disk = \Mockery::mock(Storage::disk('local'))->makePartial();
+        $disk->shouldReceive('put')->once()->with($prefix.'.json', \Mockery::type('string'))->andReturn(false);
+        Storage::shouldReceive('disk')->with('local')->andReturn($disk);
+
+        $this->assertSame(1, Artisan::call('ii:idxedge:pilot', ['--ticker' => 'BBCA']));
+        $this->assertFalse($disk->exists($prefix.'.raw'));
+        $this->assertFalse($disk->exists($prefix.'.json'));
+        $this->assertDatabaseCount('ii_issuer_periods', 0);
+        $this->assertDatabaseCount('ii_issuer_market_prices', 0);
+    }
+
 }
