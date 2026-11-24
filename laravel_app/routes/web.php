@@ -53,8 +53,6 @@ Route::prefix('ii')->name('ii.')->group(function (): void {
             ->middleware('throttle:3,1')->name('fundamentals.sec-companyfacts.normalize');
         Route::post('/fundamentals/sec-companyfacts/live', [FundamentalHubController::class, 'fetchSecCompanyFacts'])
             ->middleware('throttle:2,1')->name('fundamentals.sec-companyfacts.live');
-        Route::post('/fundamentals/idxapi/free-review', [FundamentalHubController::class, 'fetchIdxApiAnnual'])
-            ->middleware('throttle:2,1')->name('fundamentals.idxapi.free-review');
         Route::post('/fundamentals/import', [FundamentalHubController::class, 'import'])
             ->middleware('throttle:6,1')->name('fundamentals.import');
         Route::post('/fundamentals/batches', [FundamentalHubController::class, 'importBatch'])
