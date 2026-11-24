@@ -101,3 +101,9 @@ No CI, deployment, live data, rights approval or installer acceptance is asserte
 - Atomicity qualification: advisory locking prevents cooperating process interleaving, but existing direct `Storage::put` writes are **not atomic rename** and abrupt-process recovery is not yet proven. Must implement temp-file + same-filesystem rename and recovery scanner with dedicated tests before promoting M03 acceptance.
 - [M08 Windows installer runtime audit](II_PRT_WINDOWS_INSTALLER_M08_RUNTIME_AUDIT.md): reviewed existing FrankenPHP/local launcher, PHP dependency, queue/scheduler, deployment/recovery scripts; specifies clean machine, per-device APP_KEY/SQLite, signed bundles, rollback and second-device test requirements. No installer has been shipped.
 - Live-provider and rights checks remain pending; commercial redistribution rights for bundled runtime must be checked. `NOT_ADMITTED / HOLD / TRADING_AUTHORITY=NONE` unchanged.
+
+## V13 staged evidence milestone — 24 Nov 2026
+- PR #26 implements same-directory staged `.pending-*` files with hash verification, rename via local Laravel filesystem, checksum-scoped file locking and scoped orphan staging cleanup. This closes a coding gap, **not** full power-loss durability or provider-live acceptance.
+- Added synthetic test for abandoned staging recovery and revised mocked staging-write failures. Current code CI is GitHub Actions run #95; do not label it PASS until completed and verified. Windows owner-device acceptance is still open.
+- M08 installer design audit remains separate from implemented installer deliverable; clean-device packaging has not started.
+- Financial data admission remains `NOT_ADMITTED / HOLD / TRADING_AUTHORITY=NONE`; live FY report validation and rights verification pending.
