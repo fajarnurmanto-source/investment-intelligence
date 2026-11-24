@@ -69,8 +69,10 @@ function iiBackupDevice(string $root): array
             throw new RuntimeException('II_DEVICE_BACKUP_SOURCE_CORRUPT');
         }
         $escaped = str_replace("'", "''", $target);
-        $pdo->exec("VACUUM INTO '".$escaped."'");
+        // SQLite may create the target before reporting a VACUUM error.
+        // Track it *before* execution so even partial backups are removed.
         $created = true;
+        $pdo->exec("VACUUM INTO '".$escaped."'");
 
         if (PHP_OS_FAMILY !== 'Windows' && !chmod($target, 0600)) {
             throw new RuntimeException('II_DEVICE_BACKUP_FILE_PERMISSIONS_UNSAFE');
