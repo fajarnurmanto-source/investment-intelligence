@@ -36,3 +36,9 @@ B. Real API key supplied by the user in runtime only; independently inspect cont
 C. Reconcile FY2024/FY2025 statement values to official audited issuer filings, document mapping of periods, currencies and scales; only then implement canonical metrics ingestion through existing issuer importer with usage-rights reviews.
 
 Do not merge or deploy without user approval.
+
+## Staged archival and interruption recovery (incremental implementation)
+- Before the final `.raw` or `.json` path is exposed, data is written to a same-directory `.pending-{random}` file and re-hashed. The Laravel local-disk `move()` then renames it under a checksum-scoped OS advisory lock.
+- A subsequent invocation holding the same checksum lock removes abandoned `.pending-*` files **for that checksum only**. It does not repair legacy manifest-only evidence and does not automatically import financial facts.
+- Scope limitation: this is a two-file protocol, not a fully durable database transaction. OS crash/power-loss durability, Windows filesystem rename behavior, cross-host locks and remote object disks require separate acceptance. The canonical pilot is a local disk only.
+- Test additions cover archive failure, locking, whitespace-preserved original HTTP JSON, legacy evidence, tampered archive and staged recovery. Running CI at the exact final SHA and local Windows acceptance remain mandatory.
