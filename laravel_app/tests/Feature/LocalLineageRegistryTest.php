@@ -157,5 +157,11 @@ final class LocalLineageRegistryTest extends TestCase
         $this->assertDatabaseCount('ii_lineage_edges', 1);
         $this->assertDatabaseCount('ii_lineage_nodes', 2);
         $this->assertFalse($registry->allows($owner->id, $derived['id'], 'export'));
+        $snapshot = app(\App\Services\FundamentalSnapshotService::class)
+            ->latestByTicker($owner->id)['AAPL'];
+        $this->assertSame('REGISTERED', $snapshot['lineage_status']);
+        $this->assertSame($derived['id'], $snapshot['lineage_node_id']);
+        $this->assertSame('SOURCE_RIGHTS_UNVERIFIED', $snapshot['lineage_rights_profile']);
+        $this->assertFalse($snapshot['lineage_effective_export']);
     }
 }
