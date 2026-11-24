@@ -18,7 +18,7 @@ Status: code implemented on feature branch; acceptance depends on exact-HEAD CI.
 
 1. **Fundamental import:** `IssuerFundamentalImportService` registers the uploaded source fingerprint and normalized issuer-period transform **within the same database transaction as the document/period inserts**. If lineage registration fails, the transaction rolls back and the uploaded file is cleaned up by existing error handling.
 2. **Manual/batch price import:** `IssuerMarketPriceService` registers source metadata with the hashed observation in a transaction, nested safely inside atomic batch imports. Restricted BYOK provider records are blocked **before persistence**.
-3. **Snapshot consumption:** `FundamentalSnapshotService` attaches `lineage_node_id`, `lineage_status`, `lineage_rights_profile` and `lineage_effective_export` to newer imported-document snapshots. Pre-registry older documents are **UNREGISTERED** and never silently certified.
+3. **Snapshot consumption:** `FundamentalSnapshotService` attaches `lineage_node_id`, `lineage_market_price_node_id`, `lineage_status`, `lineage_rights_profile` and `lineage_effective_export` to newer imported-document snapshots. When both parent inputs are registered, status is `INPUTS_REGISTERED_TRANSFORM_PENDING`: the price-dependent valuation calculation is explicitly **not yet recorded as a transform**. Pre-registry older documents are **UNREGISTERED** and never silently certified.
 4. **Exports:** `BlockRestrictedByokExports` now blocks known restricted ancestry recorded in the registry, even if mutable legacy source display metadata is later edited; earlier metadata-based price/document checks remain in place.
 5. **MarketData live quote:** remains transient *in-app only*, with `raw_archive=false` and `storage=false`; **no quote payload, numeric quote hash or vendor snapshot is recorded in persistent registry**. A source catalog record with no provider payload is a separate metadata concept, not an entitlement.
 
@@ -33,3 +33,11 @@ No market-data redistribution permission is inferred from user-attested `license
 `LocalLineageRegistryTest` validates idempotent registration, conflicting SHA-256 rejection, owner isolation, multi-parent restrictions, inherited no-export/no-cloud rules, bounded ancestry, correct price/document import integration, and rejection of restricted legacy market sources. Existing BYOK and Laravel regression plus Windows packaging are mandatory.
 
 Do not merge PR #28, migrate an owner's production SQLite, call an actual provider or distribute installer until CI and future clean-machine acceptance are verified.
+
+## Operational data-lineage boundaries
+
+- `LocalLineageRegistry::trace(userId,nodeId)` provides a bounded owner-only ancestry graph for review without revealing numeric input or credentials. Foreign-owner nodes fail closed.
+- A known `RESTRICTED_BYOK` rights claim in the registry blocks issuer/screener CSV through `BlockRestrictedByokExports`, including cases where somebody later changes the mutable source name or URL in legacy records.
+- The rights registry is not a retroactive source classifier for *all* historical documents; old records without a node remain `UNREGISTERED` and require explicit backfill/audit before asserting graph completeness.
+- Immutable source fingerprint and transformation hash bind claims at creation; **the initial registry does not independently re-hash files/DB periods on every subsequent read or prevent a privileged SQLite administrator from changing rows**. Do not market it as tamper-proof.
+- Live MarketData BYOK quotes are intentionally never registered as stored numeric payloads. No market-data provider legal rights are invented from a user key or unverified user claim.
