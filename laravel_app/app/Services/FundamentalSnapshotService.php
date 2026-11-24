@@ -131,6 +131,7 @@ class FundamentalSnapshotService
             'currency' => $document->currency, 'multiplier' => 1, 'report_period' => $document->report_period,
             'report_date' => $document->report_date->toDateString(), 'consolidated' => $document->consolidated,
             'source_name' => $document->source->name, 'source_url' => $document->source->source_url,
+            'publisher' => $document->source->publisher, 'terms_url' => $document->source->terms_url,
             'license_status' => $document->source->license_status, 'usage_rights' => $document->source->usage_rights,
             'redistribution_allowed' => $document->source->redistribution_allowed,
             'sha256' => $document->sha256, 'imported_at' => $document->imported_at->toIso8601String(),
