@@ -73,6 +73,7 @@ class IIIdxEdgePilot extends Command
                     if (! flock($lockHandle, LOCK_EX | LOCK_NB)) {
                         throw new \RuntimeException('IDXEDGE_ARCHIVE_BUSY');
                     }
+                    $this->recoverStaging($disk, 'ii_idxedge_review/'.$code);
                 $manifestExists = $disk->exists($manifestPath);
                 $rawExists = $disk->exists($rawPath);
 
@@ -89,14 +90,11 @@ class IIIdxEdgePilot extends Command
                     }
                 }
 
-                // Persist original bytes and never replace evidence in place.
+                // Stage on the same filesystem, then rename. Never expose a
+                // partly written final path to another process.
                 $rawCreated = false;
                 if (! $rawExists) {
-                    if (! $disk->put($rawPath, $raw)) {
-                        // A failed write may have left a partial file.
-                        $disk->delete($rawPath);
-                        throw new \RuntimeException('IDXEDGE_RAW_ARCHIVE_FAILED');
-                    }
+                    $this->writeStagedEvidence($disk, $rawPath, $raw);
                     $rawCreated = true;
                 }
 
@@ -112,9 +110,7 @@ class IIIdxEdgePilot extends Command
                 if (! $manifestExists) {
                     try {
                         $manifest = json_encode($result, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT);
-                        if (! $disk->put($manifestPath, $manifest)) {
-                            throw new \RuntimeException('IDXEDGE_MANIFEST_ARCHIVE_FAILED');
-                        }
+                        $this->writeStagedEvidence($disk, $manifestPath, $manifest);
                     } catch (\Throwable $error) {
                         // Clean a possibly partial manifest before returning failure.
                         $disk->delete($manifestPath);
@@ -147,4 +143,48 @@ class IIIdxEdgePilot extends Command
 
         return $failed === 0 ? self::SUCCESS : self::FAILURE;
     }
+    /**
+     * Same-directory staging followed by filesystem rename. The caller holds
+     * a checksum-scoped flock; the destination must not already exist.
+     */
+    private function writeStagedEvidence($disk, string $destination, string $bytes): void
+    {
+        if ($disk->exists($destination)) {
+            throw new \RuntimeException('IDXEDGE_ARCHIVE_ALREADY_EXISTS');
+        }
+
+        $temporary = $destination.'.pending-'.bin2hex(random_bytes(8));
+        try {
+            if (! $disk->put($temporary, $bytes)) {
+                throw new \RuntimeException('IDXEDGE_STAGE_WRITE_FAILED');
+            }
+            if (! hash_equals(hash('sha256', $bytes), hash('sha256', $disk->get($temporary)))) {
+                throw new \RuntimeException('IDXEDGE_STAGE_HASH_MISMATCH');
+            }
+            if (! $disk->move($temporary, $destination)) {
+                throw new \RuntimeException('IDXEDGE_STAGE_RENAME_FAILED');
+            }
+            if (! hash_equals(hash('sha256', $bytes), hash('sha256', $disk->get($destination)))) {
+                // Do not report a corrupt final artifact as success.
+                $disk->delete($destination);
+                throw new \RuntimeException('IDXEDGE_FINAL_HASH_MISMATCH');
+            }
+        } finally {
+            $disk->delete($temporary);
+        }
+    }
+
+    /**
+     * Only remove abandoned staging files; never remove immutable final raw
+     * evidence or a reviewed manifest. Runs under the same ticker/hash lock.
+     */
+    private function recoverStaging($disk, string $directory): void
+    {
+        foreach ($disk->files($directory) as $path) {
+            if (preg_match('/\.(?:raw|json)\.pending-[a-f0-9]{16}$/D', $path)) {
+                $disk->delete($path);
+            }
+        }
+    }
+
 }
