@@ -41,3 +41,11 @@ The script reports only presence/absence of input prerequisites. It does not rea
 - Latest tests for verifier are subject to CI run #7 and general regression #104; **do not infer PASS before observing their completed outcomes**.
 - **M08-C** device-local APP_KEY, SQLite, first-run enrollment and launcher, **M08-D** signed installer and update/rollback, **M08-E** actual two-device acceptance remain NOT_IMPLEMENTED.
 - Packaging script produces a staging artifact, **not an installer**, and has not been run against owner's live Windows machine in this chat. Licensing and redistribution rights remain unverified.
+
+## M08-C isolated device bootstrap prototype — 24 Nov 2026
+- `Initialize-IIPersonalDeviceState.ps1` requires verified staging manifest and an **explicit `-AllowUnsignedStagingForTest` opt-in**. It is a test/prototype initializer; not an installer or production activation workflow.
+- For each new distinct device-data root, generates a random 32-byte Laravel `APP_KEY`, a UUID `device_id`, a private `.env`, writable runtime folders, and an **empty SQLite placeholder**. Publishes the new runtime directory by filesystem rename and rejects existing roots; no source/production state is copied or changed.
+- Reports `PENDING_DATABASE_MIGRATION_AND_OWNER_ENROLLMENT`, `database_migrated=false`, `login_ready=false`. No credentials/keys are printed. No claim of usable SQLite schema, login or signed installer.
+- Windows synthetic test verifies distinct keys/UUIDs across two device folders, unchanged prior device state on repeated invocation, denied unsigned invocation, rejection of a tampered package and no silent enrollment.
+- **Critical prerequisites before any real device activation:** ensure restrictive Windows NTFS ACL for the generated `.env`, authenticated owner enrollment, PHP/FrankenPHP path portability, database migrations against the bundled PHP executable, safe lifecycle management and signed bundle/installer. Current test prototype intentionally does NOT invoke migrations.
+- Pending GitHub CI on the exact bootstrap commit; no production deployment or PR merge.
