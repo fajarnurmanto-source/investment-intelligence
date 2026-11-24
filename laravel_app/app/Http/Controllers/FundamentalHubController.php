@@ -211,6 +211,8 @@ class FundamentalHubController extends Controller
                 ->withErrors(['idxedge_ticker' => 'Respons penyedia belum dapat dibaca; tidak ada data disimpan.']);
         }
 
+        // The byte-exact upstream response is reserved for the private pilot archive.
+        unset($result['raw_response_body']);
         $json = json_encode($result, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
         return response($json, 200, [
             'Content-Type' => 'application/json; charset=UTF-8',
