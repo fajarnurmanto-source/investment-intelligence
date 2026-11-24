@@ -72,6 +72,14 @@ class FundamentalSnapshotService
                             : 'INPUTS_REGISTERED_TRANSFORM_PENDING'));
                 $summary['lineage_rights_profile'] = $node['rights_profile'] ?? 'UNVERIFIED';
                 $summary['lineage_effective_export'] = false;
+                // Register derived valuation without persisting any numeric
+                // market payload, and only after both applicable parents
+                // have owner-scoped registry identities.
+                $summary = app(DerivedAnalyticsLineageService::class)->valuation(
+                    $userId, $document->id, $summary, $node, $priceNode,
+                    $observation !== null,
+                    (bool) $priceConflicts->get($document->issuer_code, false)
+                );
                 $out[$document->issuer_code] = $summary;
             }
         }
