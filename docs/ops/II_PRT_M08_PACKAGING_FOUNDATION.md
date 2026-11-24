@@ -1,71 +1,29 @@
-# II PRT M08 — Personal Installer Packaging Foundation
+# II — Local BYOK Windows Installer Foundation (M08)
 
-## Scope
-This branch implements the **first executable Windows packaging gate**, not a finished installer.
+Updated: 24 November 2026
+Status: DRAFT; source staging and synthetic CI, **NOT an installable/signed release**.
 
-- Read-only PowerShell preflight validates Laravel source, composer.lock, Caddyfile, launcher scripts, PHP CLI executable, FrankenPHP, PHP extensions, vendor autoload, built assets and CA bundle.
-- Emits a JSON receipt with explicit status `INPUTS_READY_FOR_PACKAGING_REVIEW` or `BLOCKED_MISSING_INPUTS`; never prints or packages existing `.env`, APP_KEY, live SQLite, credentials or source archives.
-- Synthetic Windows regression checks both complete and deliberately missing-php inputs. A separate GitHub Actions workflow runs these tests on PRs.
-- Safe by default: this tool never copies private runtime, creates a distributable installer or modifies a device.
+**Current mandate:** local BYOK-first research terminal, one local installation per independent subscriber. Previous same-owner multi-device synchronization milestone is RETIRED. Each independent installation must use its own APP_KEY/SQLite and owner credentials; no shared market-data data cache or API key and no inter-device sync.
 
-## Verified runtime assumptions
-Existing launcher and deployment scripts use PHP from PATH, FrankenPHP in habitat runtime, and a pre-existing APP_KEY. A clean installation needs a device-specific secret and SQLite initialization. Those follow-up tasks require a dedicated first-run installer implementation, signing, and clean-VM testing.
+## Reusable implementation
+- `Test-IIPersonalPackageInputs.ps1`: checks Laravel, FrankenPHP, PHP CLI/extensions, vendor and compiled assets before staging.
+- `Build-IIPersonalStagingPayload.ps1`: allowlisted unsigned staging with manifest SHA-256; blocks source secrets, .env, databases, uploads and excess files.
+- `Test-IIPersonalStagingIntegrity.ps1`: independent hash/manifest/undeclared-file gate.
+- `Initialize-IIPersonalDeviceState.ps1`: **unsigned staging test-only** initialization with unique APP_KEY, device UUID, local SQLite placeholder and protected Windows ACL.
+- `Invoke-IIPersonalDeviceMigration.ps1`: explicit **test-only** bundled PHP migration workflow, no production activation proven.
+- `IIPersonalEnrollOwner`: hidden-password CLI account setup via the existing Laravel Users table, no public registration.
+- Tests under `tools/installer/tests/` use two disposable isolated fixture folders solely to verify that independent installations do not share keys. **These are not multi-device sync tests.**
 
-## Acceptance gates
-1. Green Windows CI for preflight.
-2. Capture real preflight receipt in canonical local runtime (no secret values).
-3. Verify redistribution rights and pinned hashes of packaged PHP/FrankenPHP/build dependencies.
-4. Only then implement a separately staged payload builder, first-run owner onboarding, service lifecycle and signed installer.
-5. Never merge or deploy by inference from synthetic test results.
+## Release gates still open
+1. Real full-package PHP + Laravel migration and clean-Windows VM login/dashboard/`/up` acceptance.
+2. Windows ACL review of database, .env and key lifecycle; evaluate native DPAPI vault rather than only Laravel Crypt.
+3. Signed installer, binary redistribution rights, portability, Windows service lifecycle, upgrades/rollback/uninstallation.
+4. BYOK onboarding UX, accurate entitlement status, provider terms review, no cloud relay, output-rights audit across every export.
+5. Distinct **independent end users** with individual accounts and keys; never license pool.
 
-Canonical product direction: [II PRT Master Roadmap](II_PRT_MASTER_ROADMAP_AND_MANDATORY_DECISION_20261124.md).
+The code sync utility `tools/sync-II.ps1` is for the developer Git repository only, and does not copy research-market data.
 
-## M08-B incremental staged payload builder (24 November 2026)
-- `tools/installer/Build-IIPersonalStagingPayload.ps1` stages only an explicit allowlist of Laravel app directories, Composer vendor autoload tree, built frontend assets, Caddyfile, PHP CLI/FrankenPHP binaries/extensions and CA root.
-- An output folder must be new and separate from the source/runtime. The builder rejects symbolic links/reparse points, credentials and database files inside selected input locations. It does not bundle existing `.env`, personal SQLite, uploads, writable logs or market evidence.
-- The staged package has `payload-manifest.json`, `payload-manifest.sha256`, per-file size and SHA-256 plus explicit `STAGED_UNSIGNED_NOT_INSTALLABLE` state. It is **not signed and not a Windows installer**.
-- `tools/installer/tests/Test-IIPersonalStagingPayload.ps1` provides a synthetic complete payload with private fixtures, recomputes hashes, ensures sensitive files never ship, rejects overwriting the output, and tests an intentionally forbidden `.env` placed in selected input.
-- Windows GitHub Actions invokes both preflight and staged payload tests. CI must PASS at the exact commit before considering staging code accepted. A full owner-runtime stage requires separate review of package licensing/redistribution and runtime portability.
-- No first-run device initialization, migration, independent secrets generation, owner enrollment, service install, signed installer or clean VM acceptance is claimed here.
+## Verification
+Early synthetic Windows packaging stages passed CI #16, #20 and #25. Subsequent BYOK cutover must pass its own CI. No live market-data key, production database, hardware installation or trading action was touched.
 
-## Suggested read-only manual preflight (not deployment)
-```powershell
-& .\tools\installer\Test-IIPersonalPackageInputs.ps1 -RepositoryRoot "D:\Research\INVESTMENT RESEARCH\II\repository" -RuntimeRoot "D:\Research\INVESTMENT RESEARCH\II\runtime" -Strict
-```
-The script reports only presence/absence of input prerequisites. It does not read secrets, deploy, build or start services.
-
-## M08 packaging implementation and milestone state — updated 24 Nov 2026
-- **M08-A input inventory:** executable preflight and Windows synthetic acceptance PASS on PR #27, run [#4](https://github.com/fajarnurmanto-source/investment-intelligence/actions/runs/45382231626). Base Laravel CI run [#101](https://github.com/fajarnurmanto-source/investment-intelligence/actions/runs/45382231513) also PASS.
-- **M08-B unsigned staging payload:** `Build-IIPersonalStagingPayload.ps1` copies only explicit code/runtime inputs into a new destination with per-file SHA-256 and manifest. Intentional status `STAGED_UNSIGNED_NOT_INSTALLABLE`. Excludes .env, active SQLite, personal storage, credentials and uploads. Cannot overwrite an existing package destination.
-- **M08-B independent verification:** `Test-IIPersonalStagingIntegrity.ps1` checks manifest hash, all file hashes/sizes, exact file inventory and refuses undeclared files or unsafe paths. Tests inject tampering and extra files.
-- Latest tests for verifier are subject to CI run #7 and general regression #104; **do not infer PASS before observing their completed outcomes**.
-- **M08-C** device-local APP_KEY, SQLite, first-run enrollment and launcher, **M08-D** signed installer and update/rollback, **M08-E** actual two-device acceptance remain NOT_IMPLEMENTED.
-- Packaging script produces a staging artifact, **not an installer**, and has not been run against owner's live Windows machine in this chat. Licensing and redistribution rights remain unverified.
-
-## M08-C isolated device bootstrap prototype — 24 Nov 2026
-- `Initialize-IIPersonalDeviceState.ps1` requires verified staging manifest and an **explicit `-AllowUnsignedStagingForTest` opt-in**. It is a test/prototype initializer; not an installer or production activation workflow.
-- For each new distinct device-data root, generates a random 32-byte Laravel `APP_KEY`, a UUID `device_id`, a private `.env`, writable runtime folders, and an **empty SQLite placeholder**. Publishes the new runtime directory by filesystem rename and rejects existing roots; no source/production state is copied or changed.
-- Reports `PENDING_DATABASE_MIGRATION_AND_OWNER_ENROLLMENT`, `database_migrated=false`, `login_ready=false`. No credentials/keys are printed. No claim of usable SQLite schema, login or signed installer.
-- Windows synthetic test verifies distinct keys/UUIDs across two device folders, unchanged prior device state on repeated invocation, denied unsigned invocation, rejection of a tampered package and no silent enrollment.
-- **Critical prerequisites before any real device activation:** ensure restrictive Windows NTFS ACL for the generated `.env`, authenticated owner enrollment, PHP/FrankenPHP path portability, database migrations against the bundled PHP executable, safe lifecycle management and signed bundle/installer. Current test prototype intentionally does NOT invoke migrations.
-- Pending GitHub CI on the exact bootstrap commit; no production deployment or PR merge.
-
-## M08-C follow-up acceptance — 24 Nov 2026
-- Implemented `Initialize-IIPersonalDeviceState.ps1` as an **explicit unsigned-staging test prototype only**. It creates distinct random Laravel APP_KEY values, device UUID, environment configuration, empty SQLite placeholder and isolated writable runtime directories for a previously nonexistent data root; refuses overwriting the existing installation.
-- Test `Test-IIPersonalDeviceState.ps1` validates denial by default, two independent devices, non-overwriting reinitialization and tampered package rejection. First CI attempt #11 failed on Windows-specific CRLF parsing in the test; regex was corrected in follow-up commit `1ad647c1726249f851207b54904b90d839181b32`. This correction still requires fresh completed CI verification.
-- The device metadata deliberately records `database_migrated=false`, `owner_enrolled=false` and `PENDING_DATABASE_MIGRATION_AND_OWNER_ENROLLMENT`; a zero-byte SQLite placeholder is **not** a fully initialized schema. Neither signed installer nor launch/login is accepted.
-- Before real activation: enforce NTFS ACL restricting .env and device storage to owner, secure first-run migration with bundled PHP, create authenticated owner enrollment, add launcher and process supervisor independent of Git/PHP PATH, and complete signed clean-VM/second-device testing.
-- No owner runtime data, V11 production database, API key or existing APP_KEY was modified by these GitHub changes.
-
-## M08-C security and migration gate — 24 November 2026
-- **Device-state ACL:** initializer now applies protected Windows DACL before writing `.env` or `APP_KEY` into its temporary directory. Only the current Windows user and SYSTEM are explicitly granted full control; publication preserves the directory security descriptor. Tests inspect owner-device ACLs on two synthetic independent installations.
-- **Guarded migration prototype:** `Invoke-IIPersonalDeviceMigration.ps1` accepts only an integrity-verified staged payload and an un-migrated, non-enrolled device state. Both `-AllowUnsignedStagingForTest` and `-RunIsolatedMigration` must be supplied; it invokes the payload's own PHP CLI, not ambient PHP PATH. It uses `II_RUNTIME_ROOT` and isolated Laravel cache paths, and marks `database_migrated=true` only after `artisan migrate` and `migrate:status` exit successfully.
-- **Acceptance proof:** Windows Packaging CI #18 PASS for protected DACL changes; Windows Packaging CI [#20](https://github.com/fajarnurmanto-source/investment-intelligence/actions/runs/45394238472) PASS for negative migration tests. These use synthetic fixtures and explicitly **do not prove successful database migrations on a fully bundled runtime**.
-- **Unresolved:** test genuine PHP+Laravel migrations against an isolated staged VM; audit environmental path handling, transaction/backup on failed migration, NTFS inheritance for child files and owner enrollment with the existing Laravel User model and `ii_research_role`, never a second login route.
-- **No release:** no signed installer, production activation, registered account, multi-device sync or vendor feed entitlement is created. PR #27 remains draft. Current trading authority stays NONE.
-
-## M08-C owner enrollment + guarded migration — increment 24 Nov 2026
-- `Invoke-IIPersonalDeviceMigration.ps1` provides a **test-only**, manually opted-in path to run migrations using `payload/server/bin/php.exe` against a verified, isolated device. It verifies that the SQLite placeholder is empty and device state is pending, sets isolated Laravel environment/cache variables, then marks `database_migrated=true` only if `migrate` and `migrate:status` succeed. An authentic complete-payload/real-SQLite positive acceptance is **not yet evidenced**.
-- `IIPersonalEnrollOwner` is a Laravel Artisan command using the **existing User model and role**. It takes a hidden interactive password of 14+ characters, refuses existing users/second enrollment, does not add HTTP registration, and requires a migrated PRT device identity outside automated tests. Tests cover the singleton, hashed password, password mismatch, and no HTTP registration.
-- Windows ACL is installed before private key material is written. Packaging Windows CI [#20](https://github.com/fajarnurmanto-source/investment-intelligence/actions/runs/45394238472) and [#24](https://github.com/fajarnurmanto-source/investment-intelligence/actions/runs/45394572946) report PASS on their respective commits. **Owner enrollment tests must pass Laravel CI before accepted**.
-- No signed installer, device launch, owner hardware acceptance, verified migration end-to-end, or authentication usability claim. No deployed device or existing production secrets were changed.
+See [mandatory local BYOK architecture](II_BYOK_LOCAL_MANDATORY_ARCHITECTURE_20261124.md) for current canonical decision and earlier history in Git.
