@@ -203,7 +203,7 @@ class IdxEdgeFinancialEvidenceV13Test extends TestCase
         Http::fake(['https://stock.arjum.com/*' => Http::response($body, 200, ['Content-Type' => 'application/json'])]);
 
         $disk = \Mockery::mock(Storage::disk('local'))->makePartial();
-        $disk->shouldReceive('put')->once()->with($prefix.'.raw', $body)->andReturn(false);
+        $disk->shouldReceive('put')->once()->withArgs(fn ($path, $value) => str_starts_with($path, $prefix.'.raw.pending-') && $value === $body)->andReturn(false);
         Storage::shouldReceive('disk')->with('local')->andReturn($disk);
 
         $this->assertSame(1, Artisan::call('ii:idxedge:pilot', ['--ticker' => 'BBCA']));
@@ -224,7 +224,7 @@ class IdxEdgeFinancialEvidenceV13Test extends TestCase
         Http::fake(['https://stock.arjum.com/*' => Http::response($body, 200, ['Content-Type' => 'application/json'])]);
 
         $disk = \Mockery::mock(Storage::disk('local'))->makePartial();
-        $disk->shouldReceive('put')->once()->with($prefix.'.json', \Mockery::type('string'))->andReturn(false);
+        $disk->shouldReceive('put')->once()->withArgs(fn ($path, $value) => str_starts_with($path, $prefix.'.json.pending-') && is_string($value))->andReturn(false);
         Storage::shouldReceive('disk')->with('local')->andReturn($disk);
 
         $this->assertSame(1, Artisan::call('ii:idxedge:pilot', ['--ticker' => 'BBCA']));
@@ -259,6 +259,26 @@ class IdxEdgeFinancialEvidenceV13Test extends TestCase
             flock($handle, LOCK_UN);
             fclose($handle);
         }
+    }
+
+    public function test_abandoned_staging_is_recovered_without_touching_other_checksums(): void
+    {
+        Storage::fake('local');
+        config()->set('ii.idxedge.key', 'test-provider-key');
+        Http::preventStrayRequests();
+        $body = json_encode($this->fixture(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+        $hash = hash('sha256', $body);
+        $prefix = 'ii_idxedge_review/BBCA/'.$hash;
+        $other = 'ii_idxedge_review/BBCA/'.str_repeat('a', 64).'.raw.pending-1122334455667788';
+        Storage::disk('local')->put($prefix.'.raw.pending-0123456789abcdef', 'partial');
+        Storage::disk('local')->put($other, 'other concurrent checksum');
+        Http::fake(['https://stock.arjum.com/*' => Http::response($body, 200, ['Content-Type' => 'application/json'])]);
+
+        $this->assertSame(0, Artisan::call('ii:idxedge:pilot', ['--ticker' => 'BBCA']));
+        $this->assertFalse(Storage::disk('local')->exists($prefix.'.raw.pending-0123456789abcdef'));
+        $this->assertTrue(Storage::disk('local')->exists($other));
+        $this->assertSame($hash, hash('sha256', Storage::disk('local')->get($prefix.'.raw')));
+        $this->assertDatabaseCount('ii_issuer_periods', 0);
     }
 
 }
