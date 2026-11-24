@@ -10,6 +10,7 @@ use App\Models\IssuerShareBasisReview;
 use App\Services\FundamentalSnapshotService;
 use App\Services\IssuerCoverageService;
 use App\Services\IdxApiFreeFundamentalsService;
+use App\Services\IdxEdgeFinancialEvidenceService;
 use App\Services\IssuerBatchIngestionService;
 use App\Services\IssuerFundamentalImportService;
 use App\Services\IssuerImportMetadataService;
@@ -185,6 +186,39 @@ class FundamentalHubController extends Controller
             'X-Content-Type-Options' => 'nosniff',
             'X-II-Review-Required' => 'true',
             'X-II-Source-Origin' => 'IDXAPI_THIRD_PARTY_FREE',
+        ]);
+    }
+
+    /**
+     * On-demand read-only alternate provider pilot, not an official IDX API.
+     * Response schema/financial periods remain unverified until reconciliation.
+     */
+    public function fetchIdxEdgeFinancials(Request $request, IdxEdgeFinancialEvidenceService $connector)
+    {
+        $data = $request->validate([
+            'idxedge_ticker' => ['required', 'string', 'regex:/^[A-Za-z0-9]{4,6}$/'],
+        ]);
+
+        try {
+            $result = $connector->fetch($data['idxedge_ticker']);
+        } catch (\InvalidArgumentException $exception) {
+            return redirect()->route('ii.fundamentals.index', ['workspace' => 'activation'])
+                ->withErrors(['idxedge_ticker' => $exception->getMessage()]);
+        } catch (\Throwable $exception) {
+            Log::warning('II IDX Edge pilot unavailable', ['type' => get_class($exception)]);
+
+            return redirect()->route('ii.fundamentals.index', ['workspace' => 'activation'])
+                ->withErrors(['idxedge_ticker' => 'Respons penyedia belum dapat dibaca; tidak ada data disimpan.']);
+        }
+
+        $json = json_encode($result, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+        return response($json, 200, [
+            'Content-Type' => 'application/json; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="II_IDXEDGE_'.$result['ticker_requested'].'_REVIEW.json"',
+            'Cache-Control' => 'private, no-store',
+            'X-Content-Type-Options' => 'nosniff',
+            'X-II-Review-Required' => 'true',
+            'X-II-Source-Origin' => 'IDXEDGE_THIRD_PARTY_FREE',
         ]);
     }
 
