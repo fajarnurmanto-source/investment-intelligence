@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\EconomicObservation;
+use App\Models\IngestionRun;
 use Illuminate\Support\Facades\Schema;
 
 /**
@@ -44,6 +45,17 @@ final class MacroReportRightsGate
                 || (string) ($series['latest_value'] ?? '') !== (string) (float) $latest->value
             ) {
                 $issues[] = $id.':OBSERVATION_PROVENANCE_MISMATCH';
+                continue;
+            }
+            // Cross-check the persisted observation against its ingestion
+            // receipt, not merely a mutable series label or source URL.
+            $run = IngestionRun::query()->whereKey($latest->ingestion_run_id)->first();
+            if ($run === null
+                || $run->status !== 'SUCCEEDED'
+                || $run->source_id !== 'FRED'
+                || $run->series_id !== $id
+                || ! hash_equals((string) $run->response_sha256, $latest->raw_checksum)) {
+                $issues[] = $id.':INGESTION_RECEIPT_MISMATCH';
                 continue;
             }
             $url = (string) ($latest->source_url ?? '');
