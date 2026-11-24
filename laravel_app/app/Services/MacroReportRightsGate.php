@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\EconomicObservation;
 use App\Models\IngestionRun;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Strict pre-download review of independent FRED series.
@@ -73,7 +74,8 @@ final class MacroReportRightsGate
                 && ($approval['scope'] ?? null) === 'LOCAL_PERSONAL_NONCOMMERCIAL_CSV'
                 && is_string($approval['receipt_sha256'] ?? null)
                 && preg_match('/^[a-f0-9]{64}$/D', $approval['receipt_sha256'])
-                && ($approval['source_owner'] ?? null) === $metadata['owner'];
+                && ($approval['source_owner'] ?? null) === $metadata['owner']
+                && $this->verifiedLocalReceipt($approval);
             if (! $approved) {
                 $issues[] = $id.':RIGHTS_REVIEW_REQUIRED';
             }
@@ -94,4 +96,28 @@ final class MacroReportRightsGate
             'terms_url' => (string) config('ii.fred.terms_url'),
         ];
     }
+    private function verifiedLocalReceipt(array $approval): bool
+    {
+        // Receipt filename is deployment controlled, never accepted from an
+        // HTTP request. Keep the file out of Git and out of the installer.
+        $filename = $approval['receipt_file'] ?? null;
+        if (! is_string($filename)
+            || ! preg_match('/^[A-Za-z0-9][A-Za-z0-9_.-]{0,95}$/D', $filename)
+            || str_contains($filename, '..')) {
+            return false;
+        }
+        $path = 'ii-rights-reviews/'.$filename;
+        $disk = Storage::disk('local');
+        if (! $disk->exists($path)
+            || $disk->size($path) < 1
+            || $disk->size($path) > 2_000_000) {
+            return false;
+        }
+
+        return hash_equals(
+            (string) ($approval['receipt_sha256'] ?? ''),
+            hash('sha256', $disk->get($path))
+        );
+    }
+
 }
