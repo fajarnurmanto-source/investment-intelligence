@@ -37,6 +37,9 @@ class FredPipelineTest extends TestCase
         $user = User::factory()->create();
         $user->forceFill(['ii_research_role' => 'analyst'])->save();
         $this->actingAs($user)->get('/ii/macro')->assertOk()->assertSee('Inflasi YoY')->assertSee('CPIAUCSL');
+        $this->get('/ii/macro')->assertOk()
+            ->assertSee('Ekspor CSV ditahan')
+            ->assertDontSee('Unduh CSV pribadi (reviewed)');
         $this->actingAs($user)->get('/ii/macro/report/rights')->assertOk()
             ->assertJsonPath('status', 'DENIED')
             ->assertJsonPath('issues.0', 'CPIAUCSL:RIGHTS_REVIEW_REQUIRED');
@@ -51,6 +54,9 @@ class FredPipelineTest extends TestCase
             'receipt_sha256' => hash('sha256', 'synthetic-ci-only-rights-review'),
             'source_owner' => 'U.S. Bureau of Labor Statistics',
         ]);
+        $this->get('/ii/macro')->assertOk()
+            ->assertSee('Unduh CSV pribadi (reviewed)')
+            ->assertDontSee('Ekspor CSV ditahan');
         $response = $this->get('/ii/macro/report.csv')->assertOk()
             ->assertHeader('Content-Type', 'text/csv; charset=UTF-8')
             ->assertHeader('X-II-Rights-Scope', 'LOCAL_PERSONAL_NONCOMMERCIAL_CSV');
