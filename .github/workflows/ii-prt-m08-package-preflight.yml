@@ -1,0 +1,23 @@
+name: II PRT M08 Packaging Preflight
+
+on:
+  pull_request:
+    paths:
+      - 'tools/installer/**'
+      - '.github/workflows/ii-prt-m08-package-preflight.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-package-preflight:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate independent installer input inventory
+        shell: pwsh
+        run: |
+          & ./tools/installer/tests/Test-IIPersonalPackageInputs.ps1
+          & ./tools/installer/tests/Test-IIPersonalStagingPayload.ps1
+          & ./tools/installer/tests/Test-IIPersonalDeviceState.ps1

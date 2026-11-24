@@ -18,6 +18,11 @@ class FundamentalSnapshotService
     /** Compatibility path for snapshots imported before Issuer Intelligence V1. */
     public function save(int $userId, array $document): void
     {
+        // Legacy JSON compatibility must not become a bypass around the
+        // restricted provider's no-storage and no-export policy.
+        if (app(ByokSnapshotLineage::class)->isRestricted($document)) {
+            throw new \InvalidArgumentException('II_BYOK_RESTRICTED_SNAPSHOT_STORAGE_DENIED');
+        }
         $path = $this->directory($userId).'/'.$document['ticker'].'__'.bin2hex(random_bytes(12)).'.json';
         if (! Storage::disk('local')->put($path, json_encode($document, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES))) {
             throw new \RuntimeException('Could not store issuer data.');
@@ -47,8 +52,48 @@ class FundamentalSnapshotService
                 if ($document->periods->isEmpty()) {
                     continue;
                 }
-                $out[$document->issuer_code] = $this->summarizeDocument($document, (int) $versions[$document->issuer_code], $prices->get($document->issuer_code), (bool) $priceConflicts->get($document->issuer_code, false));
+                $observation = $prices->get($document->issuer_code);
+                $summary = $this->summarizeDocument($document, (int) $versions[$document->issuer_code], $observation, (bool) $priceConflicts->get($document->issuer_code, false));
+                $registry = app(LocalLineageRegistry::class);
+                $node = $registry->find(
+                    $userId, 'issuer_document', $document->id, 'NORMALIZE_ISSUER_PERIODS_V1'
+                );
+                $priceNode = $observation
+                    ? $registry->find($userId, 'issuer_market_price', $observation->id, 'ACQUIRED_SOURCE')
+                    : null;
+                // Normalization has a registered transform ID. Valuation
+                // combines separate inputs dynamically and is NOT yet a
+                // materialized transform; do not mislabel it as audited.
+                $summary['lineage_node_id'] = $node['id'] ?? null;
+                $summary['lineage_market_price_node_id'] = $priceNode['id'] ?? null;
+                $summary['lineage_status'] = $node === null ? 'UNREGISTERED'
+                    : ($observation === null ? 'REGISTERED'
+                        : ($priceNode === null ? 'PARTIAL_UNREGISTERED_PRICE'
+                            : 'INPUTS_REGISTERED_TRANSFORM_PENDING'));
+                $summary['lineage_rights_profile'] = $node['rights_profile'] ?? 'UNVERIFIED';
+                $summary['lineage_effective_export'] = false;
+                $basisNode = ! empty($summary['share_basis_review_id'])
+                    ? $registry->find($userId, 'issuer_share_basis_review',
+                        $summary['share_basis_review_id'], 'RECONCILE_SHARE_BASIS_V1')
+                    : null;
+                $summary['lineage_share_basis_node_id'] = $basisNode['id'] ?? null;
+                // Register derived valuation without persisting any numeric
+                // market payload, and only after both applicable parents
+                // have owner-scoped registry identities.
+                $summary = app(DerivedAnalyticsLineageService::class)->valuation(
+                    $userId, $document->id, $summary, $node, $priceNode,
+                    $observation !== null,
+                    (bool) $priceConflicts->get($document->issuer_code, false),
+                    $basisNode
+                );
+                $out[$document->issuer_code] = $summary;
             }
+        }
+        // Apply source rights at the shared data boundary, before the same
+        // snapshot can feed screener, coverage, valuation or Blade views.
+        $lineage = app(ByokSnapshotLineage::class);
+        foreach ($out as $ticker => $record) {
+            $out[$ticker] = $lineage->apply($record);
         }
         ksort($out);
 
@@ -120,6 +165,7 @@ class FundamentalSnapshotService
             'currency' => $document->currency, 'multiplier' => 1, 'report_period' => $document->report_period,
             'report_date' => $document->report_date->toDateString(), 'consolidated' => $document->consolidated,
             'source_name' => $document->source->name, 'source_url' => $document->source->source_url,
+            'publisher' => $document->source->publisher, 'terms_url' => $document->source->terms_url,
             'license_status' => $document->source->license_status, 'usage_rights' => $document->source->usage_rights,
             'redistribution_allowed' => $document->source->redistribution_allowed,
             'sha256' => $document->sha256, 'imported_at' => $document->imported_at->toIso8601String(),
@@ -142,8 +188,10 @@ class FundamentalSnapshotService
             'market_price_as_of' => $marketPriceAsOf,
             'valuation_market_price' => $price,
             'market_price_source' => $marketObservation?->source_name ?? ($embeddedPrice !== null ? $document->source->name : null),
+            'market_price_source_url' => $marketObservation?->source_url ?? ($embeddedPrice !== null ? $document->source->source_url : null),
             'market_price_rights' => $priceRights,
             'share_basis_status' => $basis['status'] ?? 'NOT_APPLICABLE',
+            'share_basis_review_id' => $basis['review_id'] ?? null,
             'share_basis_factor' => $basis['factor'] ?? null,
             'share_basis_source' => $basis['source'] ?? null,
             'valuation_shares_outstanding' => $priceAligned ? $valuationShares : null,

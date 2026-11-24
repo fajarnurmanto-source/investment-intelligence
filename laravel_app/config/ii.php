@@ -11,14 +11,17 @@ return [
             'redistribution' => false,
         ],
     ],
-    'idxapi' => [
-        // Third-party IDX fundamentals provider: free 1,000 calls/month at
-        // time of integration. Never embed secrets in Git or the UI.
-        'key' => env('II_IDXAPI_KEY', ''),
-        'auto_sync' => filter_var(env('II_IDXAPI_AUTO_SYNC', false), FILTER_VALIDATE_BOOLEAN),
-        'tickers' => env('II_IDXAPI_TICKERS', ''),
-        'max_tickers_per_run' => 10,
-        'terms_url' => 'https://idxapi.io/terms',
+    // BYOK local: zero application-wide vendor credentials and no device sync.
+    'connectivity_mode' => 'BYOK_LOCAL',
+    'multi_device_sync' => false,
+    'shared_market_data_key' => false,
+    'marketdata' => [
+        'provider' => 'marketdata',
+        'byok' => true,
+        'local_only' => true,
+        'export_allowed' => false,
+        'raw_archival_allowed' => false,
+        'cloud_transfer_allowed' => false,
     ],
     'fred' => [
         'source_id' => 'FRED',
@@ -26,6 +29,10 @@ return [
         'endpoint' => env('II_FRED_CSV_ENDPOINT', 'https://fred.stlouisfed.org/graph/fredgraph.csv?id={series}'),
         'terms_url' => 'https://fred.stlouisfed.org/docs/api/terms_of_use.html',
         'attribution' => 'This product uses FRED data but is not endorsed or certified by the Federal Reserve Bank of St. Louis.',
+        // Empty by default: FRED access is not a data-redistribution license.
+        // A per-series reviewed receipt with explicit use scope is required
+        // before the CSV endpoint may return source-derived numbers.
+        'report_rights' => [],
         'series' => [
             'CPIAUCSL' => [
                 'title' => 'Consumer Price Index for All Urban Consumers',

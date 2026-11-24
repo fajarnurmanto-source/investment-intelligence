@@ -10,7 +10,19 @@
     <h1>Macro Intelligence</h1>
     <p class="lead">Data ekonomi nyata mengalir dari sumber FRED ke Laravel, dinormalisasi, dianalisis, lalu disajikan dengan provenance dan kualitas yang dapat ditelusuri.</p>
     <div class="boundary"><strong>RESEARCH CONTEXT ONLY.</strong> Data makro bukan sinyal beli/jual. This product uses FRED data but is not endorsed or certified by the Federal Reserve Bank of St. Louis.</div>
-    <div class="section-header"><h2>Snapshot ekonomi</h2><a class="button" href="{{ route('ii.macro.report') }}">Unduh report CSV</a></div>
+    <div class="section-header">
+        <h2>Snapshot ekonomi</h2>
+        @if(($rights['status'] ?? 'DENIED') === 'REVIEWED_ALLOWED_LOCAL_NONCOMMERCIAL')
+            <a class="button" href="{{ route('ii.macro.report') }}">Unduh CSV pribadi (reviewed)</a>
+        @else
+            <span class="badge amber">Ekspor CSV ditahan · review hak diperlukan</span>
+        @endif
+    </div>
+    @if(($rights['status'] ?? 'DENIED') !== 'REVIEWED_ALLOWED_LOCAL_NONCOMMERCIAL')
+        <p class="caption">Dashboard tetap tersedia untuk penelitian lokal. Pengunduhan data memerlukan review hak per seri (saat ini: {{ implode(', ', $rights['issues'] ?? ['NOT_CLEARED']) }}). <a href="{{ route('ii.macro.report.rights') }}">Periksa manifest hak tanpa nilai numerik</a>.</p>
+    @else
+        <p class="caption">Izin dibatasi untuk CSV pribadi nonkomersial; tidak termasuk redistribusi atau transfer cloud. <a href="{{ route('ii.macro.report.rights') }}">Lihat manifest hak</a>.</p>
+    @endif
     @if(count($dashboard['series']) === 0)
         <section class="panel"><h2>Connector siap, ingestion belum dijalankan</h2><p class="muted">Jalankan <code>php artisan ii:ingest-fred --sync</code>. Kegagalan dicatat sebagai ingestion run tanpa menimpa observasi terakhir yang valid.</p><span class="badge amber">{{ $dashboard['pipeline_status'] }}</span></section>
     @else

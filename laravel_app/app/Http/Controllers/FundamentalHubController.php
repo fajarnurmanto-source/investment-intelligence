@@ -9,7 +9,6 @@ use App\Models\IssuerCorporateAction;
 use App\Models\IssuerShareBasisReview;
 use App\Services\FundamentalSnapshotService;
 use App\Services\IssuerCoverageService;
-use App\Services\IdxApiFreeFundamentalsService;
 use App\Services\IssuerBatchIngestionService;
 use App\Services\IssuerFundamentalImportService;
 use App\Services\IssuerImportMetadataService;
@@ -20,6 +19,7 @@ use App\Services\IssuerShareBasisReconciliationService;
 use App\Services\SignalInsightService;
 use App\Services\SecCompanyFactsNormalizationService;
 use App\Services\SecOfficialCompanyFactsService;
+use App\Services\SecReviewLineageService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
@@ -61,7 +61,9 @@ class FundamentalHubController extends Controller
 
     /**
      * Explicit user-uploaded SEC companyfacts JSON -> reviewable normalized CSV.
-     * No network, DB/storage writes, source approval or trading permission.
+     * No network or raw financial payload persistence. A digest-only, owner-
+     * scoped source→CSV review audit is recorded in SQLite; no source approval,
+     * redistribution permission or trading authority is inferred.
      */
     public function normalizeSecCompanyFacts(Request $request, SecCompanyFactsNormalizationService $normalizer)
     {
@@ -113,7 +115,12 @@ class FundamentalHubController extends Controller
             $writer->insertOne(array_map(fn ($key) => $this->csvCell($period[$key]), $fields));
         }
 
-        return response($writer->toString(), 200, [
+        $csv = $writer->toString();
+        $audit = app(SecReviewLineageService::class)->attest(
+            (int) auth()->id(), $result, $csv
+        );
+
+        return response($csv, 200, [
             'Content-Type' => 'text/csv; charset=UTF-8',
             'Content-Disposition' => 'attachment; filename="II_SEC_COMPANYFACTS_CIK'.$result['cik'].'_REVIEW.csv"',
             'Cache-Control' => 'private, no-store',
@@ -121,6 +128,10 @@ class FundamentalHubController extends Controller
             'X-II-Source-Sha256' => $result['source_sha256'],
             'X-II-Review-Required' => 'true',
             'X-II-Source-Origin' => $result['fetch_origin'] ?? 'USER_PROVIDED_JSON',
+            'X-II-Lineage-Node' => $audit['node_id'],
+            'X-II-Content-SHA256' => $audit['content_sha256'],
+            'X-II-Lineage-Status' => $audit['status'],
+            'X-II-Export-Scope' => 'LOCAL_REVIEW_ONLY_NOT_CLEARED_FOR_REDISTRIBUTION',
         ]);
     }
 
@@ -152,39 +163,6 @@ class FundamentalHubController extends Controller
             'Content-Disposition' => 'attachment; filename="II_ISSUER_SOURCE_ACTIVATION_V9.csv"',
             'Cache-Control' => 'private, no-store',
             'X-Content-Type-Options' => 'nosniff',
-        ]);
-    }
-
-    /**
-     * Free third-party API acquisition (not official IDX). All three statements
-     * are fetched automatically; returned native concepts require reconciliation.
-     * No user DB writes, order placement, or credential exposure.
-     */
-    public function fetchIdxApiAnnual(Request $request, IdxApiFreeFundamentalsService $connector)
-    {
-        $data = $request->validate([
-            'idxapi_ticker' => ['required', 'string', 'regex:/^[A-Za-z0-9]{4,6}$/'],
-            'idxapi_year' => ['required', 'integer', 'between:2000,2100'],
-        ]);
-        try {
-            $result = $connector->fetchAnnual($data['idxapi_ticker'], (int) $data['idxapi_year']);
-        } catch (\InvalidArgumentException $exception) {
-            return redirect()->route('ii.fundamentals.index', ['workspace' => 'activation'])
-                ->withErrors(['idxapi_ticker' => $exception->getMessage()]);
-        } catch (\Throwable $exception) {
-            Log::warning('II free IDXAPI read-only fetch failed', ['type' => get_class($exception)]);
-            return redirect()->route('ii.fundamentals.index', ['workspace' => 'activation'])
-                ->withErrors(['idxapi_ticker' => 'Penyedia fundamental belum dapat diakses; tidak ada data yang disimpan.']);
-        }
-
-        $json = json_encode($result, JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-        return response($json, 200, [
-            'Content-Type' => 'application/json; charset=UTF-8',
-            'Content-Disposition' => 'attachment; filename="II_IDXAPI_'.$result['ticker'].'_FY'.$result['year'].'_REVIEW.json"',
-            'Cache-Control' => 'private, no-store',
-            'X-Content-Type-Options' => 'nosniff',
-            'X-II-Review-Required' => 'true',
-            'X-II-Source-Origin' => 'IDXAPI_THIRD_PARTY_FREE',
         ]);
     }
 

@@ -9,6 +9,7 @@ class IssuerImportMetadataService
     public function validate(array $input): array
     {
         $data = Validator::make($input, self::rules())->validate();
+        app(ByokIntakeFirewall::class)->assertIndependentSource($data);
         $data['ticker'] = strtoupper($data['ticker']);
         $data['sector'] = trim($data['sector'] ?? 'Unclassified') ?: 'Unclassified';
         $data['fiscal_period_type'] = $data['fiscal_period_type'] ?? 'annual';

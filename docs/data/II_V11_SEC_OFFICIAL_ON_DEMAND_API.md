@@ -24,3 +24,11 @@ V10 can normalize **manually uploaded** US-GAAP SEC companyfacts JSON. V11 remov
 
 ## Release gate
 V10 deployed production commit `5d7f25c448174f21c51ec1beb348e328ec0cb9e8`. Run GitHub CI, Windows isolated staging with preserved SQLite, HTTP smoke and full Laravel regression, then merge and separately execute guarded deployment. No production changes from this PR alone.
+
+
+## V7 BYOK-local provenance extension — 25 November 2026
+
+- SEC official on-demand API and user-uploaded Companyfacts JSON now generate a **local-review-only CSV**, each with separate source-origin status. A source digest and exact CSV digest are recorded in the owner-scoped lineage registry; the source→normalization transform is registered in one SQLite transaction. Raw SEC JSON, financial values, contact email and CSV bytes are not copied into registry metadata.
+- The response adds `X-II-Lineage-Node`, `X-II-Content-SHA256`, `X-II-Lineage-Status`, and `X-II-Export-Scope: LOCAL_REVIEW_ONLY_NOT_CLEARED_FOR_REDISTRIBUTION`. Existing `X-II-Source-Sha256` and `X-II-Review-Required: true` continue.
+- Direct official API origin **does not** mean user-uploaded JSON is authenticated by SEC; both require human numeric reconciliation. The CSV is for an existing user-initiated review workflow and never confers a general license for commercial distribution, bulk exports or cloud LLM transfers.
+- Existing code paths still avoid permanent raw SEC JSON/financial persistence during this review step. The new **metadata-only registry writes are intentional** and should not be mistaken for admitted/reconciled financial records.

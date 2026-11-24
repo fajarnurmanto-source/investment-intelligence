@@ -19,9 +19,21 @@ class SignalInsightService
     {
         // Immutable, versioned uploads: importing the same ticker never erases history.
         $path = $this->directory($userId).'/'.$ticker.'__'.bin2hex(random_bytes(12)).'.json';
+        app(ByokIntakeFirewall::class)->assertIndependentSource($document);
         $json = json_encode($document, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+        $sha = hash('sha256', $json);
+        // Filesystem and SQLite are not a distributed transaction. If lineage
+        // registration fails, delete this newly-created version only.
         if (!Storage::disk('local')->put($path, $json)) {
             throw new \RuntimeException('Could not save the uploaded price series.');
+        }
+        try {
+            app(LocalLineageRegistry::class)->registerSource(
+                $userId, 'signal_ohlcv_document', $sha, $sha, $document
+            );
+        } catch (\Throwable $exception) {
+            Storage::disk('local')->delete($path);
+            throw $exception;
         }
     }
 
@@ -61,7 +73,26 @@ class SignalInsightService
                 || count($document['rows']) < 60) {
                 continue;
             }
+            // Historical JSON can predate the BYOK firewall. Refuse known
+            // restricted sources before indicators/portfolio/strategy use it.
+            if (app(ByokSnapshotLineage::class)->isRestricted($document)) {
+                continue;
+            }
             $ticker = $document['ticker'];
+            $jsonHash = hash('sha256', $disk->get($path));
+            $node = app(LocalLineageRegistry::class)->find(
+                $userId, 'signal_ohlcv_document',
+                $jsonHash, 'ACQUIRED_SOURCE'
+            );
+            $document['lineage_source_node_id'] = null;
+            $document['lineage_source_status'] = 'UNREGISTERED';
+            // Independently rehash the physical JSON file before using the
+            // source node. Legacy sources remain identifiable as unregistered.
+            if ($node !== null && app(LocalLineageRegistry::class)->verifyTrace($userId, $node['id'])
+                && hash_equals($node['evidence_sha256'], $jsonHash)) {
+                $document['lineage_source_node_id'] = $node['id'];
+                $document['lineage_source_status'] = 'REGISTERED';
+            }
             // Storage filenames are unique; lexical timestamps select the newest import.
             if (!isset($latest[$ticker]) || strcmp((string) ($document['imported_at'] ?? ''), (string) ($latest[$ticker]['imported_at'] ?? '')) > 0) {
                 $latest[$ticker] = $document;

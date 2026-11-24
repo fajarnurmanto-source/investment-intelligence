@@ -78,6 +78,17 @@ class SecCompanyFactsNormalizationV10Test extends TestCase
         $this->assertStringContainsString('private', $response->headers->get('Cache-Control'));
         $this->assertStringContainsString('no-store', $response->headers->get('Cache-Control'));
         $this->assertStringContainsString('CIK0000320193_REVIEW.csv', $response->headers->get('Content-Disposition'));
+        $this->assertSame('USER_UPLOAD_REVIEW_REQUIRED',
+            $response->headers->get('X-II-Lineage-Status'));
+        $this->assertSame('LOCAL_REVIEW_ONLY_NOT_CLEARED_FOR_REDISTRIBUTION',
+            $response->headers->get('X-II-Export-Scope'));
+        $this->assertSame(hash('sha256', $response->getContent()),
+            $response->headers->get('X-II-Content-SHA256'));
+        $lineageNode = $response->headers->get('X-II-Lineage-Node');
+        $registry = app(\App\Services\LocalLineageRegistry::class);
+        $this->assertTrue($registry->verifyTrace($user->id, $lineageNode));
+        $this->assertCount(2, $registry->trace($user->id, $lineageNode)['nodes']);
+        $this->assertFalse($registry->allows($user->id, $lineageNode, 'export'));
 
         $reader = Reader::createFromString($response->getContent());
         $reader->setHeaderOffset(0);

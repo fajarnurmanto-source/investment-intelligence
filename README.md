@@ -2,6 +2,16 @@
 
 Investment Intelligence (II) is a Laravel-only local research product. Its active backend, ingestion, analytics, authorization, queue, scheduler, dashboard, and reports run in PHP/Laravel; no Python or FastAPI runtime is required.
 
+## Architecture decision (24 November 2026)
+
+**Local BYOK-first:** II is a local Laravel research application installed separately for each independent user. No shared developer-owned market-data key, no centralized market-data relay and **no multi-device data synchronization**.
+
+The first provider adapter supports MarketData.app delayed quotes from the authenticated user's own key via a localhost-only workflow at `/ii/data-sources` after login. API keys are encrypted in the local database using the device-specific Laravel APP_KEY. BYOK market quotes are transient, display-only: no export, clipboard feature, cloud LLM transfer, raw archive, background fetch or import to canonical price tables. MarketData user agreements may impose additional restrictions; the installer and DPAPI hardening are still pending.
+
+**Do not use the old idxapi.io Free shared-key sync workflow:** it has been removed. SEC/FRED sources and independently uploaded research retain separate usage rights. Git synchronization commands in this README apply only to application **source code**, never licensed market data.
+
+Architecture record: [II Local BYOK Mandatory Architecture](docs/ops/II_BYOK_LOCAL_MANDATORY_ARCHITECTURE_20261124.md).
+
 ## Canonical habitat
 
 - Habitat: `D:\Research\INVESTMENT RESEARCH\II`

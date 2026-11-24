@@ -104,7 +104,10 @@ class AccountAndProductStabilityTest extends TestCase
             $this->actingAs($user)->get($path)->assertOk();
         }
 
-        $this->actingAs($user)->get('/ii/macro/report.csv')->assertOk();
+        // Macro CSV requires independently reviewed source-use rights.
+        $this->actingAs($user)->get('/ii/macro/report/rights')->assertOk()
+            ->assertJsonPath('status', 'DENIED');
+        $this->actingAs($user)->get('/ii/macro/report.csv')->assertForbidden();
         $this->actingAs($user)->get('/ii/screener/export.csv')->assertOk();
         $this->actingAs($user)->get('/ii/fundamentals/coverage/export.csv')->assertOk();
     }

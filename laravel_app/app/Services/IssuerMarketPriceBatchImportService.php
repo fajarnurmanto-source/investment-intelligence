@@ -21,6 +21,7 @@ class IssuerMarketPriceBatchImportService
 
     public function import(int $userId, UploadedFile $file, array $source): array
     {
+        app(ByokIntakeFirewall::class)->assertIndependentSource($source);
         $raw = $this->readCsv($file);
         $sha256 = hash('sha256', $raw);
         if (IssuerMarketPrice::where('user_id', $userId)->where('batch_sha256', $sha256)->exists()) {

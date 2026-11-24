@@ -8,6 +8,11 @@ class FundamentalScreenerService
     {
         $rows = [];
         foreach ($records as $record) {
+            // A restricted snapshot must not participate in ranking,
+            // filtering, scoring or any downstream screener export.
+            if (($record['byok_lineage'] ?? null) === 'RESTRICTED_BYOK_SOURCE_DETECTED') {
+                continue;
+            }
             if ((($filters['sector'] ?? null) !== null && ($record['sector'] ?? 'Unclassified') !== $filters['sector'])
                 || (($filters['period'] ?? null) !== null && (int) ($record['latest_year'] ?? 0) !== $filters['period'])
                 || (($filters['min_margin'] ?? null) !== null && (($record['net_margin_pct'] ?? null) === null || $record['net_margin_pct'] < $filters['min_margin']))
