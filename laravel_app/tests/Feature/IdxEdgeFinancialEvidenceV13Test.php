@@ -234,4 +234,31 @@ class IdxEdgeFinancialEvidenceV13Test extends TestCase
         $this->assertDatabaseCount('ii_issuer_market_prices', 0);
     }
 
+    public function test_checksum_lock_contention_fails_closed_without_creating_evidence(): void
+    {
+        Storage::fake('local');
+        config()->set('ii.idxedge.key', 'test-provider-key');
+        Http::preventStrayRequests();
+        $body = json_encode($this->fixture(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+        $hash = hash('sha256', $body);
+        Http::fake(['https://stock.arjum.com/*' => Http::response($body, 200, ['Content-Type' => 'application/json'])]);
+
+        $dir = storage_path('app/private/ii_idxedge_locks');
+        if (! is_dir($dir)) {
+            mkdir($dir, 0700, true);
+        }
+        $handle = fopen($dir.'/'.$hash.'.lock', 'c');
+        $this->assertNotFalse($handle);
+        $this->assertTrue(flock($handle, LOCK_EX | LOCK_NB));
+        try {
+            $this->assertSame(1, Artisan::call('ii:idxedge:pilot', ['--ticker' => 'BBCA']));
+            $this->assertSame([], Storage::disk('local')->allFiles('ii_idxedge_review/BBCA'));
+            $this->assertDatabaseCount('ii_issuer_periods', 0);
+            $this->assertDatabaseCount('ii_issuer_market_prices', 0);
+        } finally {
+            flock($handle, LOCK_UN);
+            fclose($handle);
+        }
+    }
+
 }
