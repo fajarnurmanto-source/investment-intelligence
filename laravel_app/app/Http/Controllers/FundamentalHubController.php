@@ -9,6 +9,7 @@ use App\Models\IssuerCorporateAction;
 use App\Models\IssuerShareBasisReview;
 use App\Services\FundamentalSnapshotService;
 use App\Services\IssuerCoverageService;
+use App\Services\IdxFilingEvidenceService;
 use App\Services\IssuerBatchIngestionService;
 use App\Services\IssuerFundamentalImportService;
 use App\Services\IssuerImportMetadataService;
@@ -152,6 +153,40 @@ class FundamentalHubController extends Controller
             'Cache-Control' => 'private, no-store',
             'X-Content-Type-Options' => 'nosniff',
         ]);
+    }
+
+    /**
+     * Offline BEI evidence-only path: no URL fetch, PDF OCR, or numeric admission.
+     * The user attests that the uploaded PDF came from the linked official URL.
+     */
+    public function importIdxFiling(Request $request, IdxFilingEvidenceService $evidence)
+    {
+        $data = $request->validate([
+            'idx_ticker' => ['required', 'string', 'regex:/^[A-Za-z0-9]{4,6}(\.JK)?$/i'],
+            'idx_issuer_name' => ['required', 'string', 'max:200'],
+            'idx_report_period' => ['required', 'string', 'regex:/^(FY|Q[1-4]|H[12]) 20\d{2}$/i'],
+            'idx_report_date' => ['required', 'date_format:Y-m-d'],
+            'idx_currency' => ['required', 'in:IDR,USD'],
+            'idx_consolidated' => ['nullable', 'boolean'],
+            'idx_source_url' => ['required', 'url', 'max:1000'],
+            'idx_rights_confirmed' => ['accepted'],
+            'idx_filing_file' => ['required', 'file', 'max:20480'],
+        ]);
+
+        try {
+            $document = $evidence->import((int) auth()->id(), $data, $data['idx_filing_file']);
+        } catch (\InvalidArgumentException $exception) {
+            return redirect()->route('ii.fundamentals.index', ['workspace' => 'activation'])
+                ->withErrors(['idx_filing_file' => $exception->getMessage()]);
+        } catch (\Throwable $exception) {
+            Log::warning('II IDX evidence intake error', ['type' => get_class($exception)]);
+
+            return redirect()->route('ii.fundamentals.index', ['workspace' => 'activation'])
+                ->withErrors(['idx_filing_file' => 'Bukti BEI gagal disimpan; dokumen dan data lama tetap aman.']);
+        }
+
+        return redirect()->route('ii.fundamentals.index', ['workspace' => 'activation'])
+            ->with('fundamental_notice', 'Bukti PDF '.$document->issuer_code.' tersimpan sebagai DOCUMENT_ONLY (SHA-256 '.substr($document->sha256, 0, 16).'…). URL dan asal dokumen masih berdasarkan pernyataan pengguna; angka fundamental belum diekstraksi.');
     }
 
     public function import(Request $request, IssuerFundamentalImportService $importer, IssuerImportMetadataService $metadata)
