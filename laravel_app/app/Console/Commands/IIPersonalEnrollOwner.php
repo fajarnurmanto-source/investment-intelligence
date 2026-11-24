@@ -79,7 +79,51 @@ class IIPersonalEnrollOwner extends Command
         } finally {
             unset($password, $confirm);
         }
+        if (! app()->environment('testing')) {
+            // The user record is the source of truth; do not advertise an
+            // activated installation while device.json still claims pending.
+            // Atomic metadata publication never writes a password, email,
+            // credential, or application key to device.json.
+            try {
+                $this->publishOwnerEnrollmentState((string) getenv('II_RUNTIME_ROOT'));
+            } catch (\Throwable) {
+                $this->error('II_PRT_OWNER_ENROLLED_BUT_DEVICE_STATE_UPDATE_FAILED');
+                return self::FAILURE;
+            }
+        }
         $this->info('II_PRT_OWNER_ENROLLED=YES;TRADING_AUTHORITY=NONE');
         return self::SUCCESS;
     }
+    private function publishOwnerEnrollmentState(string $root): void
+    {
+        $file = rtrim($root, '\\/').DIRECTORY_SEPARATOR.'device.json';
+        $metadata = json_decode((string) file_get_contents($file), true, 32, JSON_THROW_ON_ERROR);
+        if (! is_array($metadata)
+            || ($metadata['schema'] ?? '') !== 'ii.prt.device-bootstrap.v1'
+            || ($metadata['database_migrated'] ?? false) !== true
+            || ($metadata['owner_enrolled'] ?? true) !== false
+            || ($metadata['activation_status'] ?? '') !== 'PENDING_OWNER_ENROLLMENT') {
+            throw new \RuntimeException('II_PRT_DEVICE_STATE_CHANGED');
+        }
+
+        $metadata['owner_enrolled'] = true;
+        $metadata['activation_status'] = 'OWNER_ENROLLED_PENDING_RUNTIME_ACCEPTANCE';
+        $metadata['login_ready'] = false;
+        $metadata['runtime_accepted'] = false;
+        $metadata['owner_enrolled_at'] = gmdate('c');
+
+        $tmp = $file.'.owner-'.bin2hex(random_bytes(8)).'.pending';
+        try {
+            $json = json_encode($metadata, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+            if (file_put_contents($tmp, $json, LOCK_EX) !== strlen($json)
+                || ! rename($tmp, $file)) {
+                throw new \RuntimeException('II_PRT_OWNER_STATE_PUBLISH_FAILED');
+            }
+        } finally {
+            if (is_file($tmp)) {
+                @unlink($tmp);
+            }
+        }
+    }
+
 }
