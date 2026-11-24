@@ -112,6 +112,48 @@ final class LocalLineageRegistry
         return $record === null ? null : $this->view($record);
     }
 
+    /**
+     * Read a bounded owner-only ancestry graph for audit/review.
+     * No numeric payload or provider API key is returned.
+     */
+    public function trace(int $userId, string $nodeId): array
+    {
+        if ($userId < 1 || ! Str::isUuid($nodeId)) {
+            throw new \InvalidArgumentException('II_LINEAGE_TRACE_INVALID');
+        }
+        $pending = [$nodeId];
+        $visited = [];
+        $nodes = [];
+        $edges = [];
+        while ($pending !== []) {
+            if (count($visited) > 64) {
+                throw new \RuntimeException('II_LINEAGE_TRACE_LIMIT_EXCEEDED');
+            }
+            $id = array_shift($pending);
+            if (isset($visited[$id])) {
+                continue;
+            }
+            $row = DB::table('ii_lineage_nodes')
+                ->where('user_id', $userId)->where('id', $id)->first();
+            if ($row === null) {
+                throw new \InvalidArgumentException('II_LINEAGE_TRACE_NOT_OWNED_OR_MISSING');
+            }
+            $visited[$id] = true;
+            $nodes[] = $this->view($row);
+            $parents = DB::table('ii_lineage_edges')
+                ->where('user_id', $userId)->where('child_node_id', $id)
+                ->orderBy('parent_node_id')->pluck('parent_node_id')->all();
+            foreach ($parents as $parent) {
+                $edges[] = ['parent_node_id' => $parent, 'child_node_id' => $id];
+                if (! isset($visited[$parent])) {
+                    $pending[] = $parent;
+                }
+            }
+        }
+
+        return ['root_node_id' => $nodeId, 'nodes' => $nodes, 'edges' => $edges];
+    }
+
     /** Effective permission is never inferred from a UI badge. */
     public function allows(int $userId, string $nodeId, string $capability): bool
     {
