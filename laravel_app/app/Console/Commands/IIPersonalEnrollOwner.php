@@ -20,6 +20,24 @@ class IIPersonalEnrollOwner extends Command
             $this->error('II_PRT_OWNER_CONFIRMATION_REQUIRED');
             return self::FAILURE;
         }
+        // Outside PHPUnit, enrollment is restricted to a deliberately
+        // initialized II PRT device workspace, never an arbitrary database.
+        if (! app()->environment('testing')) {
+            $root = getenv('II_RUNTIME_ROOT');
+            if (! is_string($root) || trim($root) === '') {
+                $this->error('II_PRT_DEVICE_ROOT_REQUIRED');
+                return self::FAILURE;
+            }
+            $metadataPath = rtrim($root, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.'device.json';
+            $metadata = is_file($metadataPath) ? json_decode((string) file_get_contents($metadataPath), true) : null;
+            if (! is_array($metadata)
+                || ($metadata['schema'] ?? '') !== 'ii.prt.device-bootstrap.v1'
+                || ($metadata['database_migrated'] ?? false) !== true
+                || ($metadata['owner_enrolled'] ?? true) !== false) {
+                $this->error('II_PRT_DEVICE_MIGRATION_OR_IDENTITY_NOT_READY');
+                return self::FAILURE;
+            }
+        }
         if (! Schema::hasTable('users') || ! Schema::hasColumn('users', 'ii_research_role')) {
             $this->error('II_PRT_MIGRATION_REQUIRED');
             return self::FAILURE;
