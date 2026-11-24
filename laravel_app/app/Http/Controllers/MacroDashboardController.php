@@ -10,10 +10,13 @@ use Symfony\Component\HttpFoundation\Response;
 
 class MacroDashboardController extends Controller
 {
-    public function index(MacroAnalyticsService $analytics)
+    public function index(MacroAnalyticsService $analytics, MacroReportRightsGate $gate)
     {
         $dashboard = $analytics->dashboard();
-        return response()->view('ii.macro', compact('dashboard'))->header('Cache-Control', 'private, no-store');
+        $rights = $gate->preflight($dashboard);
+
+        return response()->view('ii.macro', compact('dashboard', 'rights'))
+            ->header('Cache-Control', 'private, no-store');
     }
 
     public function rights(MacroAnalyticsService $analytics, MacroReportRightsGate $gate): Response
