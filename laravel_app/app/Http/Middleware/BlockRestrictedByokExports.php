@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\LocalLineageRegistry;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -70,6 +71,30 @@ final class BlockRestrictedByokExports
                 ->where('can_export', false)->exists();
             if ($restrictedLineage) {
                 abort(403, 'II_LINEAGE_RESTRICTED_ANCESTRY_EXPORT_BLOCKED');
+            }
+        }
+
+        // Verify the stored ancestry before allowing legacy issuer or
+        // screener CSVs. A changed fingerprint/rights edge is not admissible,
+        // even when the vendor identity is an independent source.
+        if (Schema::hasTable('ii_lineage_nodes')) {
+            $audit = DB::table('ii_lineage_nodes')
+                ->where('user_id', $userId)
+                ->whereIn('reference_type', [
+                    'issuer_document', 'issuer_market_price',
+                    'issuer_corporate_action', 'issuer_share_basis_review',
+                    'issuer_valuation', 'issuer_screener',
+                ])->pluck('id');
+            // Bounded synchronous verification: a larger registry requires a
+            // separately reviewed batch audit, never silent export approval.
+            if ($audit->count() > 500) {
+                abort(403, 'II_LINEAGE_EXPORT_AUDIT_LIMIT_EXCEEDED');
+            }
+            $registry = app(LocalLineageRegistry::class);
+            foreach ($audit as $nodeId) {
+                if (! $registry->verifyTrace((int) $userId, (string) $nodeId)) {
+                    abort(403, 'II_LINEAGE_EXPORT_INTEGRITY_FAILED');
+                }
             }
         }
 
