@@ -12,22 +12,11 @@ final class ByokIntakeFirewall
 {
     public function assertIndependentSource(array $source): void
     {
-        foreach (['source_name', 'publisher'] as $field) {
-            $name = strtolower(trim((string) ($source[$field] ?? '')));
-            if (preg_match('/\bmarketdata\s*(?:\.\s*app|byok)\b/i', $name)) {
-                throw new \InvalidArgumentException('II_BYOK_RESTRICTED_SOURCE_CANNOT_BE_IMPORTED');
-            }
-        }
-
-        foreach (['source_url', 'terms_url'] as $field) {
-            $url = trim((string) ($source[$field] ?? ''));
-            if ($url === '') {
-                continue;
-            }
-            $host = strtolower((string) parse_url($url, PHP_URL_HOST));
-            if ($host === 'marketdata.app' || str_ends_with($host, '.marketdata.app')) {
-                throw new \InvalidArgumentException('II_BYOK_RESTRICTED_SOURCE_CANNOT_BE_IMPORTED');
-            }
+        // Share the same provenance classifier as derived snapshots so a
+        // new provider restriction cannot drift between read and write gates.
+        if (app(ByokSnapshotLineage::class)->isRestricted($source)) {
+            throw new \InvalidArgumentException('II_BYOK_RESTRICTED_SOURCE_CANNOT_BE_IMPORTED');
         }
     }
+
 }
