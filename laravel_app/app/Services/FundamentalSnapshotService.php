@@ -52,7 +52,17 @@ class FundamentalSnapshotService
                 if ($document->periods->isEmpty()) {
                     continue;
                 }
-                $out[$document->issuer_code] = $this->summarizeDocument($document, (int) $versions[$document->issuer_code], $prices->get($document->issuer_code), (bool) $priceConflicts->get($document->issuer_code, false));
+                $summary = $this->summarizeDocument($document, (int) $versions[$document->issuer_code], $prices->get($document->issuer_code), (bool) $priceConflicts->get($document->issuer_code, false));
+                $node = app(LocalLineageRegistry::class)->find(
+                    $userId, 'issuer_document', $document->id, 'NORMALIZE_ISSUER_PERIODS_V1'
+                );
+                // Explicit immutable transform link. Legacy documents with no
+                // migration registry remain UNREGISTERED, never auto-approved.
+                $summary['lineage_node_id'] = $node['id'] ?? null;
+                $summary['lineage_status'] = $node === null ? 'UNREGISTERED' : 'REGISTERED';
+                $summary['lineage_rights_profile'] = $node['rights_profile'] ?? 'UNVERIFIED';
+                $summary['lineage_effective_export'] = $node['can_export'] ?? false;
+                $out[$document->issuer_code] = $summary;
             }
         }
         // Apply source rights at the shared data boundary, before the same
