@@ -44,6 +44,15 @@ E. Centralized *single fetcher* is optional only if provider terms permit remote
 F. Prefer per-device provider credentials or vendor-supported credential entitlements; do not silently share subscriptions.
 G. Signed installer with reproducible release manifest, offline upgrade/rollback, migration backups, startup service checks and remote-device health status where approved.
  
+## Roadmap governance and state index
+This file is the **single canonical II product direction and mandatory decision ledger** for PRT; it is not a standalone competing roadmap. Version-specific implementation plans remain subordinate.
+- [Milestones, operational capsule and acceptance matrix](II_PRT_MILESTONES_CAPSULE_AND_ACCEPTANCE_20261124.md) tracks implementation evidence and the current state; milestone labels are not production-release claims.
+- [V13 IDX Edge PRO pilot evidence gates](II_V13_MANDATORY_DECISIONS_AND_ACCEPTANCE_GATES.md) govern provider-specific work.
+- The existing V11 production runtime must remain recoverable. No approval to merge/redeploy is implied.
+- Document updates are authorized as part of governance maintenance; technical code acceptance, source licensing and deployment are separate gates.
+- Milestone execution may run concurrently when isolated: market-data licensing research, V13 archival corrections, installer packaging discovery, and existing analytics regression.
+- Capability release is source-scoped: display rights, non-display rights, multi-device sessions and cross-device sync must each be affirmatively permitted.
+
 ## Revised master roadmap
 P0 — BASELINE STABILIZATION: preserve V11/V13 state, audit runtime, QA artifacts, secrets, backup/restore, no unauthorized data admission.
 P1 — REAL DATA AND RIGHTS MATRIX: continue IDX Edge PRO fundamental raw-byte evidence + checksum closure, licensed BEI EOD/delayed/live candidate assessment, Alpaca IEX limited US real-time pilot, entitlement registry + source-specific rights gate.
