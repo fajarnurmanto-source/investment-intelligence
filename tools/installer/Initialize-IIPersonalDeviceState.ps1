@@ -55,8 +55,7 @@ $environmentLines = @(
     'QUEUE_CONNECTION=database',
     'FILESYSTEM_DISK=local',
     'LOG_CHANNEL=stack',
-    'LOG_LEVEL=warning',
-    'II_IDXEDGE_AUTO_SYNC=false'
+    'LOG_LEVEL=warning'
 )
 $installMeta = [ordered]@{
     schema='ii.prt.device-bootstrap.v1'
