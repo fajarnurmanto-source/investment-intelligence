@@ -94,3 +94,10 @@ No CI, deployment, live data, rights approval or installer acceptance is asserte
 - Later commits introduce two isolated synthetic storage failure tests (raw `.raw` write and manifest `.json` write) and cleanup logic for partial writes. **These new commits are not covered by run #85**; CI on the resulting HEAD must be verified independently.
 - The current archive sequence is not a multi-file transactional filesystem guarantee; abrupt process termination and concurrency remain hazards to address with temp files, atomic rename/locking and recovery. No claim of physical disk-full test.
 - Source-live, legal rights, owner Windows-local, and financial-admission gates remain pending; no production deployment or merge.
+
+## V13 lock and M08 installer audit — 24 Nov 2026
+- Latest previously verified CI: GitHub Actions #88 (run 45379031038) on `e26d76352ee027f743d137b0d1a861af14d9e63d`; Linux and Windows hosted CI succeeded.
+- New V13 work on feature branch: checksum-scoped local advisory `flock` to serialize archives, plus lock-contention negative test; no latest-head CI success was available when this update was written.
+- Atomicity qualification: advisory locking prevents cooperating process interleaving, but existing direct `Storage::put` writes are **not atomic rename** and abrupt-process recovery is not yet proven. Must implement temp-file + same-filesystem rename and recovery scanner with dedicated tests before promoting M03 acceptance.
+- [M08 Windows installer runtime audit](II_PRT_WINDOWS_INSTALLER_M08_RUNTIME_AUDIT.md): reviewed existing FrankenPHP/local launcher, PHP dependency, queue/scheduler, deployment/recovery scripts; specifies clean machine, per-device APP_KEY/SQLite, signed bundles, rollback and second-device test requirements. No installer has been shipped.
+- Live-provider and rights checks remain pending; commercial redistribution rights for bundled runtime must be checked. `NOT_ADMITTED / HOLD / TRADING_AUTHORITY=NONE` unchanged.
