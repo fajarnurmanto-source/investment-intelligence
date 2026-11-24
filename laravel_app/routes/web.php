@@ -84,6 +84,7 @@ Route::prefix('ii')->name('ii.')->group(function (): void {
         Route::get('/risk-budget', [RiskBudgetController::class, 'index'])->name('risk-budget.index');
         Route::get('/portfolio', [PortfolioSandboxController::class, 'index'])->name('portfolio.index');
         Route::get('/macro', [MacroDashboardController::class, 'index'])->name('macro.index');
+        Route::get('/macro/report/rights', [MacroDashboardController::class, 'rights'])->name('macro.report.rights');
         Route::get('/macro/report.csv', [MacroDashboardController::class, 'report'])->name('macro.report');
 
         Route::get('/company', [CompanyResearchController::class, 'index'])->name('company');
