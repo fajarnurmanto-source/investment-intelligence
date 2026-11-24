@@ -9,6 +9,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class FredPipelineTest extends TestCase
@@ -48,10 +49,13 @@ class FredPipelineTest extends TestCase
 
         // This is a synthetic CI-only policy receipt. Deployment MUST obtain
         // a genuine, scoped rights review before setting this configuration.
+        Storage::fake('local');
+        Storage::disk('local')->put('ii-rights-reviews/ci-synthetic-receipt.txt', 'synthetic-ci-only-rights-review');
         config()->set('ii.fred.report_rights.CPIAUCSL', [
             'status' => 'REVIEWED_ALLOWED',
             'scope' => 'LOCAL_PERSONAL_NONCOMMERCIAL_CSV',
             'receipt_sha256' => hash('sha256', 'synthetic-ci-only-rights-review'),
+            'receipt_file' => 'ci-synthetic-receipt.txt',
             'source_owner' => 'U.S. Bureau of Labor Statistics',
         ]);
         $this->get('/ii/macro')->assertOk()
@@ -86,11 +90,14 @@ class FredPipelineTest extends TestCase
             'status' => 'REVIEWED_ALLOWED',
             'scope' => 'COMMERCIAL_REDISTRIBUTION', // explicitly not authorized
             'receipt_sha256' => hash('sha256', 'fake-ci-receipt'),
+            'receipt_file' => 'invalid-scope-receipt.txt',
             'source_owner' => 'U.S. Bureau of Labor Statistics',
         ]);
         $this->get('/ii/macro/report.csv')->assertForbidden();
         $this->assertDatabaseCount('ii_lineage_nodes', 0);
 
+        Storage::fake('local');
+        Storage::disk('local')->put('ii-rights-reviews/invalid-scope-receipt.txt', 'fake-ci-receipt');
         config()->set('ii.fred.report_rights.CPIAUCSL.scope', 'LOCAL_PERSONAL_NONCOMMERCIAL_CSV');
         \App\Models\EconomicObservation::query()->where('series_id', 'CPIAUCSL')
             ->orderByDesc('observed_on')->firstOrFail()->update([
@@ -111,10 +118,13 @@ class FredPipelineTest extends TestCase
             'fred.stlouisfed.org/*' => Http::response($this->cpiCsv(), 200, ['Content-Type' => 'text/csv']),
         ]);
         $run = app(FredIngestionService::class)->ingest('CPIAUCSL');
+        Storage::fake('local');
+        Storage::disk('local')->put('ii-rights-reviews/ci-ingest-review.txt', 'test-not-a-real-review');
         config()->set('ii.fred.report_rights.CPIAUCSL', [
             'status' => 'REVIEWED_ALLOWED',
             'scope' => 'LOCAL_PERSONAL_NONCOMMERCIAL_CSV',
             'receipt_sha256' => hash('sha256', 'test-not-a-real-review'),
+            'receipt_file' => 'ci-ingest-review.txt',
             'source_owner' => 'U.S. Bureau of Labor Statistics',
         ]);
         $user = User::factory()->create();
