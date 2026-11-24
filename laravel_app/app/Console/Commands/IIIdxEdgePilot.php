@@ -73,7 +73,7 @@ class IIIdxEdgePilot extends Command
                     if (! flock($lockHandle, LOCK_EX | LOCK_NB)) {
                         throw new \RuntimeException('IDXEDGE_ARCHIVE_BUSY');
                     }
-                    $this->recoverStaging($disk, 'ii_idxedge_review/'.$code);
+                    $this->recoverStaging($disk, $prefix);
                 $manifestExists = $disk->exists($manifestPath);
                 $rawExists = $disk->exists($rawPath);
 
@@ -178,10 +178,10 @@ class IIIdxEdgePilot extends Command
      * Only remove abandoned staging files; never remove immutable final raw
      * evidence or a reviewed manifest. Runs under the same ticker/hash lock.
      */
-    private function recoverStaging($disk, string $directory): void
+    private function recoverStaging($disk, string $prefix): void
     {
-        foreach ($disk->files($directory) as $path) {
-            if (preg_match('/\.(?:raw|json)\.pending-[a-f0-9]{16}$/D', $path)) {
+        foreach ($disk->files(dirname($prefix)) as $path) {
+            if (preg_match('/^'.preg_quote($prefix, '/').'\\.(?:raw|json)\\.pending-[a-f0-9]{16}$/D', $path)) {
                 $disk->delete($path);
             }
         }
