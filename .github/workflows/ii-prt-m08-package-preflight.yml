@@ -4,6 +4,10 @@ on:
   pull_request:
     paths:
       - 'tools/installer/**'
+      - 'tools/production/**'
+      - 'start-ii.ps1'
+      - 'stop-ii.ps1'
+      - 'restart-ii.ps1'
       - '.github/workflows/ii-prt-m08-package-preflight.yml'
   workflow_dispatch:
 
@@ -21,3 +25,14 @@ jobs:
           & ./tools/installer/tests/Test-IIPersonalPackageInputs.ps1
           & ./tools/installer/tests/Test-IIPersonalStagingPayload.ps1
           & ./tools/installer/tests/Test-IIPersonalDeviceState.ps1
+
+      - name: Windows PowerShell 5.1 production runtime environment contract
+        shell: pwsh
+        run: |
+          & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "./tools/production/tests/Test-IIProductionPowerShellCompatibility.ps1"
+          if ($LASTEXITCODE -ne 0) { throw "II_PS51_COMPAT_FAILED" }
+      - name: PowerShell 7 production runtime environment contract
+        shell: pwsh
+        run: |
+          & pwsh -NoProfile -NonInteractive -File "./tools/production/tests/Test-IIProductionPowerShellCompatibility.ps1"
+          if ($LASTEXITCODE -ne 0) { throw "II_PS7_COMPAT_FAILED" }
