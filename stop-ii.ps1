@@ -4,7 +4,15 @@ $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'tools\production\II-Production.Common.ps1')
 $context = Get-IIProductionContext -RepositoryRoot $PSScriptRoot -Port $Port
 $manifest = Read-IIProcessManifest -Context $context
-if (-not $manifest) { Write-Host 'Investment Intelligence is not running (no managed process manifest).'; exit 0 }
+if (-not $manifest) {
+    # Never claim an unmanaged process is stopped just because its manifest
+    # is missing. Deployment must not proceed while its target port is busy.
+    if (Test-IIListeningPort -Port $Port) {
+        throw "II_STOP_UNMANAGED_LISTENER: port $Port is still occupied but no managed manifest exists."
+    }
+    Write-Host 'Investment Intelligence is not running (no managed process manifest).'
+    return
+}
 
 foreach ($entry in @($manifest.processes)) {
     $processId = [int]$entry.id

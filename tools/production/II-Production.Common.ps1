@@ -143,6 +143,45 @@ function Start-IIManagedProcess {
     )
     $stdout = Join-Path $LogRoot "$Name.stdout.log"
     $stderr = Join-Path $LogRoot "$Name.stderr.log"
-    $process = Start-Process -FilePath $FilePath -ArgumentList $ArgumentList -WorkingDirectory $WorkingDirectory -WindowStyle Hidden -RedirectStandardOutput $stdout -RedirectStandardError $stderr -Environment $Environment -PassThru
-    [pscustomobject]@{ name = $Name; id = $process.Id; started_at = [DateTimeOffset]::Now.ToString('o') }
+
+    # Start-Process -Environment is unavailable in Windows PowerShell 5.1.
+    # Use the inherited process environment on BOTH engines. Start-Process
+    # captures it at child creation; always restore the parent afterwards.
+    # Do not call this function concurrently from runspaces in one process.
+    $previous = @{}
+    try {
+        foreach ($key in $Environment.Keys) {
+            if ($key -isnot [string] -or $key -notmatch '^[A-Za-z_][A-Za-z0-9_]*$') {
+                throw 'II_START_ENVIRONMENT_NAME_INVALID'
+            }
+            if ($null -ne $Environment[$key] -and $Environment[$key] -isnot [string]) {
+                throw 'II_START_ENVIRONMENT_VALUE_INVALID'
+            }
+            $previous[$key] = [Environment]::GetEnvironmentVariable($key, 'Process')
+            [Environment]::SetEnvironmentVariable($key, $Environment[$key], 'Process')
+        }
+        $arguments = @{
+            FilePath = $FilePath
+            ArgumentList = $ArgumentList
+            WorkingDirectory = $WorkingDirectory
+            WindowStyle = 'Hidden'
+            RedirectStandardOutput = $stdout
+            RedirectStandardError = $stderr
+            PassThru = $true
+        }
+        $process = Start-Process @arguments
+    } finally {
+        foreach ($key in $previous.Keys) {
+            [Environment]::SetEnvironmentVariable($key, $previous[$key], 'Process')
+        }
+    }
+
+    if ($null -eq $process -or $process.Id -le 0) {
+        throw 'II_START_PROCESS_FAILED'
+    }
+    [pscustomobject]@{
+        name = $Name
+        id = $process.Id
+        started_at = [DateTimeOffset]::Now.ToString('o')
+    }
 }

@@ -64,6 +64,10 @@ try {
         throw "Investment Intelligence did not become healthy. Review $($context.LogRoot)."
     }
     $queue = Start-IIManagedProcess -Name 'queue' -FilePath 'php' -ArgumentList @('artisan', 'queue:work', '--sleep=3', '--tries=3', '--timeout=90') -WorkingDirectory $context.AppRoot -LogRoot $context.LogRoot
+    # Persist ownership of every newly launched process immediately. If the
+    # scheduler fails to start, stop-ii.ps1 must also be able to stop queue.
+    $manifest.processes = @($server, $queue)
+    Write-IIProcessManifest -Context $context -Manifest $manifest
     $scheduler = Start-IIManagedProcess -Name 'scheduler' -FilePath 'php' -ArgumentList @('artisan', 'schedule:work') -WorkingDirectory $context.AppRoot -LogRoot $context.LogRoot
     $manifest.processes = @($server, $queue, $scheduler)
     Write-IIProcessManifest -Context $context -Manifest $manifest
