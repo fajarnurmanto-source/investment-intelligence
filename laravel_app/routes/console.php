@@ -15,3 +15,8 @@ Schedule::command('ii:ingest-fred')
 
 
 // Provider BYOK acquisition is user-initiated, on-device, and never scheduled.
+
+// Only an independently licensed private local feed; never the restricted BYOK endpoint.
+if (config('market_feed.enabled') === true) {
+    Schedule::command('ii:sync-market-feed')->everyFifteenMinutes()->withoutOverlapping();
+}
