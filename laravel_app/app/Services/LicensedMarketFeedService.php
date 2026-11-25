@@ -50,10 +50,36 @@ final class LicensedMarketFeedService
             $responseHash = null;
             $mode = $provider === 'twelve_data' ? 'LICENSED_PROVIDER_API' : 'LICENSED_LOCAL_FEED';
             $identity = $provider === 'twelve_data' ? strtoupper($cfg['provider_symbol'] ?? '').'@'.strtoupper($cfg['provider_mic'] ?? '') : null;
+            $previous = $this->signals->latestDocument($owner, $ticker);
+            if ($previous !== null) {
+                if (($previous['acquisition_mode'] ?? null) !== $mode
+                    || ($previous['provider_identity'] ?? null) !== $identity
+                    || $previous['source_name'] !== $source || ($previous['source_url'] ?? null) !== $url
+                    || ($previous['rights_reference'] ?? null) !== $cfg['rights_reference']) {
+                    throw new \InvalidArgumentException('II_FEED_EXISTING_SOURCE_CONFLICT');
+                }
+                foreach (['currency', 'price_adjustment', 'session_timezone'] as $field) {
+                    if (($previous[$field] ?? null) !== $metadata[$field]) {
+                        throw new \InvalidArgumentException('II_FEED_METADATA_CONFLICT');
+                    }
+                }
+            }
+            $checkpoint = null;
+            $requestWindow = null;
             if ($provider === 'twelve_data') {
-                $result = app(TwelveDataDailyAdapter::class)->fetch($cfg, $metadata);
+                $target = filter_var($cfg['history_sessions'] ?? 250, FILTER_VALIDATE_INT,
+                    ['options' => ['min_range' => 60, 'max_range' => 2000]]);
+                if (!$target) {
+                    throw new \InvalidArgumentException('II_PROVIDER_HISTORY_LIMIT_INVALID');
+                }
+                if ($previous !== null && count($previous['rows']) >= $target
+                    && ($cfg['incremental_enabled'] ?? true) === true) {
+                    $checkpoint = $previous['rows'][array_key_last($previous['rows'])]['date'];
+                }
+                $result = app(TwelveDataDailyAdapter::class)->fetch($cfg, $metadata, $checkpoint);
                 $raw = $result['csv'];
                 $responseHash = $result['response_sha256'];
+                $requestWindow = ['start' => $result['request_start'], 'end' => $result['request_end'], 'limit' => $result['request_limit']];
             } else {
             $disk = Storage::disk('local');
             $path = 'ii_market_feed/u'.$owner.'/'.$ticker.'.csv';
@@ -68,29 +94,20 @@ final class LicensedMarketFeedService
                 throw new \InvalidArgumentException('II_FEED_SIZE_INVALID');
             }
             }
-            $rows = $this->parse($raw, $metadata['session_timezone']);
+            $rows = $this->parse($raw, $metadata['session_timezone'], $provider === 'twelve_data' && $previous !== null ? 1 : 60);
             $fingerprint = hash('sha256', json_encode($provider === 'local' ? [$source, $url, $cfg['rights_reference'], $metadata, $rows] : [$source, $url, $cfg['rights_reference'], $metadata, $rows, $identity], JSON_THROW_ON_ERROR));
-            $previous = $this->signals->latestDocument($owner, $ticker);
             if ($previous !== null) {
                 if (($previous['feed_fingerprint'] ?? null) === $fingerprint) {
                     return 'UNCHANGED';
-                }
-                if (($previous['acquisition_mode'] ?? null) !== $mode
-                    || ($previous['provider_identity'] ?? null) !== $identity
-                    || $previous['source_name'] !== $source || ($previous['source_url'] ?? null) !== $url
-                    || ($previous['rights_reference'] ?? null) !== $cfg['rights_reference']) {
-                    throw new \InvalidArgumentException('II_FEED_EXISTING_SOURCE_CONFLICT');
-                }
-                foreach (['currency', 'price_adjustment', 'session_timezone'] as $field) {
-                    if (($previous[$field] ?? null) !== $metadata[$field]) {
-                        throw new \InvalidArgumentException('II_FEED_METADATA_CONFLICT');
-                    }
                 }
                 $oldRows = $previous['rows'];
                 if (end($rows)['date'] < end($oldRows)['date']) {
                     throw new \InvalidArgumentException('II_FEED_STALE_SNAPSHOT');
                 }
                 $merged = array_column($oldRows, null, 'date');
+                if ($provider === 'twelve_data' && array_intersect_key($merged, array_column($rows, null, 'date')) === []) {
+                    throw new \InvalidArgumentException('II_FEED_HISTORY_OVERLAP_REQUIRED');
+                }
                 foreach ($rows as $row) {
                     if (isset($merged[$row['date']]) && $merged[$row['date']] != $row) {
                         throw new \InvalidArgumentException('II_FEED_HISTORICAL_CONFLICT');
@@ -99,6 +116,9 @@ final class LicensedMarketFeedService
                 }
                 ksort($merged);
                 $rows = array_slice(array_values($merged), -2000);
+                if ($provider === 'twelve_data' && $rows == $oldRows) {
+                    return 'UNCHANGED';
+                }
             }
             $this->signals->save($owner, $ticker, array_merge([
                 'schema' => 'ii.signal.vs7.r1',
@@ -110,6 +130,10 @@ final class LicensedMarketFeedService
                 'acquisition_mode' => $mode,
                 'provider_identity' => $identity,
                 'provider_response_sha256' => $responseHash,
+                'acquisition_window' => $requestWindow,
+                'coverage_first_date' => $rows[0]['date'],
+                'coverage_last_date' => $rows[array_key_last($rows)]['date'],
+                'coverage_sessions' => count($rows),
                 'rights_reference' => $cfg['rights_reference'],
                 'feed_fingerprint' => $fingerprint,
                 'source_sha256' => hash('sha256', $raw),
@@ -122,7 +146,7 @@ final class LicensedMarketFeedService
         });
     }
 
-    private function parse(string $raw, string $timezone): array
+    private function parse(string $raw, string $timezone, int $minimum = 60): array
     {
         $handle = fopen('php://temp', 'w+b');
         if ($handle === false) {
@@ -167,7 +191,7 @@ final class LicensedMarketFeedService
                     throw new \InvalidArgumentException('II_FEED_ROW_LIMIT');
                 }
             }
-            if (count($rows) < 60) {
+            if (count($rows) < $minimum) {
                 throw new \InvalidArgumentException('II_FEED_INSUFFICIENT_HISTORY');
             }
             ksort($rows);
