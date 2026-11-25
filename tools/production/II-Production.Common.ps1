@@ -133,12 +133,13 @@ function Write-IIProcessManifest {
     try {
         $Manifest | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $temporary -Encoding utf8
         if ([IO.File]::Exists($Context.ProcessManifest)) {
-            [IO.File]::Replace($temporary, $Context.ProcessManifest, $null)
+            [IO.File]::Replace($temporary, $Context.ProcessManifest, "$temporary.bak")
         } else {
             [IO.File]::Move($temporary, $Context.ProcessManifest)
         }
     } finally {
         if (Test-Path -LiteralPath $temporary) { Remove-Item -LiteralPath $temporary -Force }
+        if (Test-Path -LiteralPath "$temporary.bak") { Remove-Item -LiteralPath "$temporary.bak" -Force }
     }
 }
 
