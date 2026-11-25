@@ -5,6 +5,23 @@ $ErrorActionPreference = 'Stop'
 
 $repo = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..\..')).Path
 . (Join-Path $repo 'tools\production\II-Production.Common.ps1')
+# Catch production-script syntax regressions with each engine's own parser.
+foreach ($relative in @(
+    'tools\production\II-Production.Common.ps1',
+    'tools\production\Deploy-IIProduction.ps1',
+    'tools\production\New-IIRecoveryPoint.ps1',
+    'start-ii.ps1', 'stop-ii.ps1', 'restart-ii.ps1'
+)) {
+    $syntaxTokens = $null
+    $syntaxErrors = $null
+    [System.Management.Automation.Language.Parser]::ParseFile(
+        (Join-Path $repo $relative), [ref]$syntaxTokens, [ref]$syntaxErrors
+    ) | Out-Null
+    if ($syntaxErrors.Count -gt 0) {
+        throw "II_PS_COMPAT_SCRIPT_PARSE_FAILED: $relative"
+    }
+}
+
 $root = Join-Path ([IO.Path]::GetTempPath()) ('ii-ps-compat-'+[Guid]::NewGuid().ToString('N'))
 $old = [Environment]::GetEnvironmentVariable('II_TEST_CHILD_MARKER','Process')
 try {
