@@ -129,7 +129,18 @@ function Read-IIProcessManifest {
 
 function Write-IIProcessManifest {
     param([Parameter(Mandatory)]$Context, [Parameter(Mandatory)]$Manifest)
-    $Manifest | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $Context.ProcessManifest -Encoding utf8
+    $temporary = "$($Context.ProcessManifest).$([Guid]::NewGuid().ToString('N')).tmp"
+    try {
+        $Manifest | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $temporary -Encoding utf8
+        if ([IO.File]::Exists($Context.ProcessManifest)) {
+            [IO.File]::Replace($temporary, $Context.ProcessManifest, "$temporary.bak")
+        } else {
+            [IO.File]::Move($temporary, $Context.ProcessManifest)
+        }
+    } finally {
+        if (Test-Path -LiteralPath $temporary) { Remove-Item -LiteralPath $temporary -Force }
+        if (Test-Path -LiteralPath "$temporary.bak") { Remove-Item -LiteralPath "$temporary.bak" -Force }
+    }
 }
 
 function Start-IIManagedProcess {
@@ -184,4 +195,44 @@ function Start-IIManagedProcess {
         id = $process.Id
         started_at = [DateTimeOffset]::Now.ToString('o')
     }
+}
+
+
+function Get-IIRuntimeStatus {
+    param([Parameter(Mandatory)]$Context)
+    $manifest = Read-IIProcessManifest -Context $Context
+    $alive = @()
+    if ($manifest) {
+        if ($manifest.url -ne $Context.AppUrl) { throw 'II_RUNTIME_PORT_MISMATCH' }
+        $alive = @($manifest.processes | Where-Object { $null -ne (Get-IIManagedProcess -Entry $_) })
+    }
+    $listener = @(Get-NetTCPConnection -LocalPort ([uri]$Context.AppUrl).Port -State Listen -ErrorAction SilentlyContinue)
+    $web = @($alive | Where-Object name -eq 'web')
+    $owned = $web.Count -eq 1 -and $listener.Count -eq 1 -and $listener[0].OwningProcess -eq $web[0].id -and $listener[0].LocalAddress -eq '127.0.0.1'
+    $healthy = $false
+    if ($owned -and $alive.Count -eq 3 -and @($alive | Where-Object name -eq 'queue').Count -eq 1 -and @($alive | Where-Object name -eq 'scheduler').Count -eq 1) {
+        try { $healthy = (Invoke-WebRequest -Uri "$($Context.AppUrl)/up" -UseBasicParsing -TimeoutSec 3).StatusCode -eq 200 } catch {}
+    }
+    $state = if ($healthy) { 'HEALTHY' } elseif ($listener.Count -gt 0 -and -not $owned) { 'UNMANAGED_LISTENER' } elseif ($alive.Count -gt 0) { 'PARTIAL' } else { 'STOPPED' }
+    [pscustomobject]@{ state = $state; url = $Context.AppUrl; processes = $alive }
+}
+
+
+function Enter-IIRuntimeLock {
+    param([Parameter(Mandatory)]$Context)
+    $sha = [Security.Cryptography.SHA256]::Create()
+    try {
+        $key = [BitConverter]::ToString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($Context.HabitatRoot.ToUpperInvariant()))).Replace('-', '')
+    } finally { $sha.Dispose() }
+    $mutex = [Threading.Mutex]::new($false, "Global\II-Runtime-$key")
+    try {
+        try { $acquired = $mutex.WaitOne(120000) } catch [Threading.AbandonedMutexException] { $acquired = $true }
+        if (-not $acquired) { throw 'II_RUNTIME_LOCK_TIMEOUT' }
+        return $mutex
+    } catch { $mutex.Dispose(); throw }
+}
+
+function Exit-IIRuntimeLock {
+    param([Parameter(Mandatory)]$Mutex)
+    try { $Mutex.ReleaseMutex() } finally { $Mutex.Dispose() }
 }

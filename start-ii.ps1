@@ -6,6 +6,8 @@ param(
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'tools\production\II-Production.Common.ps1')
 $context = Get-IIProductionContext -RepositoryRoot $PSScriptRoot -Port $Port
+$mutex = Enter-IIRuntimeLock -Context $context
+try {
 Set-IIProductionEnvironment -Context $context
 Initialize-IIProductionDirectories -Context $context
 
@@ -23,6 +25,13 @@ if (Test-IICaBundle -Context $context) {
 } else {
     Write-Warning 'II_SEC_CA_BUNDLE=MISSING_OR_INVALID; SEC official API disabled until runtime CA repair. Run: php artisan ii:doctor'
 }
+
+$status = Get-IIRuntimeStatus -Context $context
+if ($status.state -eq 'HEALTHY') {
+    Write-Host "Investment Intelligence already running at $($context.AppUrl)"
+    return
+}
+if ($status.state -eq 'UNMANAGED_LISTENER') { throw 'II_START_UNMANAGED_LISTENER' }
 
 $existing = Read-IIProcessManifest -Context $context
 if ($existing) {
@@ -71,6 +80,10 @@ try {
     $scheduler = Start-IIManagedProcess -Name 'scheduler' -FilePath 'php' -ArgumentList @('artisan', 'schedule:work') -WorkingDirectory $context.AppRoot -LogRoot $context.LogRoot
     $manifest.processes = @($server, $queue, $scheduler)
     Write-IIProcessManifest -Context $context -Manifest $manifest
+    Start-Sleep -Milliseconds 750
+    if ((Get-IIRuntimeStatus -Context $context).state -ne 'HEALTHY') {
+        throw 'II_START_MANAGED_PROCESS_READINESS_FAILED'
+    }
     Write-Host "Investment Intelligence started at $($context.AppUrl)"
     Write-Host "Managed processes: web=$($server.id), queue=$($queue.id), scheduler=$($scheduler.id)"
 } catch {
@@ -79,3 +92,5 @@ try {
 } finally {
     Pop-Location
 }
+
+} finally { Exit-IIRuntimeLock -Mutex $mutex }

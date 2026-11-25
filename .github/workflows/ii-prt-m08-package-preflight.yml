@@ -8,6 +8,9 @@ on:
       - 'start-ii.ps1'
       - 'stop-ii.ps1'
       - 'restart-ii.ps1'
+      - 'open-ii.ps1'
+      - 'open-ii.cmd'
+      - 'status-ii.ps1'
       - '.github/workflows/ii-prt-m08-package-preflight.yml'
   workflow_dispatch:
 
@@ -40,3 +43,11 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "II_PS7_COMPAT_FAILED" }
           & pwsh -NoProfile -NonInteractive -File "./tools/production/tests/Test-IIProductionStopPortGuard.ps1"
           if ($LASTEXITCODE -ne 0) { throw "II_PS7_STOP_GUARD_FAILED" }
+
+      - name: Runtime lifecycle contract on both engines
+        shell: pwsh
+        run: |
+          & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "./tools/production/tests/Test-IIRuntimeLifecycle.ps1"
+          if ($LASTEXITCODE -ne 0) { throw "II_PS51_LIFECYCLE_FAILED" }
+          & pwsh -NoProfile -NonInteractive -File "./tools/production/tests/Test-IIRuntimeLifecycle.ps1"
+          if ($LASTEXITCODE -ne 0) { throw "II_PS7_LIFECYCLE_FAILED" }
