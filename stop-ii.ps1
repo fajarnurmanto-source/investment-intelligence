@@ -3,7 +3,10 @@ param([ValidateRange(1024, 65535)][int]$Port = 8810)
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'tools\production\II-Production.Common.ps1')
 $context = Get-IIProductionContext -RepositoryRoot $PSScriptRoot -Port $Port
+$mutex = Enter-IIRuntimeLock -Context $context
+try {
 $manifest = Read-IIProcessManifest -Context $context
+if ($manifest -and $manifest.url -ne $context.AppUrl) { throw 'II_RUNTIME_PORT_MISMATCH' }
 if (-not $manifest) {
     # Never claim an unmanaged process is stopped just because its manifest
     # is missing. Deployment must not proceed while its target port is busy.
@@ -34,3 +37,5 @@ for ($attempt = 0; $attempt -lt 60; $attempt++) {
 if ($portOpen) { throw "Port $Port remained open after stopping managed processes." }
 Remove-Item -LiteralPath $context.ProcessManifest -Force -ErrorAction SilentlyContinue
 Write-Host 'Investment Intelligence stopped; all managed processes exited.'
+
+} finally { Exit-IIRuntimeLock -Mutex $mutex }
