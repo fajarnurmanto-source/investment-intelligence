@@ -1,6 +1,8 @@
 <?php
 
 return [
+    'universe_json' => env('II_MARKET_FEED_UNIVERSE_JSON'),
+    'request_budget' => env('II_MARKET_FEED_REQUEST_BUDGET', 10),
     'provider' => env('II_MARKET_FEED_PROVIDER', 'local'),
     'api_key' => env('II_MARKET_FEED_API_KEY'),
     'provider_symbol' => env('II_MARKET_FEED_PROVIDER_SYMBOL'),
