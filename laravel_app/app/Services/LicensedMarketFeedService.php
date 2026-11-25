@@ -11,9 +11,9 @@ final class LicensedMarketFeedService
 {
     public function __construct(private readonly SignalInsightService $signals) {}
 
-    public function sync(): string
+    public function sync(?array $configuration = null): string
     {
-        $cfg = config('market_feed');
+        $cfg = $configuration ?? config('market_feed');
         if (($cfg['enabled'] ?? false) !== true) {
             return 'DISABLED';
         }
