@@ -1,6 +1,10 @@
 <?php
 
 return [
+    'provider' => env('II_MARKET_FEED_PROVIDER', 'local'),
+    'api_key' => env('II_MARKET_FEED_API_KEY'),
+    'provider_symbol' => env('II_MARKET_FEED_PROVIDER_SYMBOL'),
+    'provider_mic' => env('II_MARKET_FEED_PROVIDER_MIC'),
     'enabled' => env('II_MARKET_FEED_ENABLED', false),
     'owner_id' => env('II_MARKET_FEED_OWNER_ID'),
     'ticker' => env('II_MARKET_FEED_TICKER'),
