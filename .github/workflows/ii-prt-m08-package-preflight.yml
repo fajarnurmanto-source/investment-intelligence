@@ -31,8 +31,12 @@ jobs:
         run: |
           & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "./tools/production/tests/Test-IIProductionPowerShellCompatibility.ps1"
           if ($LASTEXITCODE -ne 0) { throw "II_PS51_COMPAT_FAILED" }
+          & "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe" -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "./tools/production/tests/Test-IIProductionStopPortGuard.ps1"
+          if ($LASTEXITCODE -ne 0) { throw "II_PS51_STOP_GUARD_FAILED" }
       - name: PowerShell 7 production runtime environment contract
         shell: pwsh
         run: |
           & pwsh -NoProfile -NonInteractive -File "./tools/production/tests/Test-IIProductionPowerShellCompatibility.ps1"
           if ($LASTEXITCODE -ne 0) { throw "II_PS7_COMPAT_FAILED" }
+          & pwsh -NoProfile -NonInteractive -File "./tools/production/tests/Test-IIProductionStopPortGuard.ps1"
+          if ($LASTEXITCODE -ne 0) { throw "II_PS7_STOP_GUARD_FAILED" }
