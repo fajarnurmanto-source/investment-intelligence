@@ -215,3 +215,23 @@ function Get-IIRuntimeStatus {
     $state = if ($healthy) { 'HEALTHY' } elseif ($listener.Count -gt 0 -and -not $owned) { 'UNMANAGED_LISTENER' } elseif ($alive.Count -gt 0) { 'PARTIAL' } else { 'STOPPED' }
     [pscustomobject]@{ state = $state; url = $Context.AppUrl; processes = $alive }
 }
+
+
+function Enter-IIRuntimeLock {
+    param([Parameter(Mandatory)]$Context)
+    $sha = [Security.Cryptography.SHA256]::Create()
+    try {
+        $key = [BitConverter]::ToString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($Context.HabitatRoot.ToUpperInvariant()))).Replace('-', '')
+    } finally { $sha.Dispose() }
+    $mutex = [Threading.Mutex]::new($false, "Global\II-Runtime-$key")
+    try {
+        try { $acquired = $mutex.WaitOne(120000) } catch [Threading.AbandonedMutexException] { $acquired = $true }
+        if (-not $acquired) { throw 'II_RUNTIME_LOCK_TIMEOUT' }
+        return $mutex
+    } catch { $mutex.Dispose(); throw }
+}
+
+function Exit-IIRuntimeLock {
+    param([Parameter(Mandatory)]$Mutex)
+    try { $Mutex.ReleaseMutex() } finally { $Mutex.Dispose() }
+}
