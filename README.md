@@ -22,6 +22,16 @@ Architecture record: [II Local BYOK Mandatory Architecture](docs/ops/II_BYOK_LOC
 
 The runtime contains the private `.env`, APP_KEY, SQLite database, writable storage, installed Composer dependencies, caches, and logs. It is excluded from Git.
 
+## Windows PowerShell runtime compatibility (25 November 2026)
+
+The supported local startup path works with both **Windows PowerShell 5.1** (`powershell.exe`) and **PowerShell 7** (`pwsh`). The runtime helper no longer uses the newer `Start-Process -Environment` parameter, which caused a successful deployment/migration to fail at FrankenPHP startup under Windows PowerShell 5.1. It temporarily scopes child-only environment variables before process creation and restores the parent's original process variables in a `finally` block.
+
+Use the existing `start-ii.ps1`, `stop-ii.ps1`, and `restart-ii.ps1` scripts. If this Windows account blocks local scripts, adjust Execution Policy **for the current process only** or launch a trusted source-controlled script using `pwsh -NoProfile -ExecutionPolicy Bypass -File ...`; do not require machine-wide policy changes. An example within the existing PowerShell session is `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force`.
+
+During upgrades, `Deploy-IIProduction.ps1` still requires a clean worktree and preserves the existing runtime APP_KEY/SQLite; it creates a recovery point before Composer/migration. After a successful one-time deployment, **do not rerun Composer/migration merely to restart II**; use `start-ii.ps1 -SkipMigrate` or `restart-ii.ps1 -SkipMigrate` instead. Never run `key:generate` on an established device.
+
+Windows CI tests in `tools/production/tests/` run real `powershell.exe` and `pwsh` processes to assert child-only environment inheritance, parent restoration after success/failure, and denial of occupied ports with missing process manifests. These synthetic tests do not change the user's installation and are not a substitute for real-device launcher/dashboard acceptance.
+
 ## Operations
 
 Run from PowerShell in the repository:
