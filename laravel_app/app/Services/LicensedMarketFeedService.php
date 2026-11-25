@@ -27,6 +27,10 @@ final class LicensedMarketFeedService
             || !preg_match('/^[A-Z0-9.\-]{1,16}$/D', $ticker) || str_starts_with($ticker, 'DEMO')) {
             throw new \InvalidArgumentException('II_FEED_CONFIGURATION_INVALID');
         }
+        $provider = $cfg['provider'] ?? 'local';
+        if (!in_array($provider, ['local', 'twelve_data'], true)) {
+            throw new \InvalidArgumentException('II_PROVIDER_UNKNOWN');
+        }
         $source = trim((string) ($cfg['source_name'] ?? ''));
         $url = trim((string) ($cfg['source_url'] ?? ''));
         if ($source === '' || strlen($source) > 120 || !filter_var($url, FILTER_VALIDATE_URL)
@@ -34,12 +38,23 @@ final class LicensedMarketFeedService
             || parse_url($url, PHP_URL_USER) !== null || parse_url($url, PHP_URL_QUERY) !== null) {
             throw new \InvalidArgumentException('II_FEED_SOURCE_REQUIRED');
         }
+        if ($provider === 'twelve_data' && ($source !== 'Twelve Data' || $url !== TwelveDataDailyAdapter::URL)) {
+            throw new \InvalidArgumentException('II_PROVIDER_SOURCE_MISMATCH');
+        }
         $metadata = MarketSourceMetadataService::forImport($cfg);
         if (!$metadata['currency'] || !$metadata['price_adjustment'] || !$metadata['session_timezone']) {
             throw new \InvalidArgumentException('II_FEED_METADATA_REQUIRED');
         }
         app(ByokIntakeFirewall::class)->assertIndependentSource(['source_name' => $source, 'source_url' => $url]);
-        return Cache::lock('ii-market-feed-'.$owner.'-'.$ticker, 120)->block(5, function () use ($owner, $ticker, $source, $url, $cfg, $metadata): string {
+        return Cache::lock('ii-market-feed-'.$owner.'-'.$ticker, 120)->block(5, function () use ($owner, $ticker, $source, $url, $cfg, $metadata, $provider): string {
+            $responseHash = null;
+            $mode = $provider === 'twelve_data' ? 'LICENSED_PROVIDER_API' : 'LICENSED_LOCAL_FEED';
+            $identity = $provider === 'twelve_data' ? strtoupper($cfg['provider_symbol'] ?? '').'@'.strtoupper($cfg['provider_mic'] ?? '') : null;
+            if ($provider === 'twelve_data') {
+                $result = app(TwelveDataDailyAdapter::class)->fetch($cfg, $metadata);
+                $raw = $result['csv'];
+                $responseHash = $result['response_sha256'];
+            } else {
             $disk = Storage::disk('local');
             $path = 'ii_market_feed/u'.$owner.'/'.$ticker.'.csv';
             if (!$disk->exists($path)) {
@@ -52,14 +67,16 @@ final class LicensedMarketFeedService
             if (!is_string($raw) || strlen($raw) > 1048576) {
                 throw new \InvalidArgumentException('II_FEED_SIZE_INVALID');
             }
+            }
             $rows = $this->parse($raw, $metadata['session_timezone']);
-            $fingerprint = hash('sha256', json_encode([$source, $url, $cfg['rights_reference'], $metadata, $rows], JSON_THROW_ON_ERROR));
+            $fingerprint = hash('sha256', json_encode($provider === 'local' ? [$source, $url, $cfg['rights_reference'], $metadata, $rows] : [$source, $url, $cfg['rights_reference'], $metadata, $rows, $identity], JSON_THROW_ON_ERROR));
             $previous = $this->signals->latestDocument($owner, $ticker);
             if ($previous !== null) {
                 if (($previous['feed_fingerprint'] ?? null) === $fingerprint) {
                     return 'UNCHANGED';
                 }
-                if (($previous['acquisition_mode'] ?? null) !== 'LICENSED_LOCAL_FEED'
+                if (($previous['acquisition_mode'] ?? null) !== $mode
+                    || ($previous['provider_identity'] ?? null) !== $identity
                     || $previous['source_name'] !== $source || ($previous['source_url'] ?? null) !== $url
                     || ($previous['rights_reference'] ?? null) !== $cfg['rights_reference']) {
                     throw new \InvalidArgumentException('II_FEED_EXISTING_SOURCE_CONFLICT');
@@ -90,7 +107,9 @@ final class LicensedMarketFeedService
                 'source_name' => $source,
                 'source_url' => $url,
                 'imported_at' => now('Asia/Jakarta')->format('Y-m-d H:i:s.u T'),
-                'acquisition_mode' => 'LICENSED_LOCAL_FEED',
+                'acquisition_mode' => $mode,
+                'provider_identity' => $identity,
+                'provider_response_sha256' => $responseHash,
                 'rights_reference' => $cfg['rights_reference'],
                 'feed_fingerprint' => $fingerprint,
                 'source_sha256' => hash('sha256', $raw),
