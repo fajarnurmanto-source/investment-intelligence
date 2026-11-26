@@ -58,7 +58,7 @@ final class HistoricalSignalBootstrap
                 if ($persist) {
                     if ($previous !== null) {
                         if (($previous['source_sha256'] ?? null) !== $document['source_sha256']
-                            || $previous['rows'] !== $document['rows']) {
+                            || json_encode($previous['rows'], JSON_THROW_ON_ERROR) !== json_encode($document['rows'], JSON_THROW_ON_ERROR)) {
                             throw new \InvalidArgumentException('II_HISTORICAL_EXISTING_SERIES_CONFLICT');
                         }
                         $status = 'UNCHANGED';

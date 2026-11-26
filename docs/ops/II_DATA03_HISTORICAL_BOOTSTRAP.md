@@ -8,3 +8,5 @@ Run only after accepted deployment, with both automation flags off:
 php artisan ii:bootstrap-idx-history --user=7 --rights-confirmed
 php artisan ii:bootstrap-idx-history --user=7 --rights-confirmed --import
 The first previews and calculates; second persists private immutable SignalInsightService document, registers lineage, verifies readback. No provider credentials, no catalog, no scheduler; refuses existing conflicting BBCA series. Expected STALE/HOLD/no trading authority. Production acceptance requires real command results and browser inspection. Next: direct provider diagnostics and acquisition, then generalized capability routing, not a wholesale runtime rewrite.
+
+CI incident: both initial workflows failed at repeat import (test line 83). JSON persistence converts integer-valued floats to integers; strict PHP array comparison then rejected identical observations. Compare canonical JSON representations, preserving numeric value and row order without weakening source hash or lineage checks. Existing repeat-import regression remains mandatory.
