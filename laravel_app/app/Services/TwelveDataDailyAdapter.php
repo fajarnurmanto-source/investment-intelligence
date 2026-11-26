@@ -46,6 +46,7 @@ final class TwelveDataDailyAdapter
         $credits = app(MarketProviderCreditGuard::class);
         $credits->assertAvailable((int) $cfg['owner_id']);
         app(MarketAcquisitionLedger::class)->reserve($cfg);
+        $credits->debit((int) $cfg['owner_id']);
         try {
             $response = Http::acceptJson()->withHeaders(['Authorization' => 'apikey '.$key])
                 ->connectTimeout(5)->timeout(20)->withOptions(['allow_redirects' => false])

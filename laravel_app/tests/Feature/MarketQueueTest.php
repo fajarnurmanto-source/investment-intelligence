@@ -75,6 +75,32 @@ final class MarketQueueTest extends TestCase
         $this->assertSame(1, (int) DB::table('ii_market_request_days')->value('attempts'));
     }
 
+    public function test_budget_dispatch_prioritizes_unattempted_and_never_exceeds_credit(): void
+    {
+        $owner = $this->configure();
+        $items = array_map(fn ($ticker) => ['ticker' => $ticker, 'provider_symbol' => $ticker,
+            'provider_mic' => 'XNAS', 'currency' => 'USD', 'price_adjustment' => 'unadjusted',
+            'session_timezone' => 'America/New_York'], ['AAA', 'BBB', 'CCC']);
+        config(['market_feed.universe_json' => json_encode($items), 'market_feed.request_budget' => 3,
+            'market_feed.daily_request_limit' => 3]);
+        DB::table('ii_market_acquisition_receipts')->insert([
+            'id' => (string) \Illuminate\Support\Str::uuid(), 'user_id' => $owner->id,
+            'ticker' => 'AAA', 'provider' => 'twelve_data', 'status' => 'IMPORTED', 'started_at' => now('UTC'),
+        ]);
+        app(MarketAcquisitionLedger::class)->reserve(config('market_feed'));
+        app(\App\Services\MarketProviderCreditGuard::class)->observe($owner->id,
+            new \Illuminate\Http\Client\Response(new \GuzzleHttp\Psr7\Response(200, ['api-credits-left' => '1'])));
+        Queue::fake();
+        Http::fake();
+        $this->artisan('ii:sync-market-feed', ['--queue' => true])->assertSuccessful();
+        Queue::assertPushed(SyncMarketUniverse::class, 1);
+        Queue::assertPushed(SyncMarketUniverse::class, fn ($job) => $job->ticker === 'BBB');
+        app(\App\Services\MarketProviderCreditGuard::class)->markExhausted($owner->id);
+        $this->artisan('ii:sync-market-feed', ['--queue' => true])->expectsOutput('II_MARKET_FEED=DEFERRED_BUDGET')->assertSuccessful();
+        Queue::assertPushed(SyncMarketUniverse::class, 1);
+        Http::assertNothingSent();
+    }
+
     public function test_unsafe_queue_timeout_is_rejected(): void
     {
         $this->configure();

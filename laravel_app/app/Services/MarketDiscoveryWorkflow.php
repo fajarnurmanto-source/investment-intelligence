@@ -39,7 +39,13 @@ final class MarketDiscoveryWorkflow
             $ledger = app(MarketAcquisitionLedger::class);
             $credits = app(MarketProviderCreditGuard::class);
             // Refresh stale/never-seen MICs first. Reserve at least one daily request for price acquisition.
+            $ordered = $mics;
+            $last = [];
             foreach ($mics as $mic) {
+                $last[$mic] = $master->lastObservation($owner, $mic) ?? '';
+            }
+            usort($ordered, fn (string $a, string $b): int => [$last[$a], $a] <=> [$last[$b], $b]);
+            foreach ($ordered as $mic) {
                 if (!$settings->runtimeAuthorized($current)) {
                     throw new \InvalidArgumentException('II_DISCOVERY_AUTHORIZATION_CHANGED');
                 }
@@ -74,7 +80,7 @@ final class MarketDiscoveryWorkflow
                 throw new \InvalidArgumentException('II_DISCOVERY_AUTHORIZATION_CHANGED');
             }
             foreach ($mics as $mic) {
-                if (!isset($counts[$mic], $deferred[$mic]) && !array_key_exists($mic, $counts) && !array_key_exists($mic, $deferred)) {
+                if (!array_key_exists($mic, $counts) && !array_key_exists($mic, $deferred)) {
                     $deferred[$mic] = 'NOT_ATTEMPTED_AFTER_PROVIDER_FAILURE';
                 }
             }

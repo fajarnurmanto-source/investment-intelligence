@@ -7,6 +7,14 @@ use Illuminate\Support\Facades\DB;
 
 final class MarketSecurityMaster
 {
+    public function lastObservation(int $owner, string $mic): ?string
+    {
+        $value = DB::table('ii_market_security_master')->where('user_id', $owner)
+            ->where('provider', 'twelve_data')->where('mic', $mic)
+            ->where('status', 'CATALOG_ONLY_ENTITLEMENT_UNVERIFIED')->max('observed_at');
+        return $value === null ? null : (string) $value;
+    }
+
     /** A successful complete MIC snapshot is reusable for 72 hours; never extends observed_at. */
     public function freshCount(int $owner, string $mic): int
     {

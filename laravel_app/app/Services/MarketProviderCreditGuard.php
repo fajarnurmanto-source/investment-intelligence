@@ -16,7 +16,11 @@ final class MarketProviderCreditGuard
     public function remaining(int $owner): ?int
     {
         $value = Cache::get($this->key($owner));
-        return is_int($value) && $value >= 0 ? $value : null;
+        if (is_int($value) && $value >= 0) {
+            return $value; // Existing short-lived observations.
+        }
+        return is_array($value) && ($value['expires'] ?? 0) > now()->timestamp
+            && is_int($value['remaining'] ?? null) ? max(0, $value['remaining']) : null;
     }
 
     public function assertAvailable(int $owner): void
@@ -26,9 +30,25 @@ final class MarketProviderCreditGuard
         }
     }
 
+    /** Call after persistent reservation, under the shared operation lock. */
+    public function debit(int $owner): void
+    {
+        $value = Cache::get($this->key($owner));
+        if (!is_array($value) || ($value['expires'] ?? 0) <= now()->timestamp) {
+            return;
+        }
+        $value['remaining'] = max(0, (int) $value['remaining'] - 1);
+        Cache::put($this->key($owner), $value, max(1, $value['expires'] - now()->timestamp));
+    }
+
+    private function record(int $owner, int $remaining): void
+    {
+        Cache::put($this->key($owner), ['remaining' => $remaining, 'expires' => now()->timestamp + 60], 60);
+    }
+
     public function markExhausted(int $owner): void
     {
-        Cache::put($this->key($owner), 0, 60);
+        $this->record($owner, 0);
     }
 
     public function observe(int $owner, Response $response): void
@@ -42,6 +62,6 @@ final class MarketProviderCreditGuard
             return;
         }
         // A conservative rolling minute, not a claim about provider reset time.
-        Cache::put($this->key($owner), (int) $raw, 60);
+        $this->record($owner, (int) $raw);
     }
 }

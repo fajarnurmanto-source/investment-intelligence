@@ -67,6 +67,7 @@ final class TwelveDataDiscovery
         $credits = app(MarketProviderCreditGuard::class);
         $credits->assertAvailable((int) $policy['owner_id']);
         app(MarketAcquisitionLedger::class)->reserve($policy);
+        $credits->debit((int) $policy['owner_id']);
         try {
             $response = Http::acceptJson()->withHeaders(['Authorization' => 'apikey '.$key])
                 ->connectTimeout(5)->timeout(20)->withOptions(['allow_redirects' => false])
