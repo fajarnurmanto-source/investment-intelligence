@@ -28,7 +28,8 @@ final class AutomaticMarketUniverse
         }
         $used = (int) DB::table('ii_market_request_days')->where('provider', 'twelve_data')
             ->where('utc_day', now('UTC')->toDateString())->value('attempts');
-        $cap = min($limit, max(0, $daily - $used));
+        $credits = app(MarketProviderCreditGuard::class)->remaining($owner);
+        $cap = min($limit, max(0, $daily - $used), $credits ?? PHP_INT_MAX);
         $base = DB::table('ii_market_security_master')->where('user_id', $owner)->where('provider', 'twelve_data');
         $ambiguous = (clone $base)->select('symbol')->groupBy('symbol')->havingRaw('COUNT(*) > 1');
         $eligible = (clone $base)->whereIn('mic', $mics)
@@ -62,7 +63,7 @@ final class AutomaticMarketUniverse
                 'session_timezone' => $row->session_timezone, 'price_adjustment' => 'unadjusted'];
         }
         return ['status' => 'PROPOSAL_ENTITLEMENT_UNVERIFIED', 'entries' => $entries,
-            'remaining_local_requests' => max(0, $daily - $used), 'legacy_conflicts' => $blocked,
+            'remaining_local_requests' => max(0, $daily - $used), 'observed_provider_credits' => $credits, 'legacy_conflicts' => $blocked,
             'selection_method' => 'LEAST_RECENTLY_ATTEMPTED_BOUNDED_SCAN'];
     }
 }
