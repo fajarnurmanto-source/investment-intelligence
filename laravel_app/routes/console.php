@@ -18,7 +18,7 @@ Schedule::command('ii:ingest-fred')
 
 // Only an independently licensed private local feed; never the restricted BYOK endpoint.
 if (config('market_feed.enabled') === true) {
-    $marketFeed = Schedule::command('ii:sync-market-feed')->withoutOverlapping();
+    $marketFeed = Schedule::command('ii:sync-market-feed --queue')->withoutOverlapping();
     if (config('market_feed.provider') === 'twelve_data') {
         $marketFeed->dailyAt('12:00')->timezone('UTC');
     } else {
