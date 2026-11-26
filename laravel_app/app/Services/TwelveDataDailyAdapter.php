@@ -11,7 +11,11 @@ final class TwelveDataDailyAdapter
 
     public function fetch(array $cfg, array $metadata, ?string $checkpoint = null): array
     {
-        $key = (string) ($cfg['api_key'] ?? '');
+        try {
+            $key = app(LocalByokCredentialVault::class)->key((int) $cfg['owner_id'], 'twelve_data');
+        } catch (\Throwable) {
+            throw new \InvalidArgumentException('II_PROVIDER_CREDENTIAL_UNAVAILABLE');
+        }
         $symbol = strtoupper(trim((string) ($cfg['provider_symbol'] ?? '')));
         $mic = strtoupper(trim((string) ($cfg['provider_mic'] ?? '')));
         if ($key === '' || strtolower($key) === 'demo' || !preg_match('/^[A-Za-z0-9_-]{8,128}$/D', $key)
@@ -39,6 +43,7 @@ final class TwelveDataDailyAdapter
         if ($start !== null) {
             $query['start_date'] = $start;
         }
+        app(MarketAcquisitionLedger::class)->reserve($cfg);
         try {
             $response = Http::acceptJson()->withHeaders(['Authorization' => 'apikey '.$key])
                 ->connectTimeout(5)->timeout(20)->withOptions(['allow_redirects' => false])
