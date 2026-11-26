@@ -43,6 +43,8 @@ final class TwelveDataDailyAdapter
         if ($start !== null) {
             $query['start_date'] = $start;
         }
+        $credits = app(MarketProviderCreditGuard::class);
+        $credits->assertAvailable((int) $cfg['owner_id']);
         app(MarketAcquisitionLedger::class)->reserve($cfg);
         try {
             $response = Http::acceptJson()->withHeaders(['Authorization' => 'apikey '.$key])
@@ -54,6 +56,7 @@ final class TwelveDataDailyAdapter
         if (in_array($response->status(), [401, 403], true)) {
             throw new \InvalidArgumentException('II_PROVIDER_ENTITLEMENT_DENIED');
         }
+        $credits->observe((int) $cfg['owner_id'], $response);
         if ($response->status() === 429) {
             throw new \InvalidArgumentException('II_PROVIDER_RATE_LIMITED');
         }
