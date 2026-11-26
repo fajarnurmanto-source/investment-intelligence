@@ -64,6 +64,8 @@ final class TwelveDataDiscovery
 
     private function request(array $policy, string $key, string $endpoint, array $query): array
     {
+        $credits = app(MarketProviderCreditGuard::class);
+        $credits->assertAvailable((int) $policy['owner_id']);
         app(MarketAcquisitionLedger::class)->reserve($policy);
         try {
             $response = Http::acceptJson()->withHeaders(['Authorization' => 'apikey '.$key])
@@ -72,6 +74,7 @@ final class TwelveDataDiscovery
         } catch (\Throwable) {
             throw new \RuntimeException('II_DISCOVERY_NETWORK_ERROR');
         }
+        $credits->observe((int) $policy['owner_id'], $response);
         if ($response->status() === 429) {
             throw new \InvalidArgumentException('II_PROVIDER_RATE_LIMITED');
         }
