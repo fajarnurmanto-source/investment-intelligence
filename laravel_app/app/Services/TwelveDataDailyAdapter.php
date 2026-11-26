@@ -57,6 +57,9 @@ final class TwelveDataDailyAdapter
         if ($response->status() === 429) {
             throw new \InvalidArgumentException('II_PROVIDER_RATE_LIMITED');
         }
+        if (in_array($response->status(), [500, 502, 503, 504], true)) {
+            throw new \RuntimeException('II_PROVIDER_TEMPORARY_ERROR');
+        }
         if (!$response->successful() || strlen($response->body()) > 1048576) {
             throw new \InvalidArgumentException('II_PROVIDER_RESPONSE_REJECTED');
         }
