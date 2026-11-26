@@ -12,11 +12,20 @@ use Illuminate\Support\Facades\DB;
  */
 final class LocalByokCredentialVault
 {
+    private function profile(string $provider): string
+    {
+        return match ($provider) {
+            'marketdata' => ByokRightsPolicy::RESTRICTED,
+            'twelve_data' => 'LICENSED_FEED_CREDENTIAL_ONLY',
+            default => throw new \InvalidArgumentException('BYOK_PROVIDER_UNSUPPORTED'),
+        };
+    }
+
     public function connected(int $userId, string $provider): bool
     {
         $row = DB::table('ii_byok_credentials')
-            ->where('user_id', $userId)->where('provider', $provider)->first(['encrypted_api_key']);
-        if ($row === null) {
+            ->where('user_id', $userId)->where('provider', $provider)->first(['encrypted_api_key', 'rights_profile']);
+        if ($row === null || $row->rights_profile !== $this->profile($provider)) {
             return false;
         }
         // Old APP_KEY-encrypted credentials must be explicitly reconnected on
@@ -27,9 +36,7 @@ final class LocalByokCredentialVault
 
     public function save(int $userId, string $provider, string $key): void
     {
-        if ($provider !== 'marketdata') {
-            throw new \InvalidArgumentException('BYOK_PROVIDER_UNSUPPORTED');
-        }
+        $profile = $this->profile($provider);
         $key = trim($key);
         if ($key === '' || strlen($key) > 512 || preg_match('/[\r\n\x00-\x1f]/', $key)) {
             throw new \InvalidArgumentException('BYOK_KEY_INVALID');
@@ -38,7 +45,7 @@ final class LocalByokCredentialVault
             ['user_id' => $userId, 'provider' => $provider],
             [
                 'encrypted_api_key' => $this->encrypt($key),
-                'rights_profile' => ByokRightsPolicy::RESTRICTED,
+                'rights_profile' => $profile,
                 'updated_at' => now(),
                 'created_at' => now(),
             ]
@@ -49,7 +56,7 @@ final class LocalByokCredentialVault
     {
         $entry = DB::table('ii_byok_credentials')
             ->where('user_id', $userId)->where('provider', $provider)->first();
-        if ($entry === null || $entry->rights_profile !== ByokRightsPolicy::RESTRICTED) {
+        if ($entry === null || $entry->rights_profile !== $this->profile($provider)) {
             throw new \RuntimeException('BYOK_NOT_CONNECTED');
         }
 
