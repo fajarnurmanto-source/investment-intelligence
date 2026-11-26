@@ -18,7 +18,8 @@ final class SyncLicensedMarketFeedCommand extends Command
     public function handle(LicensedMarketFeedService $feed, MarketUniverseRegistry $registry, MarketAcquisitionLedger $ledger): int
     {
         try {
-            $base = config('market_feed');
+            return Cache::lock('ii-market-universe-run', 3600)->block(1, function () use ($feed, $registry, $ledger): int {
+            $base = app(\App\Services\MarketFeedSettings::class)->current();
             if (($base['enabled'] ?? false) !== true) {
                 $this->info('II_MARKET_FEED=DISABLED');
                 return self::SUCCESS;
@@ -50,12 +51,11 @@ final class SyncLicensedMarketFeedCommand extends Command
             // Preserve the single-instrument command's existing output contract.
             $multi = !empty($base['universe_json']);
             if (!$multi) {
-                $this->info('II_MARKET_FEED='.Cache::lock('ii-market-universe-run', 3600)->block(1, fn () => $ledger->run($entries[0], fn () => $feed->sync($entries[0]))));
+                $this->info('II_MARKET_FEED='.$ledger->run($entries[0], fn () => $feed->sync($entries[0])));
                 return self::SUCCESS;
             }
             // A shared batch lock prevents overlapping universe runs, including
             // operator-selected runs. This is a per-run cap, not a daily quota.
-            return Cache::lock('ii-market-universe-run', 3600)->block(1, function () use ($entries, $feed, $ledger): int {
                 $failed = false;
                 foreach ($entries as $entry) {
                     $ticker = $entry['ticker'];
