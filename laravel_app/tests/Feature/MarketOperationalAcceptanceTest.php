@@ -55,7 +55,7 @@ final class MarketOperationalAcceptanceTest extends TestCase
         $this->assertSame(0, $master->freshCount($owner->id, 'XNAS'));
         Http::fake([
             'https://api.twelvedata.com/exchanges*' => Http::response(['status' => 'ok', 'data' => [
-                ['mic_code' => 'XNYS', 'timezone' => 'America/New_York']]]),
+                ['code' => 'XNYS', 'timezone' => 'America/New_York']]]),
             'https://api.twelvedata.com/stocks*' => Http::response(['status' => 'ok', 'data' => [
                 ['mic_code' => 'XNYS', 'symbol' => 'BBB', 'currency' => 'USD', 'type' => 'Common Stock']]]),
         ]);
@@ -73,7 +73,7 @@ final class MarketOperationalAcceptanceTest extends TestCase
         $this->travel(73)->hours();
         $before = $master->lastObservation($owner->id, 'XNAS');
         Http::fake(['https://api.twelvedata.com/exchanges*' => Http::sequence()
-            ->push([], 503)->push(['status' => 'ok', 'data' => [['mic_code' => 'XNAS', 'timezone' => 'America/New_York']]]),
+            ->push([], 503)->push(['status' => 'ok', 'data' => [['code' => 'XNAS', 'timezone' => 'America/New_York']]]),
             'https://api.twelvedata.com/stocks*' => Http::response(['status' => 'ok', 'data' => [
                 ['mic_code' => 'XNAS', 'symbol' => 'AAA', 'currency' => 'USD', 'type' => 'Common Stock']]])]);
         $first = $this->runDiscovery($owner);

@@ -89,7 +89,7 @@ final class MarketControlCenterTest extends TestCase
         // Exercise the actual workflow with a synthetic provider response.
         Http::fake([
             'https://api.twelvedata.com/exchanges*' => Http::response(['status' => 'ok', 'data' => [
-                ['mic_code' => 'XNAS', 'timezone' => 'America/New_York'],
+                ['code' => 'XNAS', 'timezone' => 'America/New_York'],
             ]]),
             'https://api.twelvedata.com/stocks*' => Http::response(['status' => 'ok', 'data' => [
                 ['mic_code' => 'XNAS', 'symbol' => 'AAA', 'currency' => 'USD', 'type' => 'Common Stock'],
@@ -117,6 +117,36 @@ final class MarketControlCenterTest extends TestCase
         app()->call([new SyncMarketUniverse($owner->id, 'AAA'), 'handle']);
         Http::assertSentCount(2);
         $this->assertDatabaseCount('ii_market_acquisition_receipts', 0);
+    }
+
+    public function test_discovery_exchange_contract_rejects_missing_or_conflicting_identity(): void
+    {
+        config(['market_feed.owner_id' => 0, 'market_feed.enabled' => false]);
+        $owner = $this->admin();
+        $this->actingAs($owner)->post('/ii/market-data/policy', $this->policy())->assertRedirect();
+        $settings = app(MarketFeedSettings::class);
+        $settings->replaceCredential($owner->id, 'synthetic-test-key');
+        $settings->authorizeDiscovery($owner->id);
+        Http::preventStrayRequests();
+        Http::fake(['https://api.twelvedata.com/exchanges*' => Http::sequence()
+            ->push(['status' => 'ok', 'data' => [['mic_code' => 'XNAS', 'timezone' => 'America/New_York']]])
+            ->push(['status' => 'ok', 'data' => [['code' => 'XNYS', 'timezone' => 'America/New_York']]])
+            ->push(['status' => 'ok', 'data' => [['code' => 'XNAS', 'timezone' => 'America/New_York'],
+                ['code' => 'XNAS', 'timezone' => 'America/New_York-unsupported']]])]);
+        $cfg = $settings->current();
+        for ($i = 0; $i < 3; $i++) {
+            try {
+                app(\App\Services\MarketDiscoveryWorkflow::class)->run($owner->id, $cfg, ['XNAS']);
+                $this->fail('Unresolved exchange accepted');
+            } catch (\InvalidArgumentException $e) {
+                $this->assertSame('II_DISCOVERY_EXCHANGE_AMBIGUOUS', $e->getMessage());
+            }
+        }
+        Http::assertSentCount(3);
+        Http::assertSent(fn (\Illuminate\Http\Client\Request $request) =>
+            $request->url() === 'https://api.twelvedata.com/exchanges?code=XNAS');
+        $this->assertDatabaseCount('ii_market_security_master', 0);
+        $this->assertFalse($settings->current()['enabled']);
     }
 
     public function test_reviewer_cannot_manage_even_when_owner(): void
@@ -248,7 +278,7 @@ final class MarketControlCenterTest extends TestCase
         $settings->authorizeDiscovery($owner->id);
         Http::fake([
             'https://api.twelvedata.com/exchanges*' => Http::response(['status' => 'ok', 'data' => [
-                ['mic_code' => 'XNAS', 'timezone' => 'America/New_York'],
+                ['code' => 'XNAS', 'timezone' => 'America/New_York'],
             ]]),
             'https://api.twelvedata.com/stocks*' => Http::response(['status' => 'ok', 'data' => [
                 ['mic_code' => 'XNAS', 'symbol' => 'AAA', 'currency' => 'USD', 'type' => 'Common Stock'],

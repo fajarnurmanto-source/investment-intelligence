@@ -21,13 +21,16 @@ final class TwelveDataDiscovery
         } catch (\Throwable) {
             throw new \InvalidArgumentException('II_PROVIDER_CREDENTIAL_UNAVAILABLE');
         }
-        $exchanges = $this->request($policy, $key, 'exchanges', ['mic_code' => $mic]);
+        $exchanges = $this->request($policy, $key, 'exchanges', ['code' => $mic]);
         $zones = [];
         foreach ($exchanges as $exchange) {
-            if (is_array($exchange) && ($exchange['mic_code'] ?? null) === $mic
-                && in_array($exchange['timezone'] ?? null, MarketSourceMetadataService::SUPPORTED_TIMEZONES, true)) {
-                $zones[] = $exchange['timezone'];
+            if (!is_array($exchange) || ($exchange['code'] ?? null) !== $mic) {
+                continue;
             }
+            if (!in_array($exchange['timezone'] ?? null, MarketSourceMetadataService::SUPPORTED_TIMEZONES, true)) {
+                throw new \InvalidArgumentException('II_DISCOVERY_EXCHANGE_AMBIGUOUS');
+            }
+            $zones[] = $exchange['timezone'];
         }
         $zones = array_values(array_unique($zones));
         if (count($zones) !== 1) {
