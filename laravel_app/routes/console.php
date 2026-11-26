@@ -37,3 +37,9 @@ Artisan::command('ii:reconcile-market-runs', function () {
 })->purpose('Mark abandoned market acquisition receipts as outcome unknown');
 
 Schedule::command('ii:reconcile-market-runs')->hourly()->withoutOverlapping();
+
+Schedule::command('ii:discover-market-universe')->dailyAt('10:00')->timezone('UTC')->withoutOverlapping()
+    ->when(function (): bool {
+        $cfg = app(\App\Services\MarketFeedSettings::class)->current();
+        return ($cfg['discovery_enabled'] ?? false) === true && ($cfg['provider'] ?? null) === 'twelve_data';
+    });
