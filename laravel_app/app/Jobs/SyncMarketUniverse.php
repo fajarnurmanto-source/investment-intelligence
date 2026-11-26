@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Services\LicensedMarketFeedService;
 use App\Services\MarketAcquisitionLedger;
 use App\Services\MarketUniverseRegistry;
+use App\Services\MarketFeedSettings;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -32,17 +33,16 @@ final class SyncMarketUniverse implements ShouldQueue, ShouldBeUnique
 
     public function handle(MarketUniverseRegistry $registry, LicensedMarketFeedService $feed, MarketAcquisitionLedger $ledger): void
     {
-        $base = config('market_feed');
-        if (($base['enabled'] ?? false) !== true || (int) ($base['owner_id'] ?? 0) !== $this->ownerId) {
-            return;
-        }
         try {
-            $entries = $registry->entries($base);
-            foreach ($entries as $entry) {
-                if (strtoupper(trim((string) ($entry['ticker'] ?? ''))) !== $this->ticker) {
-                    continue;
+            Cache::lock('ii-market-universe-run', 3600)->block(1, function () use ($registry, $feed, $ledger): void {
+                $base = app(MarketFeedSettings::class)->current();
+                if (($base['enabled'] ?? false) !== true || (int) ($base['owner_id'] ?? 0) !== $this->ownerId) {
+                    return;
                 }
-                Cache::lock('ii-market-universe-run', 3600)->block(1, function () use ($entry, $feed, $ledger): void {
+                foreach ($registry->entries($base) as $entry) {
+                    if (strtoupper(trim((string) ($entry['ticker'] ?? ''))) !== $this->ticker) {
+                        continue;
+                    }
                     $ledger->run($entry, function () use ($entry, $feed): string {
                         $provider = $entry['provider'] ?? 'local';
                         $pause = 'ii-market-provider-pause-'.$provider;
@@ -58,9 +58,9 @@ final class SyncMarketUniverse implements ShouldQueue, ShouldBeUnique
                             throw $exception;
                         }
                     });
-                });
-                return;
-            }
+                    return;
+                }
+            });
         } catch (\InvalidArgumentException $exception) {
             // Permanent validation/rights/quota failures are recorded, not retried.
             $this->fail(new \RuntimeException('II_MARKET_JOB_REJECTED'));
