@@ -41,6 +41,8 @@ final class MarketDataWorkspaceController extends Controller
                 'connected' => $vault->connected($owner, 'twelve_data'),
                 'mics' => implode(', ', $cfg['mics'] ?? []),
                 'daily_limit' => $cfg['daily_request_limit'] ?? 10,
+                'daily_used' => (int) DB::table('ii_market_request_days')->where('provider', 'twelve_data')->where('utc_day', now('UTC')->toDateString())->value('attempts'),
+                'provider_credits' => app(\App\Services\MarketProviderCreditGuard::class)->remaining($owner),
                 'discovery_enabled' => ($cfg['discovery_enabled'] ?? false) === true,
                 'enabled' => ($cfg['enabled'] ?? false) === true,
                 'catalog_count' => DB::table('ii_market_security_master')->where('user_id', $owner)
@@ -83,8 +85,7 @@ final class MarketDataWorkspaceController extends Controller
         }
         try {
             // Disable both operations before replacing credentials; never flash the secret.
-            $settings->setEnabled($owner, false);
-            $vault->save($owner, 'twelve_data', $validation->validated()['api_key']);
+            $settings->replaceCredential($owner, $validation->validated()['api_key']);
         } catch (\Throwable) {
             return redirect()->route('ii.market-data.index')->withErrors(['credential' => 'Simpan kebijakan dahulu; penyimpanan kredensial gagal atau sedang terkunci.']);
         }
