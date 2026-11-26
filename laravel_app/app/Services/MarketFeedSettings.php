@@ -24,32 +24,57 @@ final class MarketFeedSettings
         return $assigned === $owner || ($assigned === 0 && !($current['enabled'] ?? false));
     }
 
-    public function save(int $owner, array $input): void
+    public function savePolicy(int $owner, array $input): void
     {
         Cache::lock('ii-market-universe-run', 3600)->block(1, function () use ($owner, $input): void {
-            if (!$this->canManage($owner)) {
+            if (!$this->canManage($owner) || !\App\Models\User::query()->whereKey($owner)->exists()) {
                 throw new \InvalidArgumentException('II_FEED_OWNER_MISMATCH');
             }
-            $items = json_decode($input['universe_json'], true, 16, JSON_THROW_ON_ERROR);
-            if (!is_array($items) || !array_is_list($items)) {
-                throw new \InvalidArgumentException('II_UNIVERSE_INVALID');
+            $mics = $input['mics'] ?? [];
+            $daily = filter_var($input['daily_request_limit'] ?? null, FILTER_VALIDATE_INT,
+                ['options' => ['min_range' => 3, 'max_range' => 10000]]);
+            $rights = trim((string) ($input['rights_reference'] ?? ''));
+            if (!is_array($mics) || !array_is_list($mics) || !$mics || count($mics) > 10
+                || !$daily || $rights === '' || strlen($rights) > 400
+                || ($input['storage_permitted'] ?? false) !== true
+                || ($input['automation_permitted'] ?? false) !== true) {
+                throw new \InvalidArgumentException('II_DISCOVERY_POLICY_REQUIRED');
+            }
+            foreach ($mics as $mic) {
+                if (!is_string($mic) || !preg_match('/^[A-Z0-9]{4}$/D', $mic)) {
+                    throw new \InvalidArgumentException('II_UNIVERSE_SCOPE_INVALID');
+                }
             }
             $cfg = [
-                'provider' => 'twelve_data', 'enabled' => false,
+                'provider' => 'twelve_data', 'enabled' => false, 'discovery_enabled' => false,
                 'source_name' => 'Twelve Data', 'source_url' => TwelveDataDailyAdapter::URL,
-                'rights_reference' => trim($input['rights_reference']),
-                'storage_permitted' => true, 'automation_permitted' => true,
-                'history_sessions' => (int) $input['history_sessions'],
-                'daily_request_limit' => (int) $input['daily_request_limit'],
-                'request_budget' => min(50, (int) $input['daily_request_limit']),
-                'incremental_enabled' => true,
-                'universe_json' => json_encode($items, JSON_THROW_ON_ERROR),
+                'rights_reference' => $rights, 'storage_permitted' => true, 'automation_permitted' => true,
+                'history_sessions' => 250, 'daily_request_limit' => $daily,
+                'request_budget' => min(50, $daily), 'incremental_enabled' => true,
+                'mics' => array_values(array_unique($mics)), 'universe_json' => '[]',
             ];
-            app(MarketUniverseRegistry::class)->entries($cfg + ['owner_id' => $owner]);
             DB::table('ii_market_feed_settings')->updateOrInsert(['id' => 1], [
                 'user_id' => $owner, 'configuration' => json_encode($cfg, JSON_THROW_ON_ERROR),
                 'created_at' => now('UTC'), 'updated_at' => now('UTC'),
             ]);
+        });
+    }
+
+    public function authorizeDiscovery(int $owner): void
+    {
+        Cache::lock('ii-market-universe-run', 3600)->block(1, function () use ($owner): void {
+            $row = DB::table('ii_market_feed_settings')->where('id', 1)->where('user_id', $owner)->first();
+            if (!$row) {
+                throw new \InvalidArgumentException('II_FEED_CONFIGURATION_REQUIRED');
+            }
+            $cfg = json_decode($row->configuration, true, 16, JSON_THROW_ON_ERROR);
+            $key = app(LocalByokCredentialVault::class)->key($owner, 'twelve_data');
+            if (!preg_match('/^[A-Za-z0-9_-]{8,128}$/D', $key) || strtolower($key) === 'demo') {
+                throw new \InvalidArgumentException('II_FEED_KEY_INVALID');
+            }
+            $cfg['discovery_enabled'] = true;
+            DB::table('ii_market_feed_settings')->where('id', 1)->where('user_id', $owner)
+                ->update(['configuration' => json_encode($cfg, JSON_THROW_ON_ERROR), 'updated_at' => now('UTC')]);
         });
     }
 
@@ -69,6 +94,9 @@ final class MarketFeedSettings
                 }
             }
             $cfg['enabled'] = $enabled;
+            if (!$enabled) {
+                $cfg['discovery_enabled'] = false;
+            }
             DB::table('ii_market_feed_settings')->where('id', 1)->where('user_id', $owner)
                 ->update(['configuration' => json_encode($cfg, JSON_THROW_ON_ERROR), 'updated_at' => now('UTC')]);
         });
