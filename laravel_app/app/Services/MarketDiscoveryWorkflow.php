@@ -24,12 +24,19 @@ final class MarketDiscoveryWorkflow
         }
         $mics = array_values(array_unique($mics));
         return Cache::lock('ii-market-universe-run', 3600)->block(1, function () use ($owner, $policy, $mics): array {
-            $current = app(MarketFeedSettings::class)->current();
+            $settings = app(MarketFeedSettings::class);
+            $current = $settings->current();
+            if (!$settings->runtimeAuthorized($current)) {
+                throw new \InvalidArgumentException('II_DISCOVERY_AUTHORIZATION_CHANGED');
+            }
             if (($current['discovery_enabled'] ?? false) !== true || (int) ($current['owner_id'] ?? 0) !== $owner || $current !== $policy || ($current['mics'] ?? []) !== $mics) {
                 throw new \InvalidArgumentException('II_DISCOVERY_AUTHORIZATION_CHANGED');
             }
             $counts = [];
             foreach ($mics as $mic) {
+                if (!$settings->runtimeAuthorized($current)) {
+                    throw new \InvalidArgumentException('II_DISCOVERY_AUTHORIZATION_CHANGED');
+                }
                 $catalog = app(TwelveDataDiscovery::class)->discover($policy, $mic);
                 $counts[$mic] = app(MarketSecurityMaster::class)->ingest($owner, $catalog);
             }

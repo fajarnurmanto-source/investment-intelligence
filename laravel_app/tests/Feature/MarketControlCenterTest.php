@@ -142,6 +142,97 @@ final class MarketControlCenterTest extends TestCase
         $this->assertFalse(app(LocalByokCredentialVault::class)->connected($owner->id, 'twelve_data'));
     }
 
+    public function test_credential_storage_failure_revokes_old_key_and_blocks_reauthorization(): void
+    {
+        config(['market_feed.owner_id' => 0, 'market_feed.enabled' => false]);
+        Http::fake();
+        $owner = $this->admin();
+        $this->actingAs($owner)->post('/ii/market-data/policy', $this->policy())->assertRedirect();
+        $settings = app(MarketFeedSettings::class);
+        $settings->replaceCredential($owner->id, 'synthetic-old-key');
+        $settings->authorizeDiscovery($owner->id);
+        $before = $settings->current()['authorization_generation'];
+        DB::unprepared("CREATE TRIGGER ii_test_reject_credential BEFORE INSERT ON ii_byok_credentials BEGIN SELECT RAISE(ABORT, 'synthetic storage failure'); END");
+        try {
+            $this->post('/ii/market-data/credential', ['api_key' => 'synthetic-new-key'])
+                ->assertSessionHasErrors('credential');
+        } finally {
+            DB::unprepared('DROP TRIGGER ii_test_reject_credential');
+        }
+        $cfg = $settings->current();
+        $this->assertFalse($cfg['enabled']);
+        $this->assertFalse($cfg['discovery_enabled']);
+        $this->assertTrue($cfg['credential_replacement_pending']);
+        $this->assertSame('[]', $cfg['universe_json']);
+        $this->assertNotSame($before, $cfg['authorization_generation']);
+        $this->assertFalse(app(LocalByokCredentialVault::class)->connected($owner->id, 'twelve_data'));
+        $this->assertNull(session()->getOldInput('api_key'));
+        $this->post('/ii/market-data/action', ['action' => 'discovery', 'confirm' => '1'])
+            ->assertSessionHasErrors('operation');
+        $this->assertFalse($settings->current()['discovery_enabled']);
+        Http::assertNothingSent();
+    }
+
+    public function test_shared_lock_contention_leaves_policy_and_key_unchanged(): void
+    {
+        config(['market_feed.owner_id' => 0, 'market_feed.enabled' => false]);
+        Http::fake();
+        $owner = $this->admin();
+        $this->actingAs($owner)->post('/ii/market-data/policy', $this->policy())->assertRedirect();
+        $settings = app(MarketFeedSettings::class);
+        $settings->replaceCredential($owner->id, 'synthetic-old-key');
+        $before = $settings->current();
+        $lock = \Illuminate\Support\Facades\Cache::lock('ii-market-universe-run', 30);
+        $this->assertTrue($lock->get());
+        try {
+            $this->post('/ii/market-data/credential', ['api_key' => 'synthetic-new-key'])
+                ->assertSessionHasErrors('credential');
+            $this->assertSame($before, $settings->current());
+            $this->assertSame('synthetic-old-key', app(LocalByokCredentialVault::class)->key($owner->id, 'twelve_data'));
+        } finally {
+            $lock->release();
+        }
+        $settings->replaceCredential($owner->id, 'synthetic-new-key');
+        $this->assertNotSame($before['authorization_generation'], $settings->current()['authorization_generation']);
+        Http::assertNothingSent();
+    }
+
+    public function test_runtime_role_revocation_stops_queue_and_discovery_and_requires_reactivation(): void
+    {
+        config(['market_feed.owner_id' => 0, 'market_feed.enabled' => false]);
+        Http::fake();
+        $owner = $this->admin();
+        $this->actingAs($owner)->post('/ii/market-data/policy', $this->policy())->assertRedirect();
+        $settings = app(MarketFeedSettings::class);
+        $settings->replaceCredential($owner->id, 'synthetic-test-key');
+        $settings->authorizeDiscovery($owner->id);
+        $row = DB::table('ii_market_feed_settings')->where('id', 1)->first();
+        $stored = json_decode($row->configuration, true, 16, JSON_THROW_ON_ERROR);
+        $stored['universe_json'] = json_encode([['ticker' => 'AAA', 'provider_symbol' => 'AAA',
+            'provider_mic' => 'XNAS', 'currency' => 'USD', 'price_adjustment' => 'unadjusted',
+            'session_timezone' => 'America/New_York']], JSON_THROW_ON_ERROR);
+        DB::table('ii_market_feed_settings')->where('id', 1)->update(['configuration' => json_encode($stored, JSON_THROW_ON_ERROR)]);
+        $settings->setEnabled($owner->id, true);
+        $before = $settings->current();
+        $job = new SyncMarketUniverse($owner->id, 'AAA', $before['authorization_generation']);
+        $owner->forceFill(['ii_research_role' => 'reviewer'])->save();
+        app()->call([$job, 'handle']);
+        $this->assertFalse($settings->current()['enabled']);
+        $this->assertFalse($settings->current()['discovery_enabled']);
+        $this->assertNotSame($before['authorization_generation'], $settings->current()['authorization_generation']);
+        try {
+            app(\App\Services\MarketDiscoveryWorkflow::class)->run($owner->id, $before, $before['mics']);
+            $this->fail('Discovery must reject revoked role');
+        } catch (\InvalidArgumentException $e) {
+            $this->assertSame('II_DISCOVERY_AUTHORIZATION_CHANGED', $e->getMessage());
+        }
+        $owner->forceFill(['ii_research_role' => 'admin'])->save();
+        $this->assertFalse($settings->current()['enabled']);
+        app()->call([$job, 'handle']);
+        Http::assertNothingSent();
+        $this->assertDatabaseCount('ii_market_acquisition_receipts', 0);
+    }
+
     public function test_local_quota_is_rendered_without_claiming_provider_entitlement(): void
     {
         config(['market_feed.owner_id' => 0, 'market_feed.enabled' => false]);

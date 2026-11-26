@@ -19,10 +19,15 @@ final class SyncLicensedMarketFeedCommand extends Command
     {
         try {
             return Cache::lock('ii-market-universe-run', 3600)->block(1, function () use ($feed, $registry, $ledger): int {
-            $base = app(\App\Services\MarketFeedSettings::class)->current();
+            $settings = app(\App\Services\MarketFeedSettings::class);
+            $base = $settings->current();
             if (($base['enabled'] ?? false) !== true) {
                 $this->info('II_MARKET_FEED=DISABLED');
                 return self::SUCCESS;
+            }
+            if (!$settings->runtimeAuthorized($base)) {
+                $this->error('II_FEED_AUTHORIZATION_REVOKED');
+                return self::FAILURE;
             }
             $entries = $registry->entries($base);
             $selected = strtoupper(trim((string) $this->option('ticker')));
@@ -58,6 +63,10 @@ final class SyncLicensedMarketFeedCommand extends Command
             // operator-selected runs. This is a per-run cap, not a daily quota.
                 $failed = false;
                 foreach ($entries as $entry) {
+                    if (!$settings->runtimeAuthorized($base)) {
+                        $this->error('II_FEED_AUTHORIZATION_REVOKED');
+                        return self::FAILURE;
+                    }
                     $ticker = $entry['ticker'];
                     try {
                         $this->info($ticker.'|II_MARKET_FEED='.$ledger->run($entry, fn () => $feed->sync($entry)));

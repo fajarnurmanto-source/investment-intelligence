@@ -40,11 +40,12 @@ final class SyncMarketUniverse implements ShouldQueue, ShouldBeUnique
     {
         try {
             Cache::lock('ii-market-universe-run', 3600)->block(1, function () use ($registry, $feed, $ledger): void {
-                $base = app(MarketFeedSettings::class)->current();
+                $settings = app(MarketFeedSettings::class);
+                $base = $settings->current();
                 if (($base['enabled'] ?? false) !== true || (int) ($base['owner_id'] ?? 0) !== $this->ownerId) {
                     return;
                 }
-                if (($base['authorization_generation'] ?? null) !== $this->authorizationGeneration) {
+                if (!$settings->runtimeAuthorized($base) || ($base['authorization_generation'] ?? null) !== $this->authorizationGeneration) {
                     return;
                 }
                 foreach ($registry->entries($base) as $entry) {

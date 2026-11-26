@@ -17,6 +17,28 @@ final class MarketFeedSettings
         return array_replace(config('market_feed'), $settings, ['owner_id' => (int) $row->user_id, 'authorization_generation' => $settings['authorization_generation'] ?? 'legacy-persisted']);
     }
 
+    /** Called under the shared operation lock, before any persisted-policy acquisition. */
+    public function runtimeAuthorized(array $cfg): bool
+    {
+        if (!array_key_exists('authorization_generation', $cfg)) {
+            return true; // Existing environment-managed feed contract.
+        }
+        $owner = (int) ($cfg['owner_id'] ?? 0);
+        if ($owner > 0 && $this->canManage($owner)) {
+            return true;
+        }
+        $row = DB::table('ii_market_feed_settings')->where('id', 1)->where('user_id', $owner)->first();
+        if ($row !== null) {
+            $stored = json_decode($row->configuration, true, 16, JSON_THROW_ON_ERROR);
+            $stored['enabled'] = false;
+            $stored['discovery_enabled'] = false;
+            $stored['authorization_generation'] = (string) \Illuminate\Support\Str::uuid();
+            DB::table('ii_market_feed_settings')->where('id', 1)->where('user_id', $owner)
+                ->update(['configuration' => json_encode($stored, JSON_THROW_ON_ERROR), 'updated_at' => now('UTC')]);
+        }
+        return false;
+    }
+
     public function canManage(int $owner): bool
     {
         $current = $this->current();
@@ -50,7 +72,9 @@ final class MarketFeedSettings
                     throw new \InvalidArgumentException('II_UNIVERSE_SCOPE_INVALID');
                 }
             }
+            $previous = $this->current();
             $cfg = [
+                'credential_replacement_pending' => ($previous['credential_replacement_pending'] ?? false) === true,
                 'provider' => 'twelve_data', 'enabled' => false, 'discovery_enabled' => false,
                 'authorization_generation' => (string) \Illuminate\Support\Str::uuid(),
                 'source_name' => 'Twelve Data', 'source_url' => TwelveDataDailyAdapter::URL,
@@ -77,6 +101,9 @@ final class MarketFeedSettings
                 throw new \InvalidArgumentException('II_FEED_CONFIGURATION_REQUIRED');
             }
             $cfg = json_decode($row->configuration, true, 16, JSON_THROW_ON_ERROR);
+            if (($cfg['credential_replacement_pending'] ?? false) === true) {
+                throw new \InvalidArgumentException('II_FEED_CREDENTIAL_REPLACEMENT_REQUIRED');
+            }
             $key = app(LocalByokCredentialVault::class)->key($owner, 'twelve_data');
             if (!preg_match('/^[A-Za-z0-9_-]{8,128}$/D', $key) || strtolower($key) === 'demo') {
                 throw new \InvalidArgumentException('II_FEED_KEY_INVALID');
@@ -114,6 +141,7 @@ final class MarketFeedSettings
             $cfg['enabled'] = false;
             $cfg['discovery_enabled'] = false;
             $cfg['universe_json'] = '[]';
+            $cfg['credential_replacement_pending'] = true;
             $cfg['authorization_generation'] = (string) \Illuminate\Support\Str::uuid();
             DB::table('ii_market_feed_settings')->where('id', 1)->where('user_id', $owner)
                 ->update(['configuration' => json_encode($cfg, JSON_THROW_ON_ERROR), 'updated_at' => now('UTC')]);
@@ -123,6 +151,9 @@ final class MarketFeedSettings
             $vault->disconnect($owner, 'twelve_data');
             if ($key !== null) {
                 $vault->save($owner, 'twelve_data', $key);
+                $cfg['credential_replacement_pending'] = false;
+                DB::table('ii_market_feed_settings')->where('id', 1)->where('user_id', $owner)
+                    ->update(['configuration' => json_encode($cfg, JSON_THROW_ON_ERROR), 'updated_at' => now('UTC')]);
             }
         });
     }
@@ -139,6 +170,9 @@ final class MarketFeedSettings
             }
             $cfg = json_decode($row->configuration, true, 16, JSON_THROW_ON_ERROR);
             if ($enabled) {
+                if (($cfg['credential_replacement_pending'] ?? false) === true) {
+                    throw new \InvalidArgumentException('II_FEED_CREDENTIAL_REPLACEMENT_REQUIRED');
+                }
                 app(MarketUniverseRegistry::class)->entries($cfg + ['owner_id' => $owner]);
                 $key = app(LocalByokCredentialVault::class)->key($owner, 'twelve_data');
                 if (!preg_match('/^[A-Za-z0-9_-]{8,128}$/D', $key) || strtolower($key) === 'demo') {
