@@ -1,6 +1,9 @@
 <?php
 
 return [
+    // Maximum history requested in one API call; entitlement may limit coverage.
+    'history_sessions' => env('II_MARKET_FEED_HISTORY_SESSIONS', 250),
+    'incremental_enabled' => env('II_MARKET_FEED_INCREMENTAL_ENABLED', true),
     'universe_json' => env('II_MARKET_FEED_UNIVERSE_JSON'),
     'request_budget' => env('II_MARKET_FEED_REQUEST_BUDGET', 10),
     'provider' => env('II_MARKET_FEED_PROVIDER', 'local'),
