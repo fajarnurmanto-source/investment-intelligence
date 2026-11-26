@@ -46,6 +46,12 @@ Route::prefix('ii')->name('ii.')->group(function (): void {
             ->middleware('throttle:6,1')->name('byok.quote');
 
         Route::get('/market-data', [MarketDataWorkspaceController::class, 'index'])->name('market-data.index');
+        Route::post('/market-data/policy', [MarketDataWorkspaceController::class, 'policy'])
+            ->middleware('throttle:5,1')->name('market-data.policy');
+        Route::post('/market-data/credential', [MarketDataWorkspaceController::class, 'credential'])
+            ->middleware('throttle:3,1')->name('market-data.credential');
+        Route::post('/market-data/action', [MarketDataWorkspaceController::class, 'action'])
+            ->middleware('throttle:6,1')->name('market-data.action');
         Route::get('/signals', [SignalCenterController::class, 'index'])->name('signals.index');
         Route::post('/signals/import', [SignalCenterController::class, 'import'])
             ->middleware('throttle:8,1')->name('signals.import');
