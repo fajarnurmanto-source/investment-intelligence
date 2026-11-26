@@ -1,0 +1,7 @@
+# DATA-02E.4–7 — queue and recovery candidate
+
+Scheduler uses ii:sync-market-feed --queue. Local database queue only; worker must run on same OS account as DPAPI vault. Default retry_after 180 seconds, job timeout 120 seconds, three attempts, backoff 60/300 seconds. Windows PHP may not enforce PCNTL timeout; verify actual runtime and watchdog before acceptance. Queue payload contains owner and ticker only; worker rechecks enabled configuration and current registry. Temporary network/5xx and lock contention retry; validation and credential/rights failures fail without automatic retry. Shared lock serializes command and queued operations. Queue-only cooldown of 15 minutes follows rate-limit, entitlement, or credential failures; manual sync is not covered by that cooldown. Failed requests consume quota.
+
+Hourly reconciliation marks RUNNING receipts older than two hours INTERRUPTED_OUTCOME_UNKNOWN; no refund, no claim that data was or was not saved, no automatic replay. Next scheduled run uses normal immutable merge. Unique lock expires after one hour; queue delay and actual worker runtime need local acceptance. Existing manual command remains synchronous. No migrations in this PR. Synthetic tests only.
+
+Next: monitoring UI, preflight and consolidated local acceptance.
