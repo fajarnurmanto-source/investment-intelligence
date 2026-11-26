@@ -7,6 +7,15 @@ use Illuminate\Support\Facades\DB;
 
 final class MarketSecurityMaster
 {
+    /** A successful complete MIC snapshot is reusable for 72 hours; never extends observed_at. */
+    public function freshCount(int $owner, string $mic): int
+    {
+        return DB::table('ii_market_security_master')->where('user_id', $owner)
+            ->where('provider', 'twelve_data')->where('mic', $mic)
+            ->where('status', 'CATALOG_ONLY_ENTITLEMENT_UNVERIFIED')
+            ->where('observed_at', '>=', now('UTC')->subHours(72))->count();
+    }
+
     /** Only trusted internal discovery results; never an HTTP request body. */
     public function ingest(int $owner, array $catalog): int
     {

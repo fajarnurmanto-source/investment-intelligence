@@ -75,6 +75,12 @@ final class TwelveDataDiscovery
             throw new \RuntimeException('II_DISCOVERY_NETWORK_ERROR');
         }
         $credits->observe((int) $policy['owner_id'], $response);
+        if (in_array($response->status(), [401, 403], true)) {
+            throw new \InvalidArgumentException('II_PROVIDER_ENTITLEMENT_DENIED');
+        }
+        if (in_array($response->status(), [500, 502, 503, 504], true)) {
+            throw new \RuntimeException('II_PROVIDER_TEMPORARY_ERROR');
+        }
         if ($response->status() === 429) {
             throw new \InvalidArgumentException('II_PROVIDER_RATE_LIMITED');
         }
@@ -82,6 +88,10 @@ final class TwelveDataDiscovery
             throw new \InvalidArgumentException('II_DISCOVERY_RESPONSE_REJECTED');
         }
         $body = $response->json();
+        if (is_array($body) && ($body['status'] ?? null) !== 'ok' && (int) ($body['code'] ?? 0) === 429) {
+            $credits->markExhausted((int) $policy['owner_id']);
+            throw new \InvalidArgumentException('II_PROVIDER_RATE_LIMITED');
+        }
         if (!is_array($body) || ($body['status'] ?? null) !== 'ok'
             || !is_array($body['data'] ?? null) || !array_is_list($body['data'])
             || count($body['data']) > 30000) {

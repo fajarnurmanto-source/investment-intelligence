@@ -98,6 +98,9 @@ final class MarketControlCenterTest extends TestCase
         $cfg = app(MarketFeedSettings::class)->current();
         $result = app(\App\Services\MarketDiscoveryWorkflow::class)->run($owner->id, $cfg, $cfg['mics']);
         $this->assertSame(['AAA'], array_column($result['proposal']['entries'], 'ticker'));
+        $cached = app(\App\Services\MarketDiscoveryWorkflow::class)->run($owner->id, app(MarketFeedSettings::class)->current(), ['XNAS']);
+        $this->assertSame(['XNAS'], $cached['reused_mics']);
+        Http::assertSentCount(2);
         $this->post('/ii/market-data/action', ['action' => 'activate', 'confirm' => '1'])
             ->assertSessionHas('market_status', 'ACTIVATE_ACCEPTED');
         $this->assertTrue(app(MarketFeedSettings::class)->current()['enabled']);
@@ -231,6 +234,33 @@ final class MarketControlCenterTest extends TestCase
         app()->call([$job, 'handle']);
         Http::assertNothingSent();
         $this->assertDatabaseCount('ii_market_acquisition_receipts', 0);
+    }
+
+    public function test_discovery_staggers_mics_and_reserves_daily_price_budget(): void
+    {
+        config(['market_feed.owner_id' => 0, 'market_feed.enabled' => false]);
+        Storage::fake('local');
+        $owner = $this->admin();
+        $this->actingAs($owner)->post('/ii/market-data/policy', array_replace($this->policy(),
+            ['mics' => 'XNAS,XNYS', 'daily_request_limit' => 3]))->assertRedirect();
+        $settings = app(MarketFeedSettings::class);
+        $settings->replaceCredential($owner->id, 'synthetic-test-key');
+        $settings->authorizeDiscovery($owner->id);
+        Http::fake([
+            'https://api.twelvedata.com/exchanges*' => Http::response(['status' => 'ok', 'data' => [
+                ['mic_code' => 'XNAS', 'timezone' => 'America/New_York'],
+            ]]),
+            'https://api.twelvedata.com/stocks*' => Http::response(['status' => 'ok', 'data' => [
+                ['mic_code' => 'XNAS', 'symbol' => 'AAA', 'currency' => 'USD', 'type' => 'Common Stock'],
+            ]]),
+        ]);
+        $cfg = $settings->current();
+        $result = app(\App\Services\MarketDiscoveryWorkflow::class)->run($owner->id, $cfg, $cfg['mics']);
+        $this->assertSame(['XNYS' => 'BUDGET_DEFERRED'], $result['deferred_mics']);
+        $this->assertSame(['AAA'], array_column($result['proposal']['entries'], 'ticker'));
+        $this->assertSame(1, $result['proposal']['remaining_local_requests']);
+        Http::assertSentCount(2);
+        $this->assertFalse($settings->current()['enabled']);
     }
 
     public function test_local_quota_is_rendered_without_claiming_provider_entitlement(): void

@@ -38,6 +38,23 @@ final class SyncLicensedMarketFeedCommand extends Command
                     throw new \InvalidArgumentException('II_UNIVERSE_TICKER_NOT_FOUND');
                 }
             }
+            if (($base['provider'] ?? 'local') === 'twelve_data' && $this->option('queue')) {
+                $remaining = $ledger->remaining($base);
+                $credits = app(\App\Services\MarketProviderCreditGuard::class)->remaining((int) $base['owner_id']);
+                $cap = min($remaining, $credits ?? PHP_INT_MAX);
+                if ($cap === 0) {
+                    $this->info('II_MARKET_FEED=DEFERRED_BUDGET');
+                    return self::SUCCESS;
+                }
+                // Least recently attempted first within the explicitly authorized universe.
+                $attempts = \Illuminate\Support\Facades\DB::table('ii_market_acquisition_receipts')
+                    ->where('user_id', (int) $base['owner_id'])->where('provider', 'twelve_data')
+                    ->select('ticker')->selectRaw('MAX(started_at) as last_attempt')->groupBy('ticker')
+                    ->pluck('last_attempt', 'ticker');
+                usort($entries, fn (array $a, array $b): int =>
+                    [($attempts[$a['ticker']] ?? ''), $a['ticker']] <=> [($attempts[$b['ticker']] ?? ''), $b['ticker']]);
+                $entries = array_slice($entries, 0, $cap);
+            }
             if ($this->option('queue')) {
                 if (config('queue.default') !== 'database' || (int) config('queue.connections.database.retry_after') <= 120) {
                     throw new \InvalidArgumentException('II_MARKET_QUEUE_CONFIGURATION_INVALID');

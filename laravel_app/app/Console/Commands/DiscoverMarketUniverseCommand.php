@@ -20,7 +20,9 @@ final class DiscoverMarketUniverseCommand extends Command
                 return self::SUCCESS;
             }
             $result = $workflow->run((int) $cfg['owner_id'], $cfg, $cfg['mics'] ?? []);
-            $this->info('II_DISCOVERY=COMPLETE; CANDIDATES='.count($result['proposal']['entries']));
+            $this->info('II_DISCOVERY='.($result['deferred_mics'] === [] ? 'COMPLETE' : 'PARTIAL_DEFERRED')
+                .'; CANDIDATES='.count($result['proposal']['entries'])
+                .'; REUSED='.count($result['reused_mics']).'; DEFERRED='.count($result['deferred_mics']));
             return self::SUCCESS;
         } catch (\Throwable $e) {
             $code = $e->getMessage();

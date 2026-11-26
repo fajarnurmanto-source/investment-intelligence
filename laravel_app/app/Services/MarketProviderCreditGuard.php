@@ -26,10 +26,15 @@ final class MarketProviderCreditGuard
         }
     }
 
+    public function markExhausted(int $owner): void
+    {
+        Cache::put($this->key($owner), 0, 60);
+    }
+
     public function observe(int $owner, Response $response): void
     {
         if ($response->status() === 429) {
-            Cache::put($this->key($owner), 0, 60);
+            $this->markExhausted($owner);
             return;
         }
         $raw = $response->header('api-credits-left');

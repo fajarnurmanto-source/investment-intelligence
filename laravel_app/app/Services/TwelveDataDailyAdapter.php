@@ -68,6 +68,9 @@ final class TwelveDataDailyAdapter
         }
         $body = $response->json();
         if (!is_array($body) || ($body['status'] ?? null) !== 'ok') {
+            if (is_array($body) && (int) ($body['code'] ?? 0) === 429) {
+                $credits->markExhausted((int) $cfg['owner_id']);
+            }
             throw new \InvalidArgumentException(match ((int) ($body['code'] ?? 0)) {
                 401, 403 => 'II_PROVIDER_ENTITLEMENT_DENIED',
                 429 => 'II_PROVIDER_RATE_LIMITED',

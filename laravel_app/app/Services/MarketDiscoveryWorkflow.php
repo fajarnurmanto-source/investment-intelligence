@@ -33,12 +33,50 @@ final class MarketDiscoveryWorkflow
                 throw new \InvalidArgumentException('II_DISCOVERY_AUTHORIZATION_CHANGED');
             }
             $counts = [];
+            $reused = [];
+            $deferred = [];
+            $master = app(MarketSecurityMaster::class);
+            $ledger = app(MarketAcquisitionLedger::class);
+            $credits = app(MarketProviderCreditGuard::class);
+            // Refresh stale/never-seen MICs first. Reserve at least one daily request for price acquisition.
             foreach ($mics as $mic) {
                 if (!$settings->runtimeAuthorized($current)) {
                     throw new \InvalidArgumentException('II_DISCOVERY_AUTHORIZATION_CHANGED');
                 }
-                $catalog = app(TwelveDataDiscovery::class)->discover($policy, $mic);
-                $counts[$mic] = app(MarketSecurityMaster::class)->ingest($owner, $catalog);
+                $fresh = $master->freshCount($owner, $mic);
+                if ($fresh > 0) {
+                    $counts[$mic] = $fresh;
+                    $reused[] = $mic;
+                    continue;
+                }
+                // A catalog refresh requires two requests; do not start a partial refresh.
+                if ($ledger->remaining($policy) < 3 || ($credits->remaining($owner) ?? PHP_INT_MAX) < 2) {
+                    $deferred[$mic] = 'BUDGET_DEFERRED';
+                    continue;
+                }
+                try {
+                    $catalog = app(TwelveDataDiscovery::class)->discover($policy, $mic);
+                    $counts[$mic] = $master->ingest($owner, $catalog);
+                } catch (\InvalidArgumentException|\RuntimeException $e) {
+                    $code = $e->getMessage();
+                    if (!in_array($code, ['II_PROVIDER_RATE_LIMITED', 'II_PROVIDER_DAILY_BUDGET_EXHAUSTED',
+                        'II_DISCOVERY_NETWORK_ERROR', 'II_PROVIDER_TEMPORARY_ERROR', 'II_SECURITY_CATALOG_EMPTY'], true)) {
+                        throw $e;
+                    }
+                    $deferred[$mic] = $code;
+                    // Stop remote work on shared provider failures; retain last valid catalog.
+                    if ($code !== 'II_SECURITY_CATALOG_EMPTY') {
+                        break;
+                    }
+                }
+            }
+            if (!$settings->runtimeAuthorized($current)) {
+                throw new \InvalidArgumentException('II_DISCOVERY_AUTHORIZATION_CHANGED');
+            }
+            foreach ($mics as $mic) {
+                if (!isset($counts[$mic], $deferred[$mic]) && !array_key_exists($mic, $counts) && !array_key_exists($mic, $deferred)) {
+                    $deferred[$mic] = 'NOT_ATTEMPTED_AFTER_PROVIDER_FAILURE';
+                }
             }
             $proposal = app(AutomaticMarketUniverse::class)->propose($owner, $policy, $mics);
             // Never silently change an active acquisition universe.
@@ -53,7 +91,7 @@ final class MarketDiscoveryWorkflow
                 DB::table('ii_market_feed_settings')->where('id', 1)->where('user_id', $owner)
                     ->update(['configuration' => json_encode($stored, JSON_THROW_ON_ERROR), 'updated_at' => now('UTC')]);
             }
-            return ['catalog_counts' => $counts, 'proposal' => $proposal];
+            return ['catalog_counts' => $counts, 'reused_mics' => $reused, 'deferred_mics' => $deferred, 'proposal' => $proposal];
         });
     }
 }
