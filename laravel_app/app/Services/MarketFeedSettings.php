@@ -78,6 +78,27 @@ final class MarketFeedSettings
         });
     }
 
+    public function replaceCredential(int $owner, string $key): void
+    {
+        if (!preg_match('/^[A-Za-z0-9_-]{8,128}$/D', $key) || strtolower($key) === 'demo') {
+            throw new \InvalidArgumentException('II_FEED_KEY_INVALID');
+        }
+        Cache::lock('ii-market-universe-run', 3600)->block(1, function () use ($owner, $key): void {
+            $row = DB::table('ii_market_feed_settings')->where('id', 1)->where('user_id', $owner)->first();
+            if (!$row) {
+                throw new \InvalidArgumentException('II_FEED_CONFIGURATION_REQUIRED');
+            }
+            $cfg = json_decode($row->configuration, true, 16, JSON_THROW_ON_ERROR);
+            $cfg['enabled'] = false;
+            $cfg['discovery_enabled'] = false;
+            $cfg['universe_json'] = '[]';
+            DB::table('ii_market_feed_settings')->where('id', 1)->where('user_id', $owner)
+                ->update(['configuration' => json_encode($cfg, JSON_THROW_ON_ERROR), 'updated_at' => now('UTC')]);
+            app(LocalByokCredentialVault::class)->save($owner, 'twelve_data', $key);
+            Cache::forget('ii-twelve-data-credit-'.$owner);
+        });
+    }
+
     public function setEnabled(int $owner, bool $enabled): void
     {
         Cache::lock('ii-market-universe-run', 3600)->block(1, function () use ($owner, $enabled): void {
