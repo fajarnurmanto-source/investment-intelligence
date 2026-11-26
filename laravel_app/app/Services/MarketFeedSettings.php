@@ -60,6 +60,42 @@ final class MarketFeedSettings
         return \App\Models\User::query()->count() === 1;
     }
 
+    /** Explicit local console bootstrap; never grants a role or enables provider access. */
+    public function initializeOwner(int $owner): void
+    {
+        if (!app()->runningInConsole()) {
+            throw new \InvalidArgumentException('II_OWNER_BOOTSTRAP_CONSOLE_REQUIRED');
+        }
+        Cache::lock('ii-market-universe-run', 3600)->block(1, function () use ($owner): void {
+            DB::transaction(function () use ($owner): void {
+                $current = $this->current();
+                if (DB::table('ii_market_feed_settings')->where('id', 1)->exists()
+                    || (int) ($current['owner_id'] ?? 0) !== 0
+                    || ($current['enabled'] ?? false) || ($current['discovery_enabled'] ?? false)) {
+                    throw new \InvalidArgumentException('II_OWNER_BOOTSTRAP_ALREADY_ASSIGNED_OR_ACTIVE');
+                }
+                $user = \App\Models\User::query()->find($owner);
+                if (!$user || !in_array($user->ii_research_role, ['analyst', 'admin'], true)) {
+                    throw new \InvalidArgumentException('II_OWNER_BOOTSTRAP_USER_INVALID');
+                }
+                $cfg = [
+                    'provider' => 'twelve_data', 'enabled' => false, 'discovery_enabled' => false,
+                    'credential_replacement_pending' => true,
+                    'authorization_generation' => (string) \Illuminate\Support\Str::uuid(),
+                    'rights_reference' => '', 'storage_permitted' => false, 'automation_permitted' => false,
+                    'mics' => [], 'universe_json' => '[]',
+                    'owner_bootstrapped_at' => now('UTC')->toIso8601String(),
+                    'owner_bootstrap_method' => 'LOCAL_CONSOLE_EXPLICIT',
+                ];
+                DB::table('ii_market_feed_settings')->insert([
+                    'id' => 1, 'user_id' => $owner,
+                    'configuration' => json_encode($cfg, JSON_THROW_ON_ERROR),
+                    'created_at' => now('UTC'), 'updated_at' => now('UTC'),
+                ]);
+            });
+        });
+    }
+
     public function savePolicy(int $owner, array $input): void
     {
         Cache::lock('ii-market-universe-run', 3600)->block(1, function () use ($owner, $input): void {
@@ -84,6 +120,8 @@ final class MarketFeedSettings
             $previous = $this->current();
             $cfg = [
                 'credential_replacement_pending' => ($previous['credential_replacement_pending'] ?? false) === true,
+                'owner_bootstrapped_at' => $previous['owner_bootstrapped_at'] ?? null,
+                'owner_bootstrap_method' => $previous['owner_bootstrap_method'] ?? null,
                 'provider' => 'twelve_data', 'enabled' => false, 'discovery_enabled' => false,
                 'authorization_generation' => (string) \Illuminate\Support\Str::uuid(),
                 'source_name' => 'Twelve Data', 'source_url' => TwelveDataDailyAdapter::URL,
@@ -147,6 +185,11 @@ final class MarketFeedSettings
                 throw new \InvalidArgumentException('II_FEED_CONFIGURATION_REQUIRED');
             }
             $cfg = json_decode($row->configuration, true, 16, JSON_THROW_ON_ERROR);
+            if ($key !== null && (trim((string) ($cfg['rights_reference'] ?? '')) === ''
+                || ($cfg['storage_permitted'] ?? false) !== true || ($cfg['automation_permitted'] ?? false) !== true
+                || empty($cfg['mics']))) {
+                throw new \InvalidArgumentException('II_DISCOVERY_POLICY_REQUIRED');
+            }
             $cfg['enabled'] = false;
             $cfg['discovery_enabled'] = false;
             $cfg['universe_json'] = '[]';
