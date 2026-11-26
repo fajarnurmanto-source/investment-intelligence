@@ -21,9 +21,7 @@ final class MarketDataWorkspaceController extends Controller
     {
         $this->localOnly($request);
         $owner = (int) $request->user()->id;
-        $assigned = (int) ($settings->current()['owner_id'] ?? 0);
-        abort_unless($settings->canManage($owner)
-            && ($assigned === $owner || $request->user()->ii_research_role === 'admin'), 403);
+        abort_unless($settings->canManage($owner), 403);
         return $owner;
     }
 
@@ -32,8 +30,7 @@ final class MarketDataWorkspaceController extends Controller
         $this->localOnly($request);
         $owner = (int) $request->user()->id;
         $cfg = $settings->current();
-        $assigned = (int) ($cfg['owner_id'] ?? 0);
-        $manage = $settings->canManage($owner) && ($assigned === $owner || $request->user()->ii_research_role === 'admin');
+        $manage = $settings->canManage($owner);
         $control = null;
         if ($manage) {
             $control = [
@@ -74,7 +71,7 @@ final class MarketDataWorkspaceController extends Controller
         return redirect()->route('ii.market-data.index')->with('market_status', 'POLICY_SAVED_DISABLED');
     }
 
-    public function credential(Request $request, MarketFeedSettings $settings, LocalByokCredentialVault $vault)
+    public function credential(Request $request, MarketFeedSettings $settings)
     {
         $owner = $this->manager($request, $settings);
         $validation = Validator::make($request->only('api_key'), [

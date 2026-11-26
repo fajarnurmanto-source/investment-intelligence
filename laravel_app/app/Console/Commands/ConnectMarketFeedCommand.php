@@ -3,7 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\User;
-use App\Services\LocalByokCredentialVault;
+use App\Services\MarketFeedSettings;
 use Illuminate\Console\Command;
 
 final class ConnectMarketFeedCommand extends Command
@@ -11,16 +11,17 @@ final class ConnectMarketFeedCommand extends Command
     protected $signature = 'ii:connect-market-feed {--disconnect : Remove the configured owner credential}';
     protected $description = 'Manage the configured owner Twelve Data credential locally';
 
-    public function handle(LocalByokCredentialVault $vault): int
+    public function handle(MarketFeedSettings $settings): int
     {
-        $owner = filter_var(config('market_feed.owner_id'), FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
-        if (!$owner || !User::query()->whereKey($owner)->exists() || config('market_feed.provider') !== 'twelve_data') {
+        $cfg = $settings->current();
+        $owner = filter_var($cfg['owner_id'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+        if (!$owner || !User::query()->whereKey($owner)->exists() || ($cfg['provider'] ?? null) !== 'twelve_data' || !$settings->canManage($owner)) {
             $this->error('II_FEED_CONFIGURATION_INVALID');
             return self::FAILURE;
         }
         try {
             if ($this->option('disconnect')) {
-                $vault->disconnect($owner, 'twelve_data');
+                $settings->disconnectCredential($owner);
                 $this->info('II_FEED_KEY_DISCONNECTED');
                 return self::SUCCESS;
             }
@@ -33,7 +34,7 @@ final class ConnectMarketFeedCommand extends Command
                 $this->error('II_FEED_KEY_INVALID');
                 return self::FAILURE;
             }
-            $vault->save($owner, 'twelve_data', $key);
+            $settings->replaceCredential($owner, $key);
             $this->info('II_FEED_KEY_STORED_LOCALLY');
             return self::SUCCESS;
         } catch (\Throwable) {

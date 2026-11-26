@@ -19,11 +19,16 @@ final class SyncMarketUniverse implements ShouldQueue, ShouldBeUnique
     public int $timeout = 120;
     public int $uniqueFor = 3600;
 
-    public function __construct(public readonly int $ownerId, public readonly string $ticker) {}
+    public ?string $authorizationGeneration = null;
+
+    public function __construct(public readonly int $ownerId, public readonly string $ticker, ?string $authorizationGeneration = null)
+    {
+        $this->authorizationGeneration = $authorizationGeneration;
+    }
 
     public function uniqueId(): string
     {
-        return $this->ownerId.'|'.$this->ticker;
+        return $this->ownerId.'|'.$this->ticker.'|'.($this->authorizationGeneration ?? 'legacy');
     }
 
     public function backoff(): array
@@ -37,6 +42,9 @@ final class SyncMarketUniverse implements ShouldQueue, ShouldBeUnique
             Cache::lock('ii-market-universe-run', 3600)->block(1, function () use ($registry, $feed, $ledger): void {
                 $base = app(MarketFeedSettings::class)->current();
                 if (($base['enabled'] ?? false) !== true || (int) ($base['owner_id'] ?? 0) !== $this->ownerId) {
+                    return;
+                }
+                if (($base['authorization_generation'] ?? null) !== $this->authorizationGeneration) {
                     return;
                 }
                 foreach ($registry->entries($base) as $entry) {

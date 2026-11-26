@@ -101,14 +101,45 @@ final class MarketControlCenterTest extends TestCase
         $this->post('/ii/market-data/action', ['action' => 'activate', 'confirm' => '1'])
             ->assertSessionHas('market_status', 'ACTIVATE_ACCEPTED');
         $this->assertTrue(app(MarketFeedSettings::class)->current()['enabled']);
+        $old = new SyncMarketUniverse($owner->id, 'AAA', app(MarketFeedSettings::class)->current()['authorization_generation']);
         $this->post('/ii/market-data/action', ['action' => 'stop', 'confirm' => '1'])
             ->assertSessionHas('market_status', 'STOP_ACCEPTED');
         $cfg = app(MarketFeedSettings::class)->current();
         $this->assertFalse($cfg['enabled']);
         $this->assertFalse($cfg['discovery_enabled']);
         app()->call([new SyncMarketUniverse($owner->id, 'AAA'), 'handle']);
+        app(MarketFeedSettings::class)->setEnabled($owner->id, true);
+        $this->assertNotSame($old->authorizationGeneration, app(MarketFeedSettings::class)->current()['authorization_generation']);
+        app()->call([$old, 'handle']);
+        app()->call([new SyncMarketUniverse($owner->id, 'AAA'), 'handle']);
         Http::assertSentCount(2);
         $this->assertDatabaseCount('ii_market_acquisition_receipts', 0);
+    }
+
+    public function test_reviewer_cannot_manage_even_when_owner(): void
+    {
+        config(['market_feed.owner_id' => 0, 'market_feed.enabled' => false]);
+        $owner = $this->admin();
+        $this->actingAs($owner)->post('/ii/market-data/policy', $this->policy())->assertRedirect();
+        $owner->forceFill(['ii_research_role' => 'reviewer'])->save();
+        $this->actingAs($owner)->post('/ii/market-data/action', ['action' => 'stop', 'confirm' => '1'])->assertForbidden();
+        $this->get('/ii/market-data')->assertOk()->assertDontSee('Simpan kebijakan (nonaktif)');
+    }
+
+    public function test_cli_disconnect_revokes_persisted_authorization(): void
+    {
+        config(['market_feed.owner_id' => 0, 'market_feed.enabled' => false]);
+        $owner = $this->admin();
+        $this->actingAs($owner)->post('/ii/market-data/policy', $this->policy())->assertRedirect();
+        $settings = app(MarketFeedSettings::class);
+        $settings->replaceCredential($owner->id, 'synthetic-test-key');
+        $settings->authorizeDiscovery($owner->id);
+        $before = $settings->current()['authorization_generation'];
+        $this->artisan('ii:connect-market-feed', ['--disconnect' => true])->assertSuccessful();
+        $this->assertFalse($settings->current()['enabled']);
+        $this->assertFalse($settings->current()['discovery_enabled']);
+        $this->assertNotSame($before, $settings->current()['authorization_generation']);
+        $this->assertFalse(app(LocalByokCredentialVault::class)->connected($owner->id, 'twelve_data'));
     }
 
     public function test_local_quota_is_rendered_without_claiming_provider_entitlement(): void

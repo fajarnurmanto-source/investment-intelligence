@@ -43,7 +43,7 @@ final class SyncLicensedMarketFeedCommand extends Command
                     if ($owner < 1 || !preg_match('/^[A-Z0-9.\-]{1,16}$/D', $ticker)) {
                         throw new \InvalidArgumentException('II_FEED_CONFIGURATION_INVALID');
                     }
-                    SyncMarketUniverse::dispatch($owner, $ticker)->onConnection('database');
+                    SyncMarketUniverse::dispatch($owner, $ticker, $base['authorization_generation'] ?? null)->onConnection('database');
                     $this->info($ticker.'|II_MARKET_FEED=DISPATCH_REQUESTED');
                 }
                 return self::SUCCESS;
