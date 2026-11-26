@@ -22,12 +22,13 @@ final class MarketHistoryCheckpointTest extends TestCase
         config(['market_feed' => [
             'enabled' => true, 'provider' => 'twelve_data', 'owner_id' => $owner->id,
             'ticker' => 'AAPL', 'provider_symbol' => 'AAPL', 'provider_mic' => 'XNAS',
-            'api_key' => 'fixture_key_not_real', 'source_name' => 'Twelve Data',
+            'source_name' => 'Twelve Data',
             'source_url' => 'https://api.twelvedata.com/time_series',
             'rights_reference' => 'TEST_ONLY', 'storage_permitted' => true,
             'automation_permitted' => true, 'currency' => 'USD', 'price_adjustment' => 'unadjusted',
             'session_timezone' => 'America/New_York', 'history_sessions' => 60,
         ]]);
+        app(\App\Services\LocalByokCredentialVault::class)->save($owner->id, 'twelve_data', 'fixture_key_not_real');
         return $owner;
     }
 
