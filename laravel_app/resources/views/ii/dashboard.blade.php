@@ -11,6 +11,7 @@
         <div class="panel"><span class="badge blue">REAL DATA</span><p class="caption" style="margin-top:16px">Seri makro FRED tersambung</p><div class="metric">{{ $macroSeriesCount }}</div><a href="{{ route('ii.macro.index') }}">Buka Macro Intelligence →</a></div>
     </div>
     <div class="boundary"><strong>Batas sistem saat ini:</strong> IMPORTED DATA = UNVERIFIED · RESEARCH = HOLD · TRADING AUTHORITY = NONE. Indikator pasar adalah observasi kuantitatif, bukan rekomendasi atau janji keuntungan.</div>
+    <div class="panel"><h2>Market Data Workspace</h2><p class="muted">Pantau cakupan instrumen dan hasil sinkronisasi lokal.</p><a href="{{ route('ii.market-data.index') }}">Buka Market Data Workspace →</a></div>
     <div class="section-header"><h2>Signal Center · snapshot terakhir</h2><a class="button" href="{{ route('ii.signals.index') }}">Buka Signal Center</a></div>
     @if(count($signals) === 0)
         <section class="panel soft"><h2>Siap mengolah seri harga pertama</h2><p class="muted">Belum ada data harga yang diimpor. Unggah minimal 60 sesi OHLCV agar tren SMA20/SMA50, RSI14, dan risiko ATR14 dapat dihitung otomatis.</p><a href="{{ route('ii.signals.index') }}">Mulai impor CSV →</a></section>
