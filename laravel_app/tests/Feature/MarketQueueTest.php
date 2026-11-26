@@ -84,4 +84,22 @@ final class MarketQueueTest extends TestCase
             ->expectsOutput('II_MARKET_QUEUE_CONFIGURATION_INVALID')->assertFailed();
         Queue::assertNothingPushed();
     }
+    public function test_interrupted_receipts_are_reconciled_without_releasing_quota(): void
+    {
+        $owner = $this->configure();
+        $ledger = app(MarketAcquisitionLedger::class);
+        $ledger->reserve(['daily_request_limit' => 10]);
+        foreach ([3, 1] as $hours) {
+            DB::table('ii_market_acquisition_receipts')->insert([
+                'id' => (string) \Illuminate\Support\Str::uuid(), 'user_id' => $owner->id,
+                'ticker' => 'AAPL', 'provider' => 'twelve_data', 'status' => 'RUNNING',
+                'started_at' => now('UTC')->subHours($hours),
+            ]);
+        }
+        $this->assertSame(1, $ledger->reconcileInterrupted());
+        $this->assertSame(0, $ledger->reconcileInterrupted());
+        $this->assertDatabaseHas('ii_market_acquisition_receipts', ['status' => 'INTERRUPTED_OUTCOME_UNKNOWN']);
+        $this->assertDatabaseHas('ii_market_acquisition_receipts', ['status' => 'RUNNING']);
+        $this->assertSame(1, (int) DB::table('ii_market_request_days')->value('attempts'));
+    }
 }
