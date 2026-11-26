@@ -1,0 +1,96 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Models\User;
+use App\Services\HistoricalMarketSnapshotSource;
+use App\Services\IdxHistoricalSnapshotSource;
+use App\Services\MarketFeedSettings;
+use App\Services\SignalInsightService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
+use Tests\TestCase;
+
+final class HistoricalSignalBootstrapTest extends TestCase
+{
+    use RefreshDatabase;
+
+    private function owner(): User
+    {
+        Storage::fake('local');
+        config(['market_feed.owner_id' => null, 'market_feed.enabled' => false]);
+        $owner = User::factory()->create();
+        $owner->forceFill(['ii_research_role' => 'analyst'])->save();
+        app(MarketFeedSettings::class)->initializeOwner($owner->id);
+        return $owner;
+    }
+
+    private function csv(bool $changed = false): string
+    {
+        $lines = ['date,open_price,high,low,close,volume,listed_shares'];
+        $start = new \DateTimeImmutable('2024-01-01');
+        for ($i = 0; $i < 250; $i++) {
+            $lines[] = implode(',', [$start->modify('+'.$i.' days')->format('Y-m-d'), 100, 102, 98, 101, 1000,
+                $changed && $i === 249 ? 2000 : 1000]);
+        }
+        return implode("\n", $lines)."\n";
+    }
+
+    public function test_source_checksum_and_rights_gate_precede_any_import(): void
+    {
+        $owner = $this->owner();
+        Http::fake([IdxHistoricalSnapshotSource::RAW_URL => Http::response($this->csv())]);
+        $this->artisan('ii:bootstrap-idx-history', ['--user' => $owner->id, '--import' => true])
+            ->expectsOutput('II_HISTORICAL_RIGHTS_CONFIRMATION_REQUIRED')->assertFailed();
+        Http::assertNothingSent();
+        $this->artisan('ii:bootstrap-idx-history', ['--user' => $owner->id, '--rights-confirmed' => true, '--import' => true])
+            ->expectsOutput('II_IDX_SNAPSHOT_BLOB_MISMATCH')->assertFailed();
+        Http::assertSentCount(1);
+        $this->assertNull(app(SignalInsightService::class)->latestDocument($owner->id, 'BBCA'));
+    }
+
+    public function test_normalizer_rejects_share_basis_changes(): void
+    {
+        $this->expectExceptionMessage('II_IDX_SNAPSHOT_SHARE_BASIS_CHANGED');
+        IdxHistoricalSnapshotSource::normalize($this->csv(true));
+    }
+
+    public function test_historical_preview_import_idempotence_and_signal_rendering(): void
+    {
+        $owner = $this->owner();
+        $other = User::factory()->create();
+        $other->forceFill(['ii_research_role' => 'analyst'])->save();
+        $raw = $this->csv();
+        $snapshot = IdxHistoricalSnapshotSource::normalize($raw) + [
+            'ticker' => 'BBCA', 'source_name' => 'Synthetic integration fixture',
+            'source_url' => 'https://example.test/historical',
+            'source_commit' => 'fixture', 'source_blob' => IdxHistoricalSnapshotSource::BLOB,
+            'source_sha256' => hash('sha256', $raw), 'provider_identity' => 'BBCA@XIDX',
+        ];
+        $this->app->instance(HistoricalMarketSnapshotSource::class, new class($snapshot) implements HistoricalMarketSnapshotSource {
+            public function __construct(private array $data) {}
+            public function snapshot(): array { return $this->data; }
+        });
+        $args = ['--user' => $owner->id, '--rights-confirmed' => true];
+        $this->artisan('ii:bootstrap-idx-history', array_replace($args, ['--user' => $other->id]))
+            ->expectsOutput('II_HISTORICAL_OWNER_REQUIRED')->assertFailed();
+        $this->artisan('ii:bootstrap-idx-history', $args)->expectsOutput('II_HISTORICAL_BOOTSTRAP=PREVIEW')->assertSuccessful();
+        $signals = app(SignalInsightService::class);
+        $this->assertNull($signals->latestDocument($owner->id, 'BBCA'));
+        $args['--import'] = true;
+        $this->artisan('ii:bootstrap-idx-history', $args)->expectsOutput('II_HISTORICAL_BOOTSTRAP=IMPORTED')->assertSuccessful();
+        $this->artisan('ii:bootstrap-idx-history', $args)->expectsOutput('II_HISTORICAL_BOOTSTRAP=UNCHANGED')->assertSuccessful();
+        $doc = $signals->latestDocument($owner->id, 'BBCA');
+        $this->assertCount(250, $doc['rows']);
+        $this->assertSame('REGISTERED', $doc['lineage_source_status']);
+        $this->assertSame('STALE', $signals->insight($doc)['state']);
+        $this->assertSame('HOLD', $doc['decision']);
+        $this->assertFalse($doc['trading_authorized']);
+        $this->assertNull($signals->latestDocument($other->id, 'BBCA'));
+        $this->assertCount(1, Storage::disk('local')->files('ii_signal_center/u'.$owner->id));
+        $this->actingAs($owner)->get('/ii/signals')->assertOk()->assertSee('BBCA')->assertSee('STALE');
+        $this->assertFalse(app(MarketFeedSettings::class)->current()['enabled']);
+        $this->assertFalse(app(MarketFeedSettings::class)->current()['discovery_enabled']);
+    }
+}
