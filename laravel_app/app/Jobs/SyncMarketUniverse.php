@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Services\LicensedMarketFeedService;
 use App\Services\MarketAcquisitionLedger;
 use App\Services\MarketUniverseRegistry;
+use App\Services\MarketFeedSettings;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -18,11 +19,16 @@ final class SyncMarketUniverse implements ShouldQueue, ShouldBeUnique
     public int $timeout = 120;
     public int $uniqueFor = 3600;
 
-    public function __construct(public readonly int $ownerId, public readonly string $ticker) {}
+    public ?string $authorizationGeneration = null;
+
+    public function __construct(public readonly int $ownerId, public readonly string $ticker, ?string $authorizationGeneration = null)
+    {
+        $this->authorizationGeneration = $authorizationGeneration;
+    }
 
     public function uniqueId(): string
     {
-        return $this->ownerId.'|'.$this->ticker;
+        return $this->ownerId.'|'.$this->ticker.'|'.($this->authorizationGeneration ?? 'legacy');
     }
 
     public function backoff(): array
@@ -32,17 +38,20 @@ final class SyncMarketUniverse implements ShouldQueue, ShouldBeUnique
 
     public function handle(MarketUniverseRegistry $registry, LicensedMarketFeedService $feed, MarketAcquisitionLedger $ledger): void
     {
-        $base = config('market_feed');
-        if (($base['enabled'] ?? false) !== true || (int) ($base['owner_id'] ?? 0) !== $this->ownerId) {
-            return;
-        }
         try {
-            $entries = $registry->entries($base);
-            foreach ($entries as $entry) {
-                if (strtoupper(trim((string) ($entry['ticker'] ?? ''))) !== $this->ticker) {
-                    continue;
+            Cache::lock('ii-market-universe-run', 3600)->block(1, function () use ($registry, $feed, $ledger): void {
+                $settings = app(MarketFeedSettings::class);
+                $base = $settings->current();
+                if (($base['enabled'] ?? false) !== true || (int) ($base['owner_id'] ?? 0) !== $this->ownerId) {
+                    return;
                 }
-                Cache::lock('ii-market-universe-run', 3600)->block(1, function () use ($entry, $feed, $ledger): void {
+                if (!$settings->runtimeAuthorized($base) || ($base['authorization_generation'] ?? null) !== $this->authorizationGeneration) {
+                    return;
+                }
+                foreach ($registry->entries($base) as $entry) {
+                    if (strtoupper(trim((string) ($entry['ticker'] ?? ''))) !== $this->ticker) {
+                        continue;
+                    }
                     $ledger->run($entry, function () use ($entry, $feed): string {
                         $provider = $entry['provider'] ?? 'local';
                         $pause = 'ii-market-provider-pause-'.$provider;
@@ -58,9 +67,9 @@ final class SyncMarketUniverse implements ShouldQueue, ShouldBeUnique
                             throw $exception;
                         }
                     });
-                });
-                return;
-            }
+                    return;
+                }
+            });
         } catch (\InvalidArgumentException $exception) {
             // Permanent validation/rights/quota failures are recorded, not retried.
             $this->fail(new \RuntimeException('II_MARKET_JOB_REJECTED'));

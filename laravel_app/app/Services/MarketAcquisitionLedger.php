@@ -7,6 +7,18 @@ use Illuminate\Support\Str;
 
 final class MarketAcquisitionLedger
 {
+    public function remaining(array $cfg): int
+    {
+        $limit = filter_var($cfg['daily_request_limit'] ?? 10, FILTER_VALIDATE_INT,
+            ['options' => ['min_range' => 1, 'max_range' => 10000]]);
+        if (!$limit) {
+            throw new \InvalidArgumentException('II_PROVIDER_DAILY_LIMIT_INVALID');
+        }
+        $used = (int) DB::table('ii_market_request_days')->where('provider', 'twelve_data')
+            ->where('utc_day', now('UTC')->toDateString())->value('attempts');
+        return max(0, $limit - $used);
+    }
+
     public function reserve(array $cfg): void
     {
         $limit = filter_var($cfg['daily_request_limit'] ?? 10, FILTER_VALIDATE_INT,

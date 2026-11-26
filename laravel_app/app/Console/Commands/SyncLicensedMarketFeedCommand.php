@@ -18,10 +18,16 @@ final class SyncLicensedMarketFeedCommand extends Command
     public function handle(LicensedMarketFeedService $feed, MarketUniverseRegistry $registry, MarketAcquisitionLedger $ledger): int
     {
         try {
-            $base = config('market_feed');
+            return Cache::lock('ii-market-universe-run', 3600)->block(1, function () use ($feed, $registry, $ledger): int {
+            $settings = app(\App\Services\MarketFeedSettings::class);
+            $base = $settings->current();
             if (($base['enabled'] ?? false) !== true) {
                 $this->info('II_MARKET_FEED=DISABLED');
                 return self::SUCCESS;
+            }
+            if (!$settings->runtimeAuthorized($base)) {
+                $this->error('II_FEED_AUTHORIZATION_REVOKED');
+                return self::FAILURE;
             }
             $entries = $registry->entries($base);
             $selected = strtoupper(trim((string) $this->option('ticker')));
@@ -31,6 +37,23 @@ final class SyncLicensedMarketFeedCommand extends Command
                 if ($entries === []) {
                     throw new \InvalidArgumentException('II_UNIVERSE_TICKER_NOT_FOUND');
                 }
+            }
+            if (($base['provider'] ?? 'local') === 'twelve_data' && $this->option('queue')) {
+                $remaining = $ledger->remaining($base);
+                $credits = app(\App\Services\MarketProviderCreditGuard::class)->remaining((int) $base['owner_id']);
+                $cap = min($remaining, $credits ?? PHP_INT_MAX);
+                if ($cap === 0) {
+                    $this->info('II_MARKET_FEED=DEFERRED_BUDGET');
+                    return self::SUCCESS;
+                }
+                // Least recently attempted first within the explicitly authorized universe.
+                $attempts = \Illuminate\Support\Facades\DB::table('ii_market_acquisition_receipts')
+                    ->where('user_id', (int) $base['owner_id'])->where('provider', 'twelve_data')
+                    ->select('ticker')->selectRaw('MAX(started_at) as last_attempt')->groupBy('ticker')
+                    ->pluck('last_attempt', 'ticker');
+                usort($entries, fn (array $a, array $b): int =>
+                    [($attempts[$a['ticker']] ?? ''), $a['ticker']] <=> [($attempts[$b['ticker']] ?? ''), $b['ticker']]);
+                $entries = array_slice($entries, 0, $cap);
             }
             if ($this->option('queue')) {
                 if (config('queue.default') !== 'database' || (int) config('queue.connections.database.retry_after') <= 120) {
@@ -42,7 +65,7 @@ final class SyncLicensedMarketFeedCommand extends Command
                     if ($owner < 1 || !preg_match('/^[A-Z0-9.\-]{1,16}$/D', $ticker)) {
                         throw new \InvalidArgumentException('II_FEED_CONFIGURATION_INVALID');
                     }
-                    SyncMarketUniverse::dispatch($owner, $ticker)->onConnection('database');
+                    SyncMarketUniverse::dispatch($owner, $ticker, $base['authorization_generation'] ?? null)->onConnection('database');
                     $this->info($ticker.'|II_MARKET_FEED=DISPATCH_REQUESTED');
                 }
                 return self::SUCCESS;
@@ -50,14 +73,17 @@ final class SyncLicensedMarketFeedCommand extends Command
             // Preserve the single-instrument command's existing output contract.
             $multi = !empty($base['universe_json']);
             if (!$multi) {
-                $this->info('II_MARKET_FEED='.Cache::lock('ii-market-universe-run', 3600)->block(1, fn () => $ledger->run($entries[0], fn () => $feed->sync($entries[0]))));
+                $this->info('II_MARKET_FEED='.$ledger->run($entries[0], fn () => $feed->sync($entries[0])));
                 return self::SUCCESS;
             }
             // A shared batch lock prevents overlapping universe runs, including
             // operator-selected runs. This is a per-run cap, not a daily quota.
-            return Cache::lock('ii-market-universe-run', 3600)->block(1, function () use ($entries, $feed, $ledger): int {
                 $failed = false;
                 foreach ($entries as $entry) {
+                    if (!$settings->runtimeAuthorized($base)) {
+                        $this->error('II_FEED_AUTHORIZATION_REVOKED');
+                        return self::FAILURE;
+                    }
                     $ticker = $entry['ticker'];
                     try {
                         $this->info($ticker.'|II_MARKET_FEED='.$ledger->run($entry, fn () => $feed->sync($entry)));

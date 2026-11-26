@@ -67,15 +67,11 @@ final class LicensedMarketFeedService
             $checkpoint = null;
             $requestWindow = null;
             if ($provider === 'twelve_data') {
-                $target = filter_var($cfg['history_sessions'] ?? 250, FILTER_VALIDATE_INT,
-                    ['options' => ['min_range' => 60, 'max_range' => 2000]]);
-                if (!$target) {
-                    throw new \InvalidArgumentException('II_PROVIDER_HISTORY_LIMIT_INVALID');
+                $plan = app(MarketHistoryPlanner::class)->plan($cfg, $previous);
+                if (str_starts_with($plan['action'], 'BLOCK_')) {
+                    throw new \InvalidArgumentException('II_FEED_'.$plan['action']);
                 }
-                if ($previous !== null && count($previous['rows']) >= $target
-                    && ($cfg['incremental_enabled'] ?? true) === true) {
-                    $checkpoint = $previous['rows'][array_key_last($previous['rows'])]['date'];
-                }
+                $checkpoint = $plan['checkpoint'];
                 $result = app(TwelveDataDailyAdapter::class)->fetch($cfg, $metadata, $checkpoint);
                 $raw = $result['csv'];
                 $responseHash = $result['response_sha256'];

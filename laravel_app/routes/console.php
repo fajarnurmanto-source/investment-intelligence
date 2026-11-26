@@ -17,14 +17,19 @@ Schedule::command('ii:ingest-fred')
 // Provider BYOK acquisition is user-initiated, on-device, and never scheduled.
 
 // Only an independently licensed private local feed; never the restricted BYOK endpoint.
-if (config('market_feed.enabled') === true) {
-    $marketFeed = Schedule::command('ii:sync-market-feed --queue')->withoutOverlapping();
-    if (config('market_feed.provider') === 'twelve_data') {
-        $marketFeed->dailyAt('12:00')->timezone('UTC');
-    } else {
-        $marketFeed->everyFifteenMinutes();
-    }
-}
+// Evaluate persistent configuration when scheduling, not when a long-lived worker starts.
+// The command and queued job recheck authorization independently under the shared lock.
+Schedule::command('ii:sync-market-feed --queue')->everyFifteenMinutes()->withoutOverlapping()
+    ->when(function (): bool {
+        $cfg = app(\App\Services\MarketFeedSettings::class)->current();
+        return ($cfg['enabled'] ?? false) === true && ($cfg['provider'] ?? 'local') === 'local';
+    });
+
+Schedule::command('ii:sync-market-feed --queue')->dailyAt('12:00')->timezone('UTC')->withoutOverlapping()
+    ->when(function (): bool {
+        $cfg = app(\App\Services\MarketFeedSettings::class)->current();
+        return ($cfg['enabled'] ?? false) === true && ($cfg['provider'] ?? 'local') === 'twelve_data';
+    });
 
 Artisan::command('ii:reconcile-market-runs', function () {
     $count = app(\App\Services\MarketAcquisitionLedger::class)->reconcileInterrupted();
@@ -32,3 +37,9 @@ Artisan::command('ii:reconcile-market-runs', function () {
 })->purpose('Mark abandoned market acquisition receipts as outcome unknown');
 
 Schedule::command('ii:reconcile-market-runs')->hourly()->withoutOverlapping();
+
+Schedule::command('ii:discover-market-universe')->dailyAt('10:00')->timezone('UTC')->withoutOverlapping()
+    ->when(function (): bool {
+        $cfg = app(\App\Services\MarketFeedSettings::class)->current();
+        return ($cfg['discovery_enabled'] ?? false) === true && ($cfg['provider'] ?? null) === 'twelve_data';
+    });
