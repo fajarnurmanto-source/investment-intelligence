@@ -34,7 +34,10 @@ final class MarketDataWorkspaceController extends Controller
         $control = null;
         if ($manage) {
             $control = [
-                'configured' => DB::table('ii_market_feed_settings')->where('id', 1)->where('user_id', $owner)->exists(),
+                'configured' => DB::table('ii_market_feed_settings')->where('id', 1)->where('user_id', $owner)->exists()
+                    && trim((string) ($cfg['rights_reference'] ?? '')) !== ''
+                    && ($cfg['storage_permitted'] ?? false) === true && ($cfg['automation_permitted'] ?? false) === true
+                    && !empty($cfg['mics']),
                 'connected' => $vault->connected($owner, 'twelve_data'),
                 'mics' => implode(', ', $cfg['mics'] ?? []),
                 'daily_limit' => $cfg['daily_request_limit'] ?? 10,
