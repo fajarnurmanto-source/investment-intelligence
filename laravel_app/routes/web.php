@@ -9,6 +9,7 @@ use App\Http\Controllers\ProductDashboardController;
 use App\Http\Controllers\ResearchCaseController;
 use App\Http\Controllers\ResearchLoginController;
 use App\Http\Controllers\LocalByokController;
+use App\Http\Controllers\MarketDataWorkspaceController;
 use App\Http\Controllers\ResearchWorkspaceController;
 use App\Http\Controllers\RiskBudgetController;
 use App\Http\Controllers\RollingValidationController;
@@ -44,6 +45,7 @@ Route::prefix('ii')->name('ii.')->group(function (): void {
         Route::post('/data-sources/quote', [LocalByokController::class, 'quote'])
             ->middleware('throttle:6,1')->name('byok.quote');
 
+        Route::get('/market-data', [MarketDataWorkspaceController::class, 'index'])->name('market-data.index');
         Route::get('/signals', [SignalCenterController::class, 'index'])->name('signals.index');
         Route::post('/signals/import', [SignalCenterController::class, 'import'])
             ->middleware('throttle:8,1')->name('signals.import');

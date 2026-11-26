@@ -1,0 +1,11 @@
+# DATA-02H — consolidated deployment gate
+
+Do not deploy candidate branches until both required CI workflows pass and the changes are merged to development. Confirm clean local working tree, correct origin and branch; do not reset or overwrite local modifications. Stop managed runtime before backup. Back up SQLite (including WAL state using a consistent backup), private storage, .env and APP_KEY securely outside the repository. Preserve OS user identity for DPAPI. Fast-forward only. Use existing Windows launcher and migration workflow, verify migration status, queue retry_after > 120, worker under same Windows identity and /up. Do not recreate accounts or regenerate APP_KEY.
+
+Keep II_MARKET_FEED_ENABLED=false for initial deployment. Verify authenticated /ii/market-data on desktop and mobile, owner isolation, existing FRED and research records, no provider requests while disabled. Verify worker and scheduler status. Remove obsolete plaintext II_MARKET_FEED_API_KEY and rebuild config cache. Select independently licensed provider and instrument only after verifying terms, persistent storage, automation, internal analysis, retention and exchange entitlement. Configure owner and mapping; use local hidden prompt php artisan ii:connect-market-feed for Twelve Data. Never send key to chat or GitHub.
+
+After explicit license confirmation, enable acquisition and execute one registered instrument first. Inspect receipt, actual dates/count, source identity, lineage, repeated sync, restart and disabled state. Validate real data against provider evidence. Do not treat synthetic CI as real data acceptance. Check Windows timeout and queue recovery under actual worker. No trading authority.
+
+Remaining limitations: read-only workspace; operator-managed universe, calendar-gap heuristic, no provider-specific minute credits, no automatic corporate-action reconciliation, queue-only cooldown. Record acceptance evidence locally without exporting licensed prices or credentials. If any gate fails disable acquisition and preserve data; do not roll back migrations destructively.
+
+This is a deployment/acceptance protocol, not evidence that local deployment occurred.
