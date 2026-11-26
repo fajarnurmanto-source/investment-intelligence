@@ -1,0 +1,10 @@
+# DATA-03A — acquisition-first historical bootstrap
+
+Baseline development 925f8ff5efaaa3fcc32a6ca67e9eef2efa3debbe. PR40 is a separate Twelve Data correction, not a prerequisite.
+Seven benchmarks: fzn0x/idx (provider contract and provenance); saham-mcp (historical file ingestion); Bursarium (structured sync, no bypass); OpenStock (display vs research); MarketStream (independent per-symbol path); AllTick/free-quote and iTick (direct REST contracts). Keep Laravel-only.
+Actual source: https://github.com/wildangunawan/Dataset-Saham-IDX/blob/bc0ac7712ce5e46f1067349e13ab9f338883c6c4/Saham/LQ45/BBCA.csv. Git blob 1606574aab3985cc2f1d2cf953ba426909001a6a. Inspection via GitHub on 2026-11-27: 1355 rows; last 250 from 2024-01-31 to 2025-02-21, 250 unique dates, zero invalid OHLCV in selected sample, constant listed shares 122042299500; close 9000, SMA20 9201.25, SMA50 9597.50, RSI14 41.67, ATR14/price 2.56%. Historical only. Basis unknown; constant listed shares is not proof of adjustment status.
+Dataset maintainer declares CC BY-NC 4.0; underlying data belongs to IDX. https://www.idx.id/id/syarat-penggunaan prohibits crawling/scraping IDX and restricts commercial use. No direct IDX scrape, no bulk redistribution, no automatic rights expansion. Explicit operator confirmation is required for download and storage. No data bytes committed to II.
+Run only after accepted deployment, with both automation flags off:
+php artisan ii:bootstrap-idx-history --user=7 --rights-confirmed
+php artisan ii:bootstrap-idx-history --user=7 --rights-confirmed --import
+The first previews and calculates; second persists private immutable SignalInsightService document, registers lineage, verifies readback. No provider credentials, no catalog, no scheduler; refuses existing conflicting BBCA series. Expected STALE/HOLD/no trading authority. Production acceptance requires real command results and browser inspection. Next: direct provider diagnostics and acquisition, then generalized capability routing, not a wholesale runtime rewrite.
