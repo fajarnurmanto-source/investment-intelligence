@@ -47,8 +47,17 @@ final class MarketFeedSettings
         if (!$user || !in_array($user->ii_research_role, ['analyst', 'admin'], true)) {
             return false;
         }
-        return $assigned === $owner || ($assigned === 0 && !($current['enabled'] ?? false)
-            && $user->ii_research_role === 'admin');
+        if ($assigned === $owner) {
+            return true;
+        }
+        if ($assigned !== 0 || ($current['enabled'] ?? false) || ($current['discovery_enabled'] ?? false)) {
+            return false;
+        }
+        if ($user->ii_research_role === 'admin') {
+            return true;
+        }
+        // Local single-account installation: no competing account or role elevation.
+        return \App\Models\User::query()->count() === 1;
     }
 
     public function savePolicy(int $owner, array $input): void

@@ -263,6 +263,34 @@ final class MarketControlCenterTest extends TestCase
         $this->assertFalse($settings->current()['enabled']);
     }
 
+    public function test_single_local_analyst_can_initialize_without_role_elevation(): void
+    {
+        config(['market_feed.owner_id' => 0, 'market_feed.enabled' => false]);
+        $owner = User::factory()->create();
+        $owner->forceFill(['ii_research_role' => 'analyst'])->save();
+        $this->actingAs($owner)->get('/ii/market-data')->assertOk()
+            ->assertSee('Autonomous Data Control Center');
+        $this->post('/ii/market-data/policy', $this->policy())
+            ->assertSessionHas('market_status', 'POLICY_SAVED_DISABLED');
+        $this->assertSame('analyst', $owner->fresh()->ii_research_role);
+        $this->assertSame($owner->id, app(MarketFeedSettings::class)->current()['owner_id']);
+        $this->assertFalse(app(MarketFeedSettings::class)->current()['enabled']);
+    }
+
+    public function test_multiple_accounts_require_admin_for_initial_claim(): void
+    {
+        config(['market_feed.owner_id' => 0, 'market_feed.enabled' => false]);
+        $analyst = User::factory()->create();
+        $analyst->forceFill(['ii_research_role' => 'analyst'])->save();
+        $admin = $this->admin();
+        $this->actingAs($analyst)->post('/ii/market-data/policy', $this->policy())->assertForbidden();
+        $this->assertDatabaseCount('ii_market_feed_settings', 0);
+        $this->actingAs($admin)->post('/ii/market-data/policy', $this->policy())
+            ->assertSessionHas('market_status', 'POLICY_SAVED_DISABLED');
+        $this->actingAs($analyst)->post('/ii/market-data/policy', $this->policy())->assertForbidden();
+        $this->assertSame($admin->id, app(MarketFeedSettings::class)->current()['owner_id']);
+    }
+
     public function test_local_quota_is_rendered_without_claiming_provider_entitlement(): void
     {
         config(['market_feed.owner_id' => 0, 'market_feed.enabled' => false]);
