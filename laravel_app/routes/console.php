@@ -25,3 +25,10 @@ if (config('market_feed.enabled') === true) {
         $marketFeed->everyFifteenMinutes();
     }
 }
+
+Artisan::command('ii:reconcile-market-runs', function () {
+    $count = app(\App\Services\MarketAcquisitionLedger::class)->reconcileInterrupted();
+    $this->info('II_MARKET_INTERRUPTED_RECONCILED='.$count);
+})->purpose('Mark abandoned market acquisition receipts as outcome unknown');
+
+Schedule::command('ii:reconcile-market-runs')->hourly()->withoutOverlapping();
