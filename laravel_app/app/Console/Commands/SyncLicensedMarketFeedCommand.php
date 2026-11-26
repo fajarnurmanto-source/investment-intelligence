@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Jobs\SyncMarketUniverse;
 use App\Services\LicensedMarketFeedService;
 use App\Services\MarketUniverseRegistry;
 use App\Services\MarketAcquisitionLedger;
@@ -10,7 +11,7 @@ use Illuminate\Console\Command;
 
 final class SyncLicensedMarketFeedCommand extends Command
 {
-    protected $signature = 'ii:sync-market-feed {--ticker= : Select one registered instrument}';
+    protected $signature = 'ii:sync-market-feed {--ticker= : Select one registered instrument} {--queue : Dispatch registered instruments to the local database queue}';
 
     protected $description = 'Synchronize an explicitly permitted private OHLCV rolling snapshot';
 
@@ -31,10 +32,25 @@ final class SyncLicensedMarketFeedCommand extends Command
                     throw new \InvalidArgumentException('II_UNIVERSE_TICKER_NOT_FOUND');
                 }
             }
+            if ($this->option('queue')) {
+                if (config('queue.default') !== 'database' || (int) config('queue.connections.database.retry_after') <= 120) {
+                    throw new \InvalidArgumentException('II_MARKET_QUEUE_CONFIGURATION_INVALID');
+                }
+                foreach ($entries as $entry) {
+                    $owner = (int) ($entry['owner_id'] ?? 0);
+                    $ticker = strtoupper(trim((string) ($entry['ticker'] ?? '')));
+                    if ($owner < 1 || !preg_match('/^[A-Z0-9.\-]{1,16}$/D', $ticker)) {
+                        throw new \InvalidArgumentException('II_FEED_CONFIGURATION_INVALID');
+                    }
+                    SyncMarketUniverse::dispatch($owner, $ticker)->onConnection('database');
+                    $this->info($ticker.'|II_MARKET_FEED=DISPATCH_REQUESTED');
+                }
+                return self::SUCCESS;
+            }
             // Preserve the single-instrument command's existing output contract.
             $multi = !empty($base['universe_json']);
             if (!$multi) {
-                $this->info('II_MARKET_FEED='.$ledger->run($entries[0], fn () => $feed->sync($entries[0])));
+                $this->info('II_MARKET_FEED='.Cache::lock('ii-market-universe-run', 3600)->block(1, fn () => $ledger->run($entries[0], fn () => $feed->sync($entries[0]))));
                 return self::SUCCESS;
             }
             // A shared batch lock prevents overlapping universe runs, including

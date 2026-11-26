@@ -51,9 +51,18 @@ final class MarketAcquisitionLedger
         return $status;
     }
 
+    /** Interrupted attempts remain uncertain: never infer that no data was written. */
+    public function reconcileInterrupted(): int
+    {
+        return DB::table('ii_market_acquisition_receipts')
+            ->where('status', 'RUNNING')->whereNull('completed_at')
+            ->where('started_at', '<', now('UTC')->subHours(2))
+            ->update(['status' => 'INTERRUPTED_OUTCOME_UNKNOWN', 'completed_at' => now('UTC')]);
+    }
+
     private function finish(string $id, string $status): void
     {
-        DB::table('ii_market_acquisition_receipts')->where('id', $id)
+        DB::table('ii_market_acquisition_receipts')->where('id', $id)->where('status', 'RUNNING')
             ->update(['status' => $status, 'completed_at' => now('UTC')]);
     }
 }
