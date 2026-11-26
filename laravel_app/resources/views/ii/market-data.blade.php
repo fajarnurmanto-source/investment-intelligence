@@ -25,6 +25,10 @@
 <dt>Akuisisi harga</dt><dd>{{ $control['enabled'] ? 'AKTIF' : 'NONAKTIF' }}</dd>
 <dt>Katalog instrumen</dt><dd>{{ $control['catalog_count'] }} kandidat, bukan bukti entitlement</dd>
 <dt>Batas harian lokal</dt><dd>{{ $control['daily_limit'] }} permintaan (UTC)</dd>
+<dt>Permintaan provider tercatat hari ini</dt><dd>{{ $control['daily_used'] }}</dd>
+<dt>Sisa anggaran permintaan lokal</dt><dd>{{ max(0, $control['daily_limit'] - $control['daily_used']) }}</dd>
+<dt>Kredit provider terobservasi</dt><dd>{{ $control['provider_credits'] === null ? 'BELUM TEROBSERVASI / KEDALUWARSA' : $control['provider_credits'] }}</dd>
+<dt>Pengukuran</dt><dd>Ledger mencatat percobaan permintaan lokal; kredit provider dapat berbeda. Observasi kredit bukan verifikasi paket langganan.</dd>
 </dl>
 </section>
 <section class="panel" aria-labelledby="market-policy">
