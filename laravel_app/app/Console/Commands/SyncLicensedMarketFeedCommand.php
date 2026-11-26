@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Services\LicensedMarketFeedService;
 use App\Services\MarketUniverseRegistry;
+use App\Services\MarketAcquisitionLedger;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Console\Command;
 
@@ -13,7 +14,7 @@ final class SyncLicensedMarketFeedCommand extends Command
 
     protected $description = 'Synchronize an explicitly permitted private OHLCV rolling snapshot';
 
-    public function handle(LicensedMarketFeedService $feed, MarketUniverseRegistry $registry): int
+    public function handle(LicensedMarketFeedService $feed, MarketUniverseRegistry $registry, MarketAcquisitionLedger $ledger): int
     {
         try {
             $base = config('market_feed');
@@ -33,22 +34,22 @@ final class SyncLicensedMarketFeedCommand extends Command
             // Preserve the single-instrument command's existing output contract.
             $multi = !empty($base['universe_json']);
             if (!$multi) {
-                $this->info('II_MARKET_FEED='.$feed->sync($entries[0]));
+                $this->info('II_MARKET_FEED='.$ledger->run($entries[0], fn () => $feed->sync($entries[0])));
                 return self::SUCCESS;
             }
             // A shared batch lock prevents overlapping universe runs, including
             // operator-selected runs. This is a per-run cap, not a daily quota.
-            return Cache::lock('ii-market-universe-run', 3600)->block(1, function () use ($entries, $feed): int {
+            return Cache::lock('ii-market-universe-run', 3600)->block(1, function () use ($entries, $feed, $ledger): int {
                 $failed = false;
                 foreach ($entries as $entry) {
                     $ticker = $entry['ticker'];
                     try {
-                        $this->info($ticker.'|II_MARKET_FEED='.$feed->sync($entry));
+                        $this->info($ticker.'|II_MARKET_FEED='.$ledger->run($entry, fn () => $feed->sync($entry)));
                     } catch (\InvalidArgumentException $exception) {
                         $failed = true;
                         $code = $exception->getMessage();
                         $this->error($ticker.'|'.(preg_match('/^II_[A-Z0-9_]+$/D', $code) ? $code : 'II_FEED_VALIDATION_FAILED'));
-                        if (in_array($code, ['II_PROVIDER_RATE_LIMITED', 'II_PROVIDER_ENTITLEMENT_DENIED'], true)) {
+                        if (in_array($code, ['II_PROVIDER_RATE_LIMITED', 'II_PROVIDER_ENTITLEMENT_DENIED', 'II_PROVIDER_DAILY_BUDGET_EXHAUSTED', 'II_PROVIDER_CREDENTIAL_UNAVAILABLE'], true)) {
                             break;
                         }
                     } catch (\Throwable) {
