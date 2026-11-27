@@ -14,7 +14,7 @@ final class HistoricalSignalBootstrap
         if (!$rightsConfirmed) {
             throw new \InvalidArgumentException('II_HISTORICAL_RIGHTS_CONFIRMATION_REQUIRED');
         }
-        $blob = IdxHistoricalSnapshotSource::BLOBS[$ticker] ?? throw new \InvalidArgumentException('II_IDX_SNAPSHOT_TICKER_UNSUPPORTED');
+        $blob = app(IdxHistoricalCatalog::class)->resolve($ticker)['blob'];
         $settings = app(MarketFeedSettings::class);
         return Cache::lock('ii-market-universe-run', 3600)->block(1, function () use ($owner, $settings, $persist, $ticker, $blob): array {
             if ($owner < 1 || !$settings->canManage($owner) || (int) ($settings->current()['owner_id'] ?? 0) !== $owner) {

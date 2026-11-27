@@ -1,0 +1,3825 @@
+{
+  "commit": "bc0ac7712ce5e46f1067349e13ab9f338883c6c4",
+  "entries": {
+    "AADI": {
+      "blob": "56b4529ce916f48eab488b81e0c8f7e9d23b004f",
+      "bytes": 10941
+    },
+    "AALI": {
+      "blob": "a02c230a45aa0539985e7336ed3fc6c4f1624b6d",
+      "bytes": 260605
+    },
+    "ABBA": {
+      "blob": "9bf2205f0f95238dc4ba545f08a736b34f18edd2",
+      "bytes": 236621
+    },
+    "ABDA": {
+      "blob": "c19c8a6fed7c90f1271d1d93bce6a0fbaad7f320",
+      "bytes": 200843
+    },
+    "ABMM": {
+      "blob": "cb6af71216107bf26627fcaf4a69020fffff35ff",
+      "bytes": 240401
+    },
+    "ACES": {
+      "blob": "ef91460854c932be4c065162f2b3afa5af6ddbc0",
+      "bytes": 281785
+    },
+    "ACRO": {
+      "blob": "78d0f515e11214a7b19aa133839a6b2d73793387",
+      "bytes": 45572
+    },
+    "ACST": {
+      "blob": "d4abc75b57babf3290a4fad5ce9191147f1a3e9e",
+      "bytes": 242408
+    },
+    "ADCP": {
+      "blob": "8dcd29aa5690af27ad03f0aead024b0a3a0134d0",
+      "bytes": 122164
+    },
+    "ADES": {
+      "blob": "0b3f964543a308a6e16808087208c3a95b9bfa02",
+      "bytes": 232029
+    },
+    "ADHI": {
+      "blob": "78fd68d656fe44189a5fa60bf901b08d287840b6",
+      "bytes": 258089
+    },
+    "ADMF": {
+      "blob": "10aa8b7af276cabb27a85a1cdeb6a55a008c29c1",
+      "bytes": 243870
+    },
+    "ADMG": {
+      "blob": "183bf974ef842292cd7277d46b71971211deff17",
+      "bytes": 228550
+    },
+    "ADMR": {
+      "blob": "5567e452a0220d9d0713136b291efde95c0c8530",
+      "bytes": 155529
+    },
+    "ADRO": {
+      "blob": "f23c8d440c97f2eadea9bc82daaa14a36ca0dce7",
+      "bytes": 294843
+    },
+    "AEGS": {
+      "blob": "f5e2a5e0f3d83ab7b2827a60abd51dab885822e3",
+      "bytes": 54220
+    },
+    "AGAR": {
+      "blob": "6f17242fb6fbc631b46ee67a530120a08bcd592f",
+      "bytes": 200651
+    },
+    "AGII": {
+      "blob": "bc389d3a13f09205b4dcbcbdcb05e1239b224b5b",
+      "bytes": 245833
+    },
+    "AGRO": {
+      "blob": "8055b9be0483c9b2a5817954da4ec6b88af12d7e",
+      "bytes": 260853
+    },
+    "AGRS": {
+      "blob": "962069f3c5cc2e3b19473c0d8bbec15c9b68ceab",
+      "bytes": 235899
+    },
+    "AHAP": {
+      "blob": "ec0ffa471df4761bacd357c1b8c226b4cd60ebd1",
+      "bytes": 227877
+    },
+    "AIMS": {
+      "blob": "9b8ac03bc37d55af82c3d40c18e1ac9ba36adcb1",
+      "bytes": 212897
+    },
+    "AISA": {
+      "blob": "50409c60973ec53619bdad2da3392f203c5682af",
+      "bytes": 233039
+    },
+    "AKKU": {
+      "blob": "514bc007a25bfdd2443bc1cf6915cdf49719ab9d",
+      "bytes": 207483
+    },
+    "AKPI": {
+      "blob": "977e263a5d4741e9f855205c36dce35f0e36e84c",
+      "bytes": 215990
+    },
+    "AKRA": {
+      "blob": "cf8d023e3cd9db2fe5db41d53d9f929af0fcfa3a",
+      "bytes": 282825
+    },
+    "AKSI": {
+      "blob": "02e0e1483a1e777d8b4eb23bdc10f8c4b0b69cc9",
+      "bytes": 220420
+    },
+    "ALDO": {
+      "blob": "6343062c7c0161b5b99f5a438c8aa06ffa74e594",
+      "bytes": 229229
+    },
+    "ALII": {
+      "blob": "c50cc300b8a3f7c799ef9d901fa3764c1e105e84",
+      "bytes": 44868
+    },
+    "ALKA": {
+      "blob": "de7e26f71052de14e1b9e80e28099ce6be849593",
+      "bytes": 214383
+    },
+    "ALMI": {
+      "blob": "df4055f62a18c0e61afff469fc4463e5ae7392a8",
+      "bytes": 212670
+    },
+    "ALTO": {
+      "blob": "2e16188ce4d48c309ace3416d8dee5e238782352",
+      "bytes": 216197
+    },
+    "AMAG": {
+      "blob": "5804d4b665f78856fe5c7e7ba6a81568d2983ed1",
+      "bytes": 223074
+    },
+    "AMAN": {
+      "blob": "a197cfeb66745b61bcd8a18ab22e7449633bb218",
+      "bytes": 204107
+    },
+    "AMAR": {
+      "blob": "cda4607a6d7e727078cfdcf7d318d06b355bca09",
+      "bytes": 221001
+    },
+    "AMFG": {
+      "blob": "9cededbdf4629f37abc14038a8e6e154cf814182",
+      "bytes": 228237
+    },
+    "AMIN": {
+      "blob": "be2d2177ba40a96f71896f001e350045a4ce4f3f",
+      "bytes": 219882
+    },
+    "AMMN": {
+      "blob": "2384779c88bacae6ddc605add87175ccff395695",
+      "bytes": 82719
+    },
+    "AMMS": {
+      "blob": "738f78722b979576a522a129f5f5a7cf70b70e96",
+      "bytes": 95471
+    },
+    "AMOR": {
+      "blob": "a4d975cb6d6bd3f290b99651b44bbc1f9508be29",
+      "bytes": 213112
+    },
+    "AMRT": {
+      "blob": "c792bf0c1822508097d4c454edb87a80accbf72e",
+      "bytes": 277199
+    },
+    "ANDI": {
+      "blob": "f551635271dc9393ca5b8287ddeda65b674a5c74",
+      "bytes": 216806
+    },
+    "ANJT": {
+      "blob": "b6cbfb885934431860658613d4d985a60d13a333",
+      "bytes": 228769
+    },
+    "ANTM": {
+      "blob": "fddbc94fc2cb892881fa958560e6788621033111",
+      "bytes": 292773
+    },
+    "APEX": {
+      "blob": "3948a427b4ab6512dee72c59fa09bd37cc87bbef",
+      "bytes": 226592
+    },
+    "APIC": {
+      "blob": "0ab8071b5e698a28deb1ae674d8ee790084deb6a",
+      "bytes": 269929
+    },
+    "APII": {
+      "blob": "0ad50bdc2e0655ad5e2327724275df4e4e0aca21",
+      "bytes": 220093
+    },
+    "APLI": {
+      "blob": "6c2304f879a91afa6ce908cda1e8606dba85cda1",
+      "bytes": 218407
+    },
+    "APLN": {
+      "blob": "9cb8158c08f8719a021cb2a4854c691f76b43ead",
+      "bytes": 250811
+    },
+    "ARCI": {
+      "blob": "eafc4a7cc3cc4a852527f888c5fdb017d6e798fc",
+      "bytes": 163136
+    },
+    "AREA": {
+      "blob": "cfad1d6aa5e9203647aa9bea74bcaf0b9c0f3438",
+      "bytes": 38766
+    },
+    "ARGO": {
+      "blob": "e8d4f1be7c926b79332c05f03ec0dae412354f0a",
+      "bytes": 209880
+    },
+    "ARII": {
+      "blob": "2e89bce000685de6bcdf045639792203d7dff458",
+      "bytes": 225393
+    },
+    "ARKA": {
+      "blob": "1e2bdfdf6705371ff44579c763697accec575859",
+      "bytes": 218823
+    },
+    "ARKO": {
+      "blob": "fb9db3da8d99ee2cf438670606d9098e17a4a7f7",
+      "bytes": 115028
+    },
+    "ARMY": {
+      "blob": "7a6ecb8f92ec01ce9b70df279c44230e96423ad9",
+      "bytes": 187056
+    },
+    "ARNA": {
+      "blob": "3b40b9c59a0b25e74bdd9bfefd1fecce25e33f89",
+      "bytes": 250083
+    },
+    "ARTA": {
+      "blob": "99bbd125d5be60aa34225c0e3dbe015bfbe61c03",
+      "bytes": 215840
+    },
+    "ARTI": {
+      "blob": "8e1594e1e1ec47678c92be0140c070102dab97ee",
+      "bytes": 196133
+    },
+    "ARTO": {
+      "blob": "f0ff4b2f5fa472ad9753ca42b4ac30e48aa4a25a",
+      "bytes": 273484
+    },
+    "ASBI": {
+      "blob": "77f1b544cb244e5ef9b9ebd61e5c2dbe873af915",
+      "bytes": 211748
+    },
+    "ASDM": {
+      "blob": "4f6fa037ef200ee0627ac92a6f54d6ff8cdff3a6",
+      "bytes": 213401
+    },
+    "ASGR": {
+      "blob": "4e412148fddb7642d6956500c48941bda88506b3",
+      "bytes": 235085
+    },
+    "ASHA": {
+      "blob": "5def76d4e5a00824e779b79fc756ac2fed60ab7d",
+      "bytes": 114563
+    },
+    "ASII": {
+      "blob": "0468bafe9056112b41451653bab5ba3975aaedaa",
+      "bytes": 301554
+    },
+    "ASJT": {
+      "blob": "12644ef24f6352542e4f064aa410f0794e3a4ca1",
+      "bytes": 221267
+    },
+    "ASLC": {
+      "blob": "52d3f386933fea16c05b5dd0c62b901c9e506106",
+      "bytes": 136080
+    },
+    "ASLI": {
+      "blob": "da9e135bf040ef5b742492b94f412cb019b98ddf",
+      "bytes": 44238
+    },
+    "ASMI": {
+      "blob": "3e4f8e9de20bd4a56d4e06b3c88f11076856772c",
+      "bytes": 228434
+    },
+    "ASPI": {
+      "blob": "fd3f08c7fe1bdc5f1753f4d6ae6b818c22f3988a",
+      "bytes": 203296
+    },
+    "ASRI": {
+      "blob": "7e0e4352975cf2db32f84f9e4938c2e5afd21195",
+      "bytes": 257073
+    },
+    "ASRM": {
+      "blob": "1385d1223b9fe5d85a3ad599ca8932d09fde82b3",
+      "bytes": 214120
+    },
+    "ASSA": {
+      "blob": "42ff1aa9087d724881f9219ba0ee48b9b5f23345",
+      "bytes": 255386
+    },
+    "ATAP": {
+      "blob": "63ed6ae0f3051c11fca502b9238c8c53e5181c08",
+      "bytes": 165113
+    },
+    "ATIC": {
+      "blob": "4e4f8ea35b9f275571cc745730b3a80b197d5be3",
+      "bytes": 219496
+    },
+    "ATLA": {
+      "blob": "2ac746d622de9a2d4f6bc211ec74842a13809a0e",
+      "bytes": 36170
+    },
+    "AUTO": {
+      "blob": "57b347587f019bd3061009a5c0a4cf563fb5f60e",
+      "bytes": 254940
+    },
+    "AVIA": {
+      "blob": "4db06ae00b5937966f64c9a087c634036273c879",
+      "bytes": 154117
+    },
+    "AWAN": {
+      "blob": "0c497fe854b9072782c37bc0e5285c16cc8e9587",
+      "bytes": 78697
+    },
+    "AXIO": {
+      "blob": "27e35e5a06a5f938154ab8bd9396ab655ecca14b",
+      "bytes": 110754
+    },
+    "AYAM": {
+      "blob": "a863f090904fdabd20dd993a3033759ad52340c1",
+      "bytes": 54193
+    },
+    "AYLS": {
+      "blob": "be83fa70c8ff2fab9aa855da7beedcb25c0905e2",
+      "bytes": 198638
+    },
+    "BABP": {
+      "blob": "2c30bb8f570408ca2487d3f3f4f34ce3ef2cea38",
+      "bytes": 243758
+    },
+    "BABY": {
+      "blob": "6c40c9ad8b9913626294b594a50729a34fbd417e",
+      "bytes": 61755
+    },
+    "BACA": {
+      "blob": "d6ecd75690d53455bdf2a204395a1d42616f1881",
+      "bytes": 245774
+    },
+    "BAIK": {
+      "blob": "11db0783bb004d1569e9ac8ae237cdd2127669d0",
+      "bytes": 40199
+    },
+    "BAJA": {
+      "blob": "6d5f5ef0a603965f05b62251335439ecee2250c5",
+      "bytes": 228526
+    },
+    "BALI": {
+      "blob": "1bde88d7f12413fe039a79da22be8b1e049dff98",
+      "bytes": 230088
+    },
+    "BANK": {
+      "blob": "ca908b6da907889ae57ced3aab32755c94b7e89c",
+      "bytes": 192263
+    },
+    "BAPA": {
+      "blob": "314ffdba5d7fc0607c7443e06949014bfee0e7ce",
+      "bytes": 215442
+    },
+    "BAPI": {
+      "blob": "34970715a02f57c3c0f0789b789218f14e823959",
+      "bytes": 203470
+    },
+    "BATA": {
+      "blob": "c579bdc25a8cdb7d50abe2ea745b7a6bb070cb19",
+      "bytes": 220075
+    },
+    "BATR": {
+      "blob": "651c8ca8c8d19751129f003ff30bb22c31e3bbc5",
+      "bytes": 29396
+    },
+    "BAUT": {
+      "blob": "0814cd4f345ede2f875976ce938d465cf7a7ce5f",
+      "bytes": 119614
+    },
+    "BAYU": {
+      "blob": "a2b805d568b05d6b2ab71e2d7ea20993742988b1",
+      "bytes": 221932
+    },
+    "BBCA": {
+      "blob": "1606574aab3985cc2f1d2cf953ba426909001a6a",
+      "bytes": 312457
+    },
+    "BBHI": {
+      "blob": "c56e786a91568e65dc40d7c6669eccd87161184c",
+      "bytes": 250047
+    },
+    "BBKP": {
+      "blob": "475a58197fa8fc6c02a910c33e6d73c6378813c3",
+      "bytes": 265141
+    },
+    "BBLD": {
+      "blob": "0a27d3573d980ca74f980280759903b59903a254",
+      "bytes": 216917
+    },
+    "BBMD": {
+      "blob": "5d90d9310b6f977fb6776ef34788ef32dcf0f04d",
+      "bytes": 218799
+    },
+    "BBNI": {
+      "blob": "c7414a2e03c2d5c7b4afc7214845a27372926e32",
+      "bytes": 295323
+    },
+    "BBRI": {
+      "blob": "43da07160634bca31bc91be2acd0b4296c3c863b",
+      "bytes": 312311
+    },
+    "BBRM": {
+      "blob": "fcab89134d6e3a25a91f1f2a1e56cf25a81c46c2",
+      "bytes": 210210
+    },
+    "BBSI": {
+      "blob": "d02417a806b37f91f8ff945d3e136f1fd2ea68ad",
+      "bytes": 183222
+    },
+    "BBSS": {
+      "blob": "59bb0a81165caf668c59f1af9c187b7f70b99daf",
+      "bytes": 195708
+    },
+    "BBTN": {
+      "blob": "908e6797b1ec939b4aa07842803f766b297151a0",
+      "bytes": 282718
+    },
+    "BBYB": {
+      "blob": "eb436f011fa12302943d2bcc2eea4bfcc31178cd",
+      "bytes": 254971
+    },
+    "BCAP": {
+      "blob": "1e8e29f53768600a505353a1e8c889d64c11a167",
+      "bytes": 255373
+    },
+    "BCIC": {
+      "blob": "9d31c6b6d9457090be3e647e5e3759e233ec0d74",
+      "bytes": 217148
+    },
+    "BCIP": {
+      "blob": "778873d5f49411f93d1999ce2c05d10b130660bf",
+      "bytes": 221934
+    },
+    "BDKR": {
+      "blob": "e0147aa9cb4e305c2964ee732b6c04698974928b",
+      "bytes": 86485
+    },
+    "BDMN": {
+      "blob": "dc17899f5b05155b0ddd90eefbe24ad5b728d0e9",
+      "bytes": 254890
+    },
+    "BEBS": {
+      "blob": "c21a7dd1b11a22471f6364bbcdb923227ad7b6f7",
+      "bytes": 172327
+    },
+    "BEEF": {
+      "blob": "d16cb5ad4aaddca4be72c1be47f508d9972c3bcc",
+      "bytes": 232130
+    },
+    "BEER": {
+      "blob": "b7e135d703bd4f6fb08693a36e8df0614b486bb7",
+      "bytes": 86630
+    },
+    "BEKS": {
+      "blob": "c9f72849ee5fee50de0e9874da634d9c8bf260c9",
+      "bytes": 236094
+    },
+    "BELI": {
+      "blob": "4e230b9a1fe3012e2f3db494c34693fc6205b596",
+      "bytes": 101999
+    },
+    "BELL": {
+      "blob": "9b882a8372bdb07d31c9e2a0fe83d01ce1662bd9",
+      "bytes": 233197
+    },
+    "BESS": {
+      "blob": "d2796d1c85c8f3e55bcd758e88e235e53564163c",
+      "bytes": 203895
+    },
+    "BEST": {
+      "blob": "364f1d033c8dee7b90497f5adba788f68dfbb307",
+      "bytes": 250443
+    },
+    "BFIN": {
+      "blob": "165b2b218123bcab6a1f2ed817647dc6e619911d",
+      "bytes": 269565
+    },
+    "BGTG": {
+      "blob": "620d7e37f49b2094b51be3b5e1f2dbd259d09b92",
+      "bytes": 240286
+    },
+    "BHAT": {
+      "blob": "8cce7b407c79ec5ae4b00a3f57b560d35749d5f8",
+      "bytes": 218738
+    },
+    "BHIT": {
+      "blob": "5d2e43cc314ad204005e4ac71bb1181278344250",
+      "bytes": 248562
+    },
+    "BIKA": {
+      "blob": "363839d27f63c0015ae1e544c9d4ae76de3daf50",
+      "bytes": 205393
+    },
+    "BIKE": {
+      "blob": "2947edb6a5605aea1c24bf8f6eec619ee3963055",
+      "bytes": 124770
+    },
+    "BIMA": {
+      "blob": "1d8a9be8d98c1be667de2f2c657d2ac0ccf299ba",
+      "bytes": 213788
+    },
+    "BINA": {
+      "blob": "bda5e9f9552fa461bf9c1a859f0d5bd7bde05d73",
+      "bytes": 240767
+    },
+    "BINO": {
+      "blob": "ea9996fbc32cdf24d50fe74c30be69957d89e0fc",
+      "bytes": 133934
+    },
+    "BIPI": {
+      "blob": "62ae30a81ed5f743bd1f7d083a689d560aa7d302",
+      "bytes": 253930
+    },
+    "BIPP": {
+      "blob": "5d71ad90e025bd48f99badf0f950c6803314772f",
+      "bytes": 211509
+    },
+    "BIRD": {
+      "blob": "e7c319d0f7259875dbeb17f5c41197089f22ff90",
+      "bytes": 252988
+    },
+    "BISI": {
+      "blob": "2ab21f0352e796f9c5f518d016561fa5d03cba40",
+      "bytes": 240725
+    },
+    "BJBR": {
+      "blob": "559995474eea157dd2cedb769c1dfd378425a339",
+      "bytes": 262280
+    },
+    "BJTM": {
+      "blob": "caec179b0f547e1af1903064a186a1beaebed29c",
+      "bytes": 257684
+    },
+    "BKDP": {
+      "blob": "7de15c7969de63b779d7699a546f8d18349a44f1",
+      "bytes": 214130
+    },
+    "BKSL": {
+      "blob": "30761b218437390b31c4bf79251728f0d3e35091",
+      "bytes": 241102
+    },
+    "BKSW": {
+      "blob": "5bfdf842ae05ed6111c84c2ac37b48ad4dcfb457",
+      "bytes": 232047
+    },
+    "BLES": {
+      "blob": "f1c5bea995e1ef61f258b05cd6fc8d61861f7188",
+      "bytes": 29103
+    },
+    "BLTA": {
+      "blob": "ac007d1d4aca132eca1f9ff5d6e68ee4634a8dc1",
+      "bytes": 217953
+    },
+    "BLTZ": {
+      "blob": "15348f13de1975d8d1e13934bbdcbde299ae51bf",
+      "bytes": 210640
+    },
+    "BLUE": {
+      "blob": "b7b44546e4e0ae492e3ca9137024eb78829527e2",
+      "bytes": 220617
+    },
+    "BMAS": {
+      "blob": "0cb9295a26be5f50a83c3d82d9de6657a628d737",
+      "bytes": 224615
+    },
+    "BMBL": {
+      "blob": "991d5abe13d81b5d3cef71420e9ce39284cf34cd",
+      "bytes": 76945
+    },
+    "BMHS": {
+      "blob": "99beb0708c7ca56b3af43feb7f180474ab2aa11e",
+      "bytes": 158470
+    },
+    "BMRI": {
+      "blob": "4693b9364ab017740c11201f654de165f4333c2d",
+      "bytes": 304428
+    },
+    "BMSR": {
+      "blob": "01a3287dc8f6c6ed89f5a0a4e2ccbd8db0275792",
+      "bytes": 222970
+    },
+    "BMTR": {
+      "blob": "967532b8bcae6b2ec4c3986d1e342e5f81a1bc8d",
+      "bytes": 262601
+    },
+    "BNBA": {
+      "blob": "76a210c1949de31de16f3e2258d048c0cf30f961",
+      "bytes": 239346
+    },
+    "BNBR": {
+      "blob": "05d78251030871ebcc6cb59443f39f57e40a780f",
+      "bytes": 230097
+    },
+    "BNGA": {
+      "blob": "e35007c95a5dcc5cd387f39fcee8650675dec808",
+      "bytes": 261675
+    },
+    "BNII": {
+      "blob": "a746528a3bf3d2b1e6f4f118315be3449e77a655",
+      "bytes": 239865
+    },
+    "BNLI": {
+      "blob": "12f56e189b5dae01913650dca78af26185d87319",
+      "bytes": 241085
+    },
+    "BOAT": {
+      "blob": "a34d626c642d52509301e47d3a77d69de4eea99e",
+      "bytes": 13150
+    },
+    "BOBA": {
+      "blob": "03decdebf905383f18c9bdf00ce50171306a73c3",
+      "bytes": 132852
+    },
+    "BOGA": {
+      "blob": "e7f39df170cce917df5c156e919720e3e352fe56",
+      "bytes": 271439
+    },
+    "BOLA": {
+      "blob": "bd68d3e25375d22e6993d411c2c1fab49b44ec9d",
+      "bytes": 232490
+    },
+    "BOLT": {
+      "blob": "522a8f5547b59944645beaf9d2592124b218d3ce",
+      "bytes": 220093
+    },
+    "BOSS": {
+      "blob": "005467a30163f6ad20d612b0784708aed1467bca",
+      "bytes": 224558
+    },
+    "BPFI": {
+      "blob": "cb04b78283fefc742b474f1bd02db9dd5267dc1d",
+      "bytes": 220880
+    },
+    "BPII": {
+      "blob": "84c1ce85fde8f7898ce0141856aa56c6d5d40416",
+      "bytes": 208330
+    },
+    "BPTR": {
+      "blob": "e9deeedddcb605e57f2fd41309a98e3f3c47323a",
+      "bytes": 225172
+    },
+    "BRAM": {
+      "blob": "d23d1d57b89e258a14124cdc67f2ed4b8e7924ac",
+      "bytes": 217966
+    },
+    "BREN": {
+      "blob": "4815cdd9f0dd20716550699fa057eae46a343fc3",
+      "bytes": 68390
+    },
+    "BRIS": {
+      "blob": "5e1f552dcbb0d7bcc4175c03791ec4d19b71d420",
+      "bytes": 273106
+    },
+    "BRMS": {
+      "blob": "4fa71e5432908acaf24057aeb4befa6d27db957a",
+      "bytes": 268041
+    },
+    "BRNA": {
+      "blob": "f6fa7af561c43326f1cccdc57337a9579eed9485",
+      "bytes": 210425
+    },
+    "BRPT": {
+      "blob": "2fd3e2c5cd8621902f9be0babe0771c21eba49bc",
+      "bytes": 281866
+    },
+    "BRRC": {
+      "blob": "072addba39c11d884c6c3d0e79a4d8364226ddf1",
+      "bytes": 5273
+    },
+    "BSBK": {
+      "blob": "90309ba14d39998ca7e28997691a5f1395bf2527",
+      "bytes": 97389
+    },
+    "BSDE": {
+      "blob": "0a3f4998dc04fde83d5d2c1cf35af49abf0ba075",
+      "bytes": 273702
+    },
+    "BSIM": {
+      "blob": "184adc7e25e6d6fc005134245785c6981b69d13b",
+      "bytes": 232966
+    },
+    "BSML": {
+      "blob": "1d67261a87f0752c0969cb7579a4518c6c4e3247",
+      "bytes": 140566
+    },
+    "BSSR": {
+      "blob": "9844d90634df9c0806cfee3d0925b5cecd1dbe23",
+      "bytes": 239933
+    },
+    "BSWD": {
+      "blob": "0a11471cda736f6834ce4461bffb081c58d523cb",
+      "bytes": 191090
+    },
+    "BTEK": {
+      "blob": "9d53b72c30b8fe3c0eacc143c12f182913186397",
+      "bytes": 215187
+    },
+    "BTEL": {
+      "blob": "f08ce7d3dbed451a61a4690d985fc6e4d989d17d",
+      "bytes": 185914
+    },
+    "BTON": {
+      "blob": "2b57133499dd0569b5236bbe9ec41184810abe96",
+      "bytes": 215430
+    },
+    "BTPN": {
+      "blob": "e68644828cc960762cc9d6a7910c5fad84070d7e",
+      "bytes": 234093
+    },
+    "BTPS": {
+      "blob": "0ba982836e5a95bb1de8ee838cea2d69fb9001a4",
+      "bytes": 272362
+    },
+    "BUAH": {
+      "blob": "22f53d9c1818e0597b67057f9364e0e9594bf726",
+      "bytes": 107777
+    },
+    "BUDI": {
+      "blob": "ba90387e10c2e9b82e2087c6018e92e210c76e55",
+      "bytes": 233088
+    },
+    "BUKA": {
+      "blob": "04fc8dbe02c1fcf774ec8a1f71b5643c4cce2aff",
+      "bytes": 180460
+    },
+    "BUKK": {
+      "blob": "ed8050ad14435ae438471b068a32ac5046422ce9",
+      "bytes": 226681
+    },
+    "BULL": {
+      "blob": "84d063226e9d51e73c2b674f9f4e58767ba9aff6",
+      "bytes": 230312
+    },
+    "BUMI": {
+      "blob": "79fe82dcc6148d173fe52c6df3a1835ed14dc264",
+      "bytes": 271077
+    },
+    "BUVA": {
+      "blob": "3fa8cfae8c3343ea2bf56c6ae71a43fe0f885f14",
+      "bytes": 211683
+    },
+    "BVIC": {
+      "blob": "43ee4c7bcdd2ebdf643928bb22958bb3409ff124",
+      "bytes": 237417
+    },
+    "BWPT": {
+      "blob": "df067c8cd3a752a7ae6556ab1f5bb2b946346ca5",
+      "bytes": 244499
+    },
+    "BYAN": {
+      "blob": "a4537fec0d760ecd262e6b43584a9582083583db",
+      "bytes": 247985
+    },
+    "CAKK": {
+      "blob": "b61c4cb1a31eeef20486fd5b68a3f700b9753a52",
+      "bytes": 228482
+    },
+    "CAMP": {
+      "blob": "166334d73b930abc5dccde077f006e0ff835962e",
+      "bytes": 233336
+    },
+    "CANI": {
+      "blob": "4cc3176bb0bb0d6d509a7925c995a01ec4ecd72c",
+      "bytes": 207587
+    },
+    "CARE": {
+      "blob": "eac69a4e4b8b8a3fc0409d523cfe90694eb24926",
+      "bytes": 237550
+    },
+    "CARS": {
+      "blob": "bc3d9e6ffb863abe31220bcce8ab31ab41f51841",
+      "bytes": 235955
+    },
+    "CASA": {
+      "blob": "04e8f61997542ecc1277c27e667d08b29b2c9ce2",
+      "bytes": 256172
+    },
+    "CASH": {
+      "blob": "7ad75de60605b3b7ea7e7a08294dd78a08c4cfed",
+      "bytes": 187290
+    },
+    "CASS": {
+      "blob": "f219c0482a7e9751660b297f2c49b46760560289",
+      "bytes": 229702
+    },
+    "CBDK": {
+      "blob": "8a49894f1875d5b96336d49577e48caaab741ccc",
+      "bytes": 5820
+    },
+    "CBMF": {
+      "blob": "546b72317f4f55fa96a4786ccfd0a36b03898707",
+      "bytes": 179673
+    },
+    "CBPE": {
+      "blob": "1c77b9172fdb8468f80bc4bf004f9363b1b72486",
+      "bytes": 85182
+    },
+    "CBRE": {
+      "blob": "6c81051031b9f52cad1e978605c063b24add2cac",
+      "bytes": 81274
+    },
+    "CBUT": {
+      "blob": "eedd3b76b9ec1bcf77efd0f02f9f136c4748b7c7",
+      "bytes": 94995
+    },
+    "CCSI": {
+      "blob": "324ce1d23cedb6d9b376531dc05bd48507769a6c",
+      "bytes": 227439
+    },
+    "CEKA": {
+      "blob": "e1890f47cc32e5bd4fc4ff35fb37a7acca17c8c4",
+      "bytes": 228651
+    },
+    "CENT": {
+      "blob": "399f13da7d5fea885c8d4cc27888126e2a148070",
+      "bytes": 238838
+    },
+    "CFIN": {
+      "blob": "1a3f227a680698e300b9e80d7bfc5b343f10bc8d",
+      "bytes": 239951
+    },
+    "CGAS": {
+      "blob": "0a88ceeab4f9ee3e2a123c496442e6f51f4950f7",
+      "bytes": 46896
+    },
+    "CHEM": {
+      "blob": "9b8ccc6ef91f08b88e97ce5f5421941da3f7ce28",
+      "bytes": 110709
+    },
+    "CHIP": {
+      "blob": "750e62617184984fc8284ee3e54e11f1ea4e7978",
+      "bytes": 81377
+    },
+    "CINT": {
+      "blob": "c77046e15fca696ed20be31c193eed40e46bb56c",
+      "bytes": 219267
+    },
+    "CITA": {
+      "blob": "d2f51b6417160eace9ed37766ad4f020b195a0fd",
+      "bytes": 226774
+    },
+    "CITY": {
+      "blob": "d4e1e5512ae0ceb804124e41263bcabcdadc0dad",
+      "bytes": 219360
+    },
+    "CLAY": {
+      "blob": "ef7044eb776740e5331e4767038215d751498484",
+      "bytes": 213465
+    },
+    "CLEO": {
+      "blob": "520a0de05047a7d1415cce917728c60a1b10637f",
+      "bytes": 251857
+    },
+    "CLPI": {
+      "blob": "427e9fe3bd74995a957930fba39b7ebd72146905",
+      "bytes": 224225
+    },
+    "CMNP": {
+      "blob": "35e18032d7a9c9d579cf250accf6f3542439714d",
+      "bytes": 233848
+    },
+    "CMNT": {
+      "blob": "176002e86884aaabef9a0069601b3984d95e8579",
+      "bytes": 160854
+    },
+    "CMPP": {
+      "blob": "a7e02744a3a255a1b05ea5b02693cf787df6f36b",
+      "bytes": 211344
+    },
+    "CMRY": {
+      "blob": "f42e562440c4b775bd7e77af69d0a908a0acfc9b",
+      "bytes": 152030
+    },
+    "CNKO": {
+      "blob": "96807d773ebb7a01470c174c6f3bb1dcdfce8e45",
+      "bytes": 203816
+    },
+    "CNMA": {
+      "blob": "7730ad2a37e0ba212bad9e458d9397f9c75c35c6",
+      "bytes": 71035
+    },
+    "CNTB": {
+      "blob": "a56e34d4a576db7f1310bd9509cede4efe95f28c",
+      "bytes": 110362
+    },
+    "CNTX": {
+      "blob": "d223c23deaf2031c07ed17bca1e6752bdf668696",
+      "bytes": 199272
+    },
+    "COAL": {
+      "blob": "7a6fa9e34b1fe0b767fd939f4b174c7b903cd46d",
+      "bytes": 103008
+    },
+    "COCO": {
+      "blob": "66c14dcd5c83e5d8731c030e202f15fe8cbcfb2a",
+      "bytes": 227604
+    },
+    "COWL": {
+      "blob": "bc23181762e97aa8c1123ab0a171fabbbaca7967",
+      "bytes": 185832
+    },
+    "CPIN": {
+      "blob": "d9585fa2145bec7331ec8bc7ee86d8225edd2e68",
+      "bytes": 284908
+    },
+    "CPRI": {
+      "blob": "586e9820e160e0d37500cc48dbb1261ae84bd62a",
+      "bytes": 194231
+    },
+    "CPRO": {
+      "blob": "25341ec12d12729d2c5df4d641d1c56f86c8a3fe",
+      "bytes": 235377
+    },
+    "CRAB": {
+      "blob": "3cf14ecd2b4da3dfcc7a5dcd90bdb6d146f6617d",
+      "bytes": 108026
+    },
+    "CRSN": {
+      "blob": "22d4459421ea80c3f796c8985b267d764d7e8419",
+      "bytes": 66160
+    },
+    "CSAP": {
+      "blob": "3c34b4bc9c29b9865f9104439e6535a10f9d28b1",
+      "bytes": 224893
+    },
+    "CSIS": {
+      "blob": "1916f521bbeac66de3a69f38bb7511d9e483437a",
+      "bytes": 219729
+    },
+    "CSMI": {
+      "blob": "9d635e2141076b5a4c7e36800c4c6bbe80e53c65",
+      "bytes": 177589
+    },
+    "CSRA": {
+      "blob": "bffc96565f851f41dcfc2a34d2f71218d203e0a7",
+      "bytes": 212006
+    },
+    "CTBN": {
+      "blob": "b5156b17398e8b3fab739c6a28ae1a8d8dfa7e1e",
+      "bytes": 209271
+    },
+    "CTRA": {
+      "blob": "6766b459f317c56c78013e9e3e55d797955ab90f",
+      "bytes": 277588
+    },
+    "CTTH": {
+      "blob": "1c6543fe91b06c41aa8ef6ab5428ab3a838aaf92",
+      "bytes": 206494
+    },
+    "CUAN": {
+      "blob": "cc8eef59d22531fbb55264b5a75d7437f6b07e3e",
+      "bytes": 91091
+    },
+    "CYBR": {
+      "blob": "3778cb401caba2b1cceb9d0409566bf8a4b8ccd4",
+      "bytes": 68686
+    },
+    "DAAZ": {
+      "blob": "55d6a9183df20290e34e8cc0d2ef72a0ef5dd46e",
+      "bytes": 13225
+    },
+    "DADA": {
+      "blob": "c759d2d3dace6584c3b27f83edd109c6d84b6f9a",
+      "bytes": 195777
+    },
+    "DART": {
+      "blob": "b02a26159959190a2b044221a02947c2fcac19e2",
+      "bytes": 217103
+    },
+    "DATA": {
+      "blob": "229a013a0bb3daca32016ea32100c2914a231775",
+      "bytes": 35687
+    },
+    "DAYA": {
+      "blob": "4ce513f92c184b75178f63fd9f63a5a84aab8356",
+      "bytes": 217698
+    },
+    "DCII": {
+      "blob": "84bf7ba0a25aac2dc47898c3699cb579e978dc83",
+      "bytes": 170904
+    },
+    "DEAL": {
+      "blob": "aa72c90325ac4387d197f82bc83745bda102dcc2",
+      "bytes": 214517
+    },
+    "DEFI": {
+      "blob": "5f90b25e18ecf508a8f487c7a21139da48de17da",
+      "bytes": 201656
+    },
+    "DEPO": {
+      "blob": "8e81569de24951b1c0876f81b9561121ad0e560a",
+      "bytes": 131331
+    },
+    "DEWA": {
+      "blob": "787cd6d41a197bd05716854fa23aa76602372a72",
+      "bytes": 242161
+    },
+    "DEWI": {
+      "blob": "01d3878dd811f169ecb99024237307cb6b3105e1",
+      "bytes": 109356
+    },
+    "DFAM": {
+      "blob": "1d01cb0ef79952752ed850f4d22c03150089e080",
+      "bytes": 224071
+    },
+    "DGIK": {
+      "blob": "27ab6adbf1445539045775474bce4cd4f667b5cf",
+      "bytes": 231836
+    },
+    "DGNS": {
+      "blob": "a0f259e384d87577c56933b1ded0f86edac06319",
+      "bytes": 176085
+    },
+    "DGWG": {
+      "blob": "2e23029169b6ce06a9378addb7ebb66062229883",
+      "bytes": 5384
+    },
+    "DIGI": {
+      "blob": "6632017f09df3fa95c15686da054e9773447a18f",
+      "bytes": 217897
+    },
+    "DILD": {
+      "blob": "eb6e0453899156bdee9e5cf2776ca0454948ab30",
+      "bytes": 251649
+    },
+    "DIVA": {
+      "blob": "7e8911b886fc69018f1b9275bc1ce0fec9c5e38c",
+      "bytes": 233360
+    },
+    "DKFT": {
+      "blob": "cf64055d106082fb77cab5e62c5a09be355618e0",
+      "bytes": 245097
+    },
+    "DLTA": {
+      "blob": "6ac2ea48be7f5cd955eec02895f7762f31bd39eb",
+      "bytes": 234823
+    },
+    "DMAS": {
+      "blob": "95f791006303ce1cc4baa1602377d8139ee27537",
+      "bytes": 261331
+    },
+    "DMMX": {
+      "blob": "c3f25104dbac2bd38485ed78618ae93295fbb205",
+      "bytes": 241160
+    },
+    "DMND": {
+      "blob": "785dcf56885343285f43c32e1061ee5aa9896ec8",
+      "bytes": 198812
+    },
+    "DNAR": {
+      "blob": "c87de29f8b5e8f1c10fa7a7debf7150ef6675203",
+      "bytes": 231959
+    },
+    "DNET": {
+      "blob": "87819bf21c7675e2ca5e3f994a1180fba62036c8",
+      "bytes": 235297
+    },
+    "DOID": {
+      "blob": "99aef4c78b83b0fbc8fcbd07d307e391c069cd4f",
+      "bytes": 257096
+    },
+    "DOOH": {
+      "blob": "e94b01cf4ee19e74b98043006af3a852872bb19a",
+      "bytes": 79399
+    },
+    "DOSS": {
+      "blob": "069e6985652306e0f8320dfd29bed7f0e4b3cae7",
+      "bytes": 24506
+    },
+    "DPNS": {
+      "blob": "0aaa70ddb6e61a19d7c229c2a5c26b131d4283db",
+      "bytes": 214831
+    },
+    "DPUM": {
+      "blob": "69f94b0e4f841c672add097ea895287c5d3c288c",
+      "bytes": 201302
+    },
+    "DRMA": {
+      "blob": "1fbfb48b9b9cc2592f6ba167363ea2aa26227c4c",
+      "bytes": 144999
+    },
+    "DSFI": {
+      "blob": "0be5cad2d83dc3711330bbf92966355a5df9c252",
+      "bytes": 221701
+    },
+    "DSNG": {
+      "blob": "6c858cd3b2dcbcf5713b88600b6ba9896b12acb8",
+      "bytes": 254016
+    },
+    "DSSA": {
+      "blob": "18e552a4aedfc2ece5c114efe80e826759f5f85f",
+      "bytes": 223250
+    },
+    "DUCK": {
+      "blob": "bf800bc5ab0e817de4bcd6d7b0660da813906669",
+      "bytes": 208786
+    },
+    "DUTI": {
+      "blob": "aa3799cc63a5ec4c511ce5e25d0ed1b6b86f8307",
+      "bytes": 219621
+    },
+    "DVLA": {
+      "blob": "504d1f7a0ccf7f171e6320e096c0b000fd43a8f1",
+      "bytes": 230795
+    },
+    "DWGL": {
+      "blob": "3c67425886f069bbf55c5288baa0222ef39b883a",
+      "bytes": 223225
+    },
+    "DYAN": {
+      "blob": "aca6cec9ff9654b4d564046558e8c01da3da48ad",
+      "bytes": 228448
+    },
+    "EAST": {
+      "blob": "a629030bc3cb517674eb621906518fdc038179eb",
+      "bytes": 229855
+    },
+    "ECII": {
+      "blob": "a8d8aeee185ab8e797b3f2a78c13585f21b6ca56",
+      "bytes": 219022
+    },
+    "EDGE": {
+      "blob": "46546de5bc2899b20830ade4e5babf654e642c59",
+      "bytes": 167618
+    },
+    "EKAD": {
+      "blob": "5fd19f9460f97f5106032cad773bacb354ce272e",
+      "bytes": 231568
+    },
+    "ELIT": {
+      "blob": "d447594d388a9388da3c00477a6fdec0700b431a",
+      "bytes": 89406
+    },
+    "ELPI": {
+      "blob": "947906904a5a0faabd4d7f164b1657ec3240d5c3",
+      "bytes": 112110
+    },
+    "ELSA": {
+      "blob": "d4d88c68eafc2055795017848b9dff9cd18acabe",
+      "bytes": 256358
+    },
+    "ELTY": {
+      "blob": "1cbe025781ba9b293549905abcb7306c98694582",
+      "bytes": 217332
+    },
+    "EMDE": {
+      "blob": "82971d7a092cf89939fb3624de0c14dc3713e584",
+      "bytes": 218628
+    },
+    "EMTK": {
+      "blob": "4ef18171f800b8a9b005a4ca4d0e49752f3e895a",
+      "bytes": 264026
+    },
+    "ENAK": {
+      "blob": "3c4129311e51686313df4c64d4241e5783c20781",
+      "bytes": 131482
+    },
+    "ENRG": {
+      "blob": "677667f4b33b67576ec73203db03aefc5ddfba82",
+      "bytes": 260788
+    },
+    "ENVY": {
+      "blob": "22703b2f19137b06d2cb93dfbc404c8c2e82922e",
+      "bytes": 197541
+    },
+    "ENZO": {
+      "blob": "b06b24cc8443e2d42e50e2b588c37ba54fb0d802",
+      "bytes": 170965
+    },
+    "EPAC": {
+      "blob": "1ddb9b23e9ba61f6ba94019047c8326bf1fe5b2c",
+      "bytes": 178999
+    },
+    "EPMT": {
+      "blob": "e4ef20f7f89f77b8081260ae39a660d21e399384",
+      "bytes": 231855
+    },
+    "ERAA": {
+      "blob": "194a7340dddd11b690648ce79d1c5224874156f5",
+      "bytes": 272712
+    },
+    "ERAL": {
+      "blob": "b8954c869ba6117bf7acbde013bad3bd8c953528",
+      "bytes": 68031
+    },
+    "ERTX": {
+      "blob": "614302a34b79b92b351a105cf072d45d59f07c1c",
+      "bytes": 223254
+    },
+    "ESIP": {
+      "blob": "7a4867b5cc02edf6613cd45c05b81158b723fdb0",
+      "bytes": 208945
+    },
+    "ESSA": {
+      "blob": "e2b896261f611d1d45e4b83aabe7dab5d93cabcf",
+      "bytes": 264823
+    },
+    "ESTA": {
+      "blob": "00f7a7fed1811d0deda580cee96431b3af32805e",
+      "bytes": 200539
+    },
+    "ESTI": {
+      "blob": "9fb914b17b4ac80c04ef1501fcd0e3cf896795b0",
+      "bytes": 216879
+    },
+    "ETWA": {
+      "blob": "ead6f11cc2a89669d3e4c4dd212357ef0a2cd137",
+      "bytes": 194147
+    },
+    "EURO": {
+      "blob": "857d0a37f73de5c497ace6e151132c0116687e98",
+      "bytes": 101677
+    },
+    "EXCL": {
+      "blob": "c1560921ca392ad1f99f1903be25010328527ce5",
+      "bytes": 285819
+    },
+    "FAPA": {
+      "blob": "96c2e2213039324b89e893f20ba4822787f88df2",
+      "bytes": 175741
+    },
+    "FAST": {
+      "blob": "d21f33ed243ce54736b5248186edcb1664ac44b2",
+      "bytes": 226510
+    },
+    "FASW": {
+      "blob": "390b9ee1fd809bf4e1ec3c9fd91b21f134dd42ae",
+      "bytes": 206787
+    },
+    "FILM": {
+      "blob": "d8ae2dadd255837246bd43dd307989e1f410ae83",
+      "bytes": 257712
+    },
+    "FIMP": {
+      "blob": "e3305d630e5f05cc04277d3f5217d03346c221a2",
+      "bytes": 137904
+    },
+    "FINN": {
+      "blob": "50388e6a95c51e8d7772fdcfa505881e878e775f",
+      "bytes": 64168
+    },
+    "FIRE": {
+      "blob": "d49ea0bd86a1fdc98ea2341df7719d541fc2b5ca",
+      "bytes": 238154
+    },
+    "FISH": {
+      "blob": "ad507feaccc6e52a3b39735e77d5cb26e5a0e30c",
+      "bytes": 209870
+    },
+    "FITT": {
+      "blob": "239bda3e4ee7415a4ad9c8cf72408b5ec2d3654d",
+      "bytes": 223286
+    },
+    "FLMC": {
+      "blob": "3cd3cb4c9ad808ce6b2d9e227ec92521d1ed4310",
+      "bytes": 122615
+    },
+    "FMII": {
+      "blob": "f91a5f0678e7dc49d914506fbfe13532c997e787",
+      "bytes": 212932
+    },
+    "FOLK": {
+      "blob": "93e3e6ad3d33035c90de1433f5dae06fadb6b64f",
+      "bytes": 61205
+    },
+    "FOOD": {
+      "blob": "70c9468cbae34f40c6e81d4d2e07c2332f8e5de3",
+      "bytes": 220603
+    },
+    "FORU": {
+      "blob": "e29b1d0ed92471d5d9cffe24012fd0387a445bcb",
+      "bytes": 213983
+    },
+    "FORZ": {
+      "blob": "99c40030b4d1ed7c6f9c5af8b1f0c81444393864",
+      "bytes": 194073
+    },
+    "FPNI": {
+      "blob": "5c8d5724c146f9a704bd983650147318ff9c0437",
+      "bytes": 237220
+    },
+    "FREN": {
+      "blob": "591a03bbaa408d8c4d7440ec4461f31436c90657",
+      "bytes": 266281
+    },
+    "FUJI": {
+      "blob": "d1c034b96cfcbc7b520c1b6b27915d7b9bb2a9f7",
+      "bytes": 223053
+    },
+    "FUTR": {
+      "blob": "94431f1909b29b5a3b3df1ec64de1c6fcd6eccb9",
+      "bytes": 79398
+    },
+    "FWCT": {
+      "blob": "32beaf3d8086a84e3470eb52e065551af037580c",
+      "bytes": 84205
+    },
+    "GAMA": {
+      "blob": "98399ee5fd312c19d6f86751e4b1941ba6dbbe61",
+      "bytes": 205595
+    },
+    "GDST": {
+      "blob": "ec3cdb3c02231d26f616b0c5cdc680ecf97ff196",
+      "bytes": 230140
+    },
+    "GDYR": {
+      "blob": "b3d2316c5864560542b0efed138303a3862eb6e9",
+      "bytes": 220602
+    },
+    "GEMA": {
+      "blob": "449f87a73665499090430f3e4996b1b0770abcc2",
+      "bytes": 216397
+    },
+    "GEMS": {
+      "blob": "155408923f317a65caf4b272057a3588eeecd596",
+      "bytes": 225001
+    },
+    "GGRM": {
+      "blob": "0d94f8d1bad232d8c6e8e79f5239ceede4eac1a8",
+      "bytes": 280596
+    },
+    "GGRP": {
+      "blob": "973a86a24a88d70e6e2d7dbd0555e417a5725a6a",
+      "bytes": 220865
+    },
+    "GHON": {
+      "blob": "93305ec6280d757a519fbcbd3b077c41ad2d7d8c",
+      "bytes": 221093
+    },
+    "GIAA": {
+      "blob": "5a7de78bb19d41fe946f13d6b85309628750c145",
+      "bytes": 235574
+    },
+    "GJTL": {
+      "blob": "3dd516751c8731304ab1de2983f5833f6f1da693",
+      "bytes": 251877
+    },
+    "GLOB": {
+      "blob": "650ef5bbeae1ad9a3fe58fb32927555448cf11e3",
+      "bytes": 209903
+    },
+    "GLVA": {
+      "blob": "e6876b7c01232cf6f390ac4ce26c7254596cd9c6",
+      "bytes": 206358
+    },
+    "GMFI": {
+      "blob": "0386cc7df89d472ee29ebce1aeb03ce5486efe1a",
+      "bytes": 231757
+    },
+    "GMTD": {
+      "blob": "840a0717b69a1ca49a8c352b5ae017a9f2b3c763",
+      "bytes": 208638
+    },
+    "GOLD": {
+      "blob": "64d2399993706f4fa627326ad28eb0bbe500149c",
+      "bytes": 220529
+    },
+    "GOLF": {
+      "blob": "c7dbd54098fd2fb1daff04d95954d995da661ddb",
+      "bytes": 29636
+    },
+    "GOLL": {
+      "blob": "30d9aa7dfd4cb605a0bec80c6d7ba5c0b1007a30",
+      "bytes": 181182
+    },
+    "GOOD": {
+      "blob": "e1477982a9fae2aaa276cd7307a67742b1d4fdd5",
+      "bytes": 241878
+    },
+    "GOTO": {
+      "blob": "4fc2a2ee3033535dc734e03eb531e0518ca1e35c",
+      "bytes": 153319
+    },
+    "GPRA": {
+      "blob": "e51317dac6b6205b259f384f2696ddc6f74e395e",
+      "bytes": 227104
+    },
+    "GPSO": {
+      "blob": "4161275a4a33d046bb98c447d1ad125fb9915ae9",
+      "bytes": 142281
+    },
+    "GRIA": {
+      "blob": "545b86eaaa544ce87ba6c1d6035ba5b1f10fbde2",
+      "bytes": 66562
+    },
+    "GRPH": {
+      "blob": "85928d11ea8a35a17a6216c9c9b3956b5cd81e92",
+      "bytes": 40733
+    },
+    "GRPM": {
+      "blob": "9b0137f914b6b49f610b98b06d1ef5d6d7ec7272",
+      "bytes": 59839
+    },
+    "GSMF": {
+      "blob": "ce87f9e849e1fe64b935334a04b2d87dead8bb32",
+      "bytes": 218150
+    },
+    "GTBO": {
+      "blob": "e7ddafddd3e8969ef522006f17c993ec22725893",
+      "bytes": 205976
+    },
+    "GTRA": {
+      "blob": "6a12d30016a7316976838648205a9d0f6c8a1b1e",
+      "bytes": 80316
+    },
+    "GTSI": {
+      "blob": "e7ce951fbfc5af8ca8b9ed92b21cd216bfb91205",
+      "bytes": 142960
+    },
+    "GULA": {
+      "blob": "d64f50fd1aa0af449f22ef8f5e78b4dd40352f6c",
+      "bytes": 112339
+    },
+    "GUNA": {
+      "blob": "0921e5b5452966a33adb5630b5f51d8b89feed75",
+      "bytes": 27515
+    },
+    "GWSA": {
+      "blob": "b47bcb9ea78b3cf3ed0f0fdc89d5cb3fa8d48a23",
+      "bytes": 225140
+    },
+    "GZCO": {
+      "blob": "b4eb4ca0bdd83980b0b6d7f0c3edbaf3ca696b3f",
+      "bytes": 229696
+    },
+    "HADE": {
+      "blob": "1fa02a40daafe77e495b53950b329a7962dddcaa",
+      "bytes": 203460
+    },
+    "HAIS": {
+      "blob": "a42f25791b2e84c43a3051f4c78cd9b67b224993",
+      "bytes": 149869
+    },
+    "HAJJ": {
+      "blob": "9cb0c7c44b9e404d7b8d70e6c49c05139619d152",
+      "bytes": 73248
+    },
+    "HALO": {
+      "blob": "e1bb75ff0b7d1beb61717fcaea0a2ee18772263a",
+      "bytes": 83980
+    },
+    "HATM": {
+      "blob": "024ea449ff2b14488516c025f061a0ef448c7028",
+      "bytes": 116585
+    },
+    "HBAT": {
+      "blob": "b6cf0bf642a460cac5e0c3a2ccf5240cff560412",
+      "bytes": 56668
+    },
+    "HDFA": {
+      "blob": "b7fb513662831799aa30ddb6ec91282f7e887dd4",
+      "bytes": 216133
+    },
+    "HDIT": {
+      "blob": "a859aef60359eab7788edb0e3c62a140fedc8dc3",
+      "bytes": 220008
+    },
+    "HDTX": {
+      "blob": "6cd488e6d9dc48c444fc81751e231eff6235a2ec",
+      "bytes": 183169
+    },
+    "HEAL": {
+      "blob": "f8fac7f36db616dfa7dfb687e2af486be094c3f0",
+      "bytes": 265322
+    },
+    "HELI": {
+      "blob": "8ae257cba242ad1093ab637378b01e00a44e29b0",
+      "bytes": 217647
+    },
+    "HERO": {
+      "blob": "425db79a8f37ec9d9090ab185e5fbdc3718a3493",
+      "bytes": 227337
+    },
+    "HEXA": {
+      "blob": "7a20abac5db2dace99661d6c814abfc9ef2e9153",
+      "bytes": 244406
+    },
+    "HGII": {
+      "blob": "2c6b8bb3eeff9afa4cfa8524af81e8a13ca55516",
+      "bytes": 6032
+    },
+    "HILL": {
+      "blob": "edea128cb66d3824c1bdc08b3fa59e1d69d06f71",
+      "bytes": 88589
+    },
+    "HITS": {
+      "blob": "4c37c7236bdfb8997778555f0688b774e59b8ac8",
+      "bytes": 224136
+    },
+    "HKMU": {
+      "blob": "456894b5e81cb9a13e0afde26fde839438d99ad4",
+      "bytes": 215634
+    },
+    "HMSP": {
+      "blob": "e9bff55b0a7038927e8f37937f557529ab9efb0d",
+      "bytes": 280851
+    },
+    "HOKI": {
+      "blob": "cecfb13013835b7ad0bde4ade2de3e39a47c5254",
+      "bytes": 246986
+    },
+    "HOME": {
+      "blob": "88857bedd3a99f52fd83a27a074557992deb2b57",
+      "bytes": 193144
+    },
+    "HOMI": {
+      "blob": "df4a8bffed7f173364715d964443c518336105e9",
+      "bytes": 185835
+    },
+    "HOPE": {
+      "blob": "080bfb56160f4f2d4b7cab336b8af053836686ec",
+      "bytes": 149298
+    },
+    "HOTL": {
+      "blob": "170c4008e4074e2bc3891bc0cba0121ded4ba736",
+      "bytes": 197499
+    },
+    "HRME": {
+      "blob": "feb99d368e37efa77313a609b321dcb502c79700",
+      "bytes": 224122
+    },
+    "HRTA": {
+      "blob": "80d0872abcd280e692e0d49ac46518ca6f634bd4",
+      "bytes": 241627
+    },
+    "HRUM": {
+      "blob": "10e78cd81be29e0d0f5d6ed395738e8a6ba09fb1",
+      "bytes": 268171
+    },
+    "HUMI": {
+      "blob": "58e2f418cf52ac59f215a91834479974e4bce249",
+      "bytes": 68042
+    },
+    "HYGN": {
+      "blob": "38638d4606c9315238950ee6dc82413ff6276897",
+      "bytes": 42325
+    },
+    "IATA": {
+      "blob": "2ff22c3425b412d7891515121fac08b9a820fd34",
+      "bytes": 231760
+    },
+    "IBFN": {
+      "blob": "e8b86d5560836fb63dada5e22f4f74060b8b23fe",
+      "bytes": 202518
+    },
+    "IBOS": {
+      "blob": "f525680f7c67593b0f24194c99d9229a486a5bd9",
+      "bytes": 112489
+    },
+    "IBST": {
+      "blob": "2d416337740b5cda764707dd7c25c47dcb41a556",
+      "bytes": 208421
+    },
+    "ICBP": {
+      "blob": "515a5c3211588b66f5cbb1407df0a1f186cc8625",
+      "bytes": 292301
+    },
+    "ICON": {
+      "blob": "aa83303888dc72292d1166df291627b121bf5989",
+      "bytes": 217012
+    },
+    "IDEA": {
+      "blob": "db06f1ceca444304cb4d96851281ff8cafadb430",
+      "bytes": 130205
+    },
+    "IDPR": {
+      "blob": "ff93ca15dc75610272f5b13e79fce11c9f7eca28",
+      "bytes": 222956
+    },
+    "IFII": {
+      "blob": "e6f59723bf61ce044033ece3239c915aee0d5be4",
+      "bytes": 209604
+    },
+    "IFSH": {
+      "blob": "452bda0f7e34524d214333a0c3c31884a8a2a703",
+      "bytes": 206191
+    },
+    "IGAR": {
+      "blob": "8fb608223ec0b6c759b76b398f48f5974ef5d3ce",
+      "bytes": 220217
+    },
+    "IIKP": {
+      "blob": "c168c88dea74f75a24b3e4b7fea621e7cd1b14b8",
+      "bytes": 189864
+    },
+    "IKAI": {
+      "blob": "29a17afa29c356f93cf5429783818dc0f49fd860",
+      "bytes": 219263
+    },
+    "IKAN": {
+      "blob": "244c57f3b686a989dba2590a44ebdf626786bc6e",
+      "bytes": 199740
+    },
+    "IKBI": {
+      "blob": "29763560ff208adc3e8afa73275f0b4d5164248e",
+      "bytes": 218431
+    },
+    "IKPM": {
+      "blob": "5beb8c1568d487e7bf8d853fafddfe0275d56ae2",
+      "bytes": 53768
+    },
+    "IMAS": {
+      "blob": "cd02e093144a947050ee376704e4ce1ea9c85a97",
+      "bytes": 245605
+    },
+    "IMJS": {
+      "blob": "b0fa05801e83c49d07b6a768787d9accba4f8356",
+      "bytes": 239029
+    },
+    "IMPC": {
+      "blob": "b1baa3ceb021c24e578b4d29e7d971dce5f32f10",
+      "bytes": 248989
+    },
+    "INAF": {
+      "blob": "a650397670ef8231501af432398865dfde021941",
+      "bytes": 233096
+    },
+    "INAI": {
+      "blob": "ec76c3c0cdb9a81977635b7240d87079013e7a9e",
+      "bytes": 213917
+    },
+    "INCF": {
+      "blob": "89bc88dd90b888a156b1da5ad19ddfcd76e58e5d",
+      "bytes": 216380
+    },
+    "INCI": {
+      "blob": "03b883ea6434c5e3a33898262454a56bec35ef6e",
+      "bytes": 216303
+    },
+    "INCO": {
+      "blob": "278b163cdfe6dc86cb5dc0202360c3c794b7d53b",
+      "bytes": 283915
+    },
+    "INDF": {
+      "blob": "33d2cbb7d4398285feab4440105eba52b4e1989e",
+      "bytes": 285517
+    },
+    "INDO": {
+      "blob": "59f5b944524a9863c2076438b5b580610cea635b",
+      "bytes": 209143
+    },
+    "INDR": {
+      "blob": "cc0c6fad91a3c68c4739edd70651646c296a441b",
+      "bytes": 231941
+    },
+    "INDS": {
+      "blob": "e1a53901a87bc516aa8b50d4692c5bf8a747acaa",
+      "bytes": 227245
+    },
+    "INDX": {
+      "blob": "1180ac6d67c967b432c5bd3630aee26375d514bd",
+      "bytes": 218895
+    },
+    "INDY": {
+      "blob": "33b50409c428ae8a9466c16480de00fff288a912",
+      "bytes": 265782
+    },
+    "INET": {
+      "blob": "a231c1519d6bcab9e51e11aad66e63db7475d7db",
+      "bytes": 71976
+    },
+    "INKP": {
+      "blob": "650be80c8c1f99de15df74641d61a6e5b9219d99",
+      "bytes": 281829
+    },
+    "INOV": {
+      "blob": "4b4b3ebb3cb18403563cd9117af00e49ae4e655d",
+      "bytes": 229957
+    },
+    "INPC": {
+      "blob": "dbcfaaa0b74792365a6945192951ba8cf683e5c6",
+      "bytes": 229336
+    },
+    "INPP": {
+      "blob": "3d0ab930d6bf1af99474cd84c4cd5d5188927b67",
+      "bytes": 221972
+    },
+    "INPS": {
+      "blob": "7884327a1246d5a7e8ae88ea15051c91348b88ec",
+      "bytes": 222926
+    },
+    "INRU": {
+      "blob": "c469b07c53a8a50c282512aca3ea8f5b2aaa6b86",
+      "bytes": 212423
+    },
+    "INTA": {
+      "blob": "7fa0e101e6e4e5c9ff6eec64bb86f9cdc94f96d3",
+      "bytes": 209826
+    },
+    "INTD": {
+      "blob": "91447b2b97f7045052cc93a467706de0d435ca29",
+      "bytes": 213235
+    },
+    "INTP": {
+      "blob": "06635f2874b2fcab11936182f2d122ee12098e8c",
+      "bytes": 282912
+    },
+    "IOTF": {
+      "blob": "e6430a3b6309ee98d767b5c3c4d9ef9995888dc6",
+      "bytes": 60908
+    },
+    "IPAC": {
+      "blob": "cd00d89dce7ea8c413607b6f4aafd4929b583a62",
+      "bytes": 130543
+    },
+    "IPCC": {
+      "blob": "c57de0d34623256e5f3bac963f8308f4c8a19b32",
+      "bytes": 240070
+    },
+    "IPCM": {
+      "blob": "a76eefd56c3bb975c24d46b47619f3fdfd2cb689",
+      "bytes": 232253
+    },
+    "IPOL": {
+      "blob": "c661cd933c1441a85f0a945d88f3af0a123da571",
+      "bytes": 223052
+    },
+    "IPPE": {
+      "blob": "6dea26fbdd133824c1c3ba77f0a66f85de4da9c5",
+      "bytes": 128832
+    },
+    "IPTV": {
+      "blob": "51a9ab535679279309de34bfe7dd3e0f1b341efb",
+      "bytes": 254750
+    },
+    "IRRA": {
+      "blob": "c77947aad9125c406cad70ae07890eb52f425290",
+      "bytes": 237573
+    },
+    "IRSX": {
+      "blob": "40525f19493d09595cad1356ae7f45e09fe6d865",
+      "bytes": 82281
+    },
+    "ISAP": {
+      "blob": "f88876890a6b63478eb88edd23a4802f42563fa4",
+      "bytes": 82542
+    },
+    "ISAT": {
+      "blob": "d8539840c128746f8504dff004e09802229717ae",
+      "bytes": 272341
+    },
+    "ISEA": {
+      "blob": "e201fd1c0b48a0a4054ffdb1ab34c36ed77b49dd",
+      "bytes": 26544
+    },
+    "ISSP": {
+      "blob": "cd46680fe8371baa8e0e27ccbb204f1b16a2bfc9",
+      "bytes": 243634
+    },
+    "ITIC": {
+      "blob": "7b16bc6a1ae289a7a2be7377039e7a022ac166aa",
+      "bytes": 235060
+    },
+    "ITMA": {
+      "blob": "4c765053035659fdb8b60f4252c620e30e3579ce",
+      "bytes": 223651
+    },
+    "ITMG": {
+      "blob": "0de9994418455c95c28ae3f57f19fcfc773a3f66",
+      "bytes": 280724
+    },
+    "JARR": {
+      "blob": "9465c1fc26637da5331c385e51b3c9c0fdaa936a",
+      "bytes": 110219
+    },
+    "JAST": {
+      "blob": "1994c3c68cfc02cbbd3e2194890dd9f297a3feee",
+      "bytes": 231804
+    },
+    "JATI": {
+      "blob": "92f40d87c134f5ada450cfd1a45e5f3820e8c756",
+      "bytes": 70569
+    },
+    "JAWA": {
+      "blob": "77c38368768a1544b2d713684175ef661eddbba6",
+      "bytes": 224612
+    },
+    "JAYA": {
+      "blob": "6235dab2e7515ee50f8225b97581586e3047d125",
+      "bytes": 226875
+    },
+    "JECC": {
+      "blob": "83c25471960ead6617e7a403da4015be7ad51293",
+      "bytes": 209691
+    },
+    "JGLE": {
+      "blob": "a421bffe15473bdb858a0ec9ac85faf1038a5ebf",
+      "bytes": 208999
+    },
+    "JIHD": {
+      "blob": "ac4a68f09c1f17e3540d59a82a3f28efc5c49699",
+      "bytes": 220082
+    },
+    "JKON": {
+      "blob": "9c58e9836f9d3529b09743868ec638010c426641",
+      "bytes": 236323
+    },
+    "JKSW": {
+      "blob": "e78086b492d7f5c5f350f3ba230dc7c33805deb1",
+      "bytes": 175673
+    },
+    "JMAS": {
+      "blob": "b7f6450ab256a2dee29b514e8ad51f083c80ee7e",
+      "bytes": 222607
+    },
+    "JPFA": {
+      "blob": "616312de06cb83242f650ca18017bee0ae2112b3",
+      "bytes": 278950
+    },
+    "JRPT": {
+      "blob": "03c8a62d5d9d270e88d3c743ea84c38d84b19921",
+      "bytes": 245175
+    },
+    "JSKY": {
+      "blob": "2e9d8148ab304d952ddfc1e4f0ee554d0feda7bc",
+      "bytes": 216765
+    },
+    "JSMR": {
+      "blob": "b831789e14d889d1a2bd8317305adb88e9c76ca5",
+      "bytes": 272090
+    },
+    "JSPT": {
+      "blob": "088a72f64e020c813686a645cf19cc0bbe079f46",
+      "bytes": 206417
+    },
+    "JTPE": {
+      "blob": "57071e368d6456bce9bad90ee4790f7b6f81afb2",
+      "bytes": 239000
+    },
+    "KAEF": {
+      "blob": "0df4031e486c31f9c7571e3e7391fae2421adde5",
+      "bytes": 250055
+    },
+    "KARW": {
+      "blob": "f66aa794e8d97e968b7d640bc787e3ab72e8cde1",
+      "bytes": 215474
+    },
+    "KAYU": {
+      "blob": "16c11675ee52eec886775cc885db3fb691de18a4",
+      "bytes": 212367
+    },
+    "KBAG": {
+      "blob": "66263c6adcccf182e28245bdbff1e2a1dd5724f6",
+      "bytes": 195897
+    },
+    "KBLI": {
+      "blob": "2308849c5204c735e50d438405512ee451b8a801",
+      "bytes": 239044
+    },
+    "KBLM": {
+      "blob": "35a4fc1b697551f6ad5bb10eb09a6c856b8393f8",
+      "bytes": 222699
+    },
+    "KBLV": {
+      "blob": "4044db7ccaaf6d547a5bae8ccc8dce9344192503",
+      "bytes": 218743
+    },
+    "KBRI": {
+      "blob": "8c2f889f4927a32be8a8ade6b99c1cb1b803c7a2",
+      "bytes": 180494
+    },
+    "KDSI": {
+      "blob": "41398613fbd4fc94e2d975ead5fc57abfca096e2",
+      "bytes": 220568
+    },
+    "KDTN": {
+      "blob": "b2ee4186eee51abf30fb25f71e589db614f2c1f5",
+      "bytes": 90995
+    },
+    "KEEN": {
+      "blob": "03f9204413bdac2b757b687c265a9d60175d2d3d",
+      "bytes": 234492
+    },
+    "KEJU": {
+      "blob": "8af1fb24f36409d265ea37d160e342e2c44459b6",
+      "bytes": 218025
+    },
+    "KETR": {
+      "blob": "294e026298eb7a8283e77a935fe46310a3a92962",
+      "bytes": 92190
+    },
+    "KIAS": {
+      "blob": "bc49af04c7da6dec0ed4fec757f42d51dec2ed95",
+      "bytes": 212569
+    },
+    "KICI": {
+      "blob": "e97cc82db9764b50636d40f413c7fd43010c9b31",
+      "bytes": 215612
+    },
+    "KIJA": {
+      "blob": "e464afd76844bb0893fea37ba54889f7d63f6e96",
+      "bytes": 258190
+    },
+    "KING": {
+      "blob": "f99f73e355ea3f4d54fb24e047e5a7eb2653d8b0",
+      "bytes": 79853
+    },
+    "KINO": {
+      "blob": "82e2cc5a28561ac99b83d73f795a284999f4fbe5",
+      "bytes": 239935
+    },
+    "KIOS": {
+      "blob": "f61c95d09fc356f84e5d14f2ae60c18707863057",
+      "bytes": 227885
+    },
+    "KJEN": {
+      "blob": "4a50183b7a3f0b536e1025ad20bf84eaff89cebe",
+      "bytes": 221617
+    },
+    "KKES": {
+      "blob": "933f3b0c9b7a0ce8379099caa4ed759a992a1b86",
+      "bytes": 99676
+    },
+    "KKGI": {
+      "blob": "b7596f6ddfbf0ca529f40ef51d5fc4330ca34d20",
+      "bytes": 237691
+    },
+    "KLAS": {
+      "blob": "e7975ecbeaca1a4858a0db48e4b0c0febc6449ab",
+      "bytes": 70728
+    },
+    "KLBF": {
+      "blob": "2612c5bd5d5354ebca158ef1caaff4cfba977768",
+      "bytes": 294544
+    },
+    "KLIN": {
+      "blob": "9d357d1362754744edf4a1d1493635d7d820a8d3",
+      "bytes": 94900
+    },
+    "KMDS": {
+      "blob": "276c3d9c6abff607dfd4f85f47994a0fb553cc45",
+      "bytes": 175777
+    },
+    "KMTR": {
+      "blob": "139f83529fa373266f9312ee0eaf2b40ee7624c1",
+      "bytes": 220999
+    },
+    "KOBX": {
+      "blob": "18409c8914a15a898975fc7ed74390cd08a0ee45",
+      "bytes": 230253
+    },
+    "KOCI": {
+      "blob": "17056d4ea9a602af780b359b5d4f78128bff749d",
+      "bytes": 53415
+    },
+    "KOIN": {
+      "blob": "e24d984bae44ab2be4b016f3ea781ac46e3b37b0",
+      "bytes": 205798
+    },
+    "KOKA": {
+      "blob": "a6e1711848d599bead1fb658d186761fe5675875",
+      "bytes": 56894
+    },
+    "KONI": {
+      "blob": "21e9174470ee3ecb8bc1437ada738b882905e4e8",
+      "bytes": 213731
+    },
+    "KOPI": {
+      "blob": "8ab33e6b3ad9d493f12556df8eafefa04202f8e5",
+      "bytes": 215213
+    },
+    "KOTA": {
+      "blob": "9c57a7c1dafd62ea93c0dc1bcc81c4ac7796b3c0",
+      "bytes": 235215
+    },
+    "KPAL": {
+      "blob": "7915269b6bfc32fea352461e2fc5e8e416b89021",
+      "bytes": 195891
+    },
+    "KPAS": {
+      "blob": "2df509366a022c2d32681f4ab2a98fc0dbbf115e",
+      "bytes": 193077
+    },
+    "KPIG": {
+      "blob": "5a3c2a3ec49bc66e5febb32170ee3c654b678a2c",
+      "bytes": 262449
+    },
+    "KRAH": {
+      "blob": "1d83fc1bde5f8e3630b71de20672cb914c909184",
+      "bytes": 188379
+    },
+    "KRAS": {
+      "blob": "37c0f2c1800c515707bba751c0972dce838acb85",
+      "bytes": 253735
+    },
+    "KREN": {
+      "blob": "cd162aed6ce8002e41ae341f274068f76fbf57c7",
+      "bytes": 239617
+    },
+    "KRYA": {
+      "blob": "cb4e2c7fbc0f79b7e79054f9ef5ff8fb35bb70dd",
+      "bytes": 105756
+    },
+    "KSIX": {
+      "blob": "85b5c031d9e746763a1a06c1d6e82ade86b9bd96",
+      "bytes": 5705
+    },
+    "KUAS": {
+      "blob": "fdc253fcb5ee4013100ec229ac8c4aa6692e61cf",
+      "bytes": 133350
+    },
+    "LABA": {
+      "blob": "3c55d9a688bda3d4deb25317c612efce1a195e7d",
+      "bytes": 153311
+    },
+    "LABS": {
+      "blob": "c6cc56d8ac263005e8ff6d38f86582b69e9b9db7",
+      "bytes": 27400
+    },
+    "LAJU": {
+      "blob": "cfd02ee3ed19eedd63e0dd6eeab831174226bf04",
+      "bytes": 82379
+    },
+    "LAND": {
+      "blob": "741e1d4dc095b9f028f0572f3f44604a531ba2bd",
+      "bytes": 223342
+    },
+    "LAPD": {
+      "blob": "b1d7e184d2ce70df8ecdf3b733e642081c46ec3d",
+      "bytes": 190079
+    },
+    "LCGP": {
+      "blob": "4e69a6c29d9ee11ead0bd143625d540eca441ee8",
+      "bytes": 184559
+    },
+    "LCKM": {
+      "blob": "d2f65dbd94d3c963f822dd4d84cd11c554fb8a34",
+      "bytes": 216655
+    },
+    "LEAD": {
+      "blob": "f5ee155e6b3e2c79e9af096f69577ab9429ad7e8",
+      "bytes": 222790
+    },
+    "LFLO": {
+      "blob": "9a30d415eca5919d9341020401afb15a1386448b",
+      "bytes": 141210
+    },
+    "LIFE": {
+      "blob": "6dcdc7f6531da82abd3211fdf9f7ea9f5e8272c2",
+      "bytes": 214407
+    },
+    "LINK": {
+      "blob": "a3344e87cf4c3e154b44d818ed771f7560a03ad5",
+      "bytes": 248634
+    },
+    "LION": {
+      "blob": "64cecf7010d09669e24691f209cf700bbb551d4e",
+      "bytes": 214057
+    },
+    "LIVE": {
+      "blob": "644e3f4d1d9081f918bf7e13b1f77189863ad5da",
+      "bytes": 44557
+    },
+    "LMAS": {
+      "blob": "bc0bce24b99a4ca0911aef0b959ea347e59f25a0",
+      "bytes": 196817
+    },
+    "LMAX": {
+      "blob": "19252168f2e08a12e91fd8b4d1bc1695b9fa2b76",
+      "bytes": 59202
+    },
+    "LMPI": {
+      "blob": "d23336a2dc9eac882dac9c444c4e7dab3263681e",
+      "bytes": 216714
+    },
+    "LMSH": {
+      "blob": "038a1c4ae1919c0fdb78be5ad01fc8614a4e3ee1",
+      "bytes": 200843
+    },
+    "LOPI": {
+      "blob": "a306feb1219a68027c1c98838503b12b0e8130ca",
+      "bytes": 50307
+    },
+    "LPCK": {
+      "blob": "f15356a0168d81e49b97a3747bfdaebd9a7ce76e",
+      "bytes": 241201
+    },
+    "LPGI": {
+      "blob": "118c4fc5491ba2490618e487acbf838a2eb9ee6c",
+      "bytes": 217371
+    },
+    "LPIN": {
+      "blob": "3b49a124327ec704f2262411f9aa95d322a9f306",
+      "bytes": 218960
+    },
+    "LPKR": {
+      "blob": "1398cd1ebece5ffa5b349aa8f8ef41c0957fad05",
+      "bytes": 259094
+    },
+    "LPLI": {
+      "blob": "211682edcef827d248e2cebc425f7185d6e05f77",
+      "bytes": 217364
+    },
+    "LPPF": {
+      "blob": "c69aac0dbcb6adeb95535d856114c1c4d86b2500",
+      "bytes": 264230
+    },
+    "LPPS": {
+      "blob": "b4cb49f074f17a8bc9987467aafd286bff93ac12",
+      "bytes": 215565
+    },
+    "LRNA": {
+      "blob": "2c4ded843a049acff8791796d9ce9336975975f0",
+      "bytes": 212895
+    },
+    "LSIP": {
+      "blob": "e8e756dd29f285ecada7790233213d9d1af6a732",
+      "bytes": 263751
+    },
+    "LTLS": {
+      "blob": "75cdb4d979f51a91e8654af43175393ed5b54bcc",
+      "bytes": 233033
+    },
+    "LUCK": {
+      "blob": "63e712dc3dcf0ef0222d1d1bc36cf917550f53df",
+      "bytes": 227589
+    },
+    "LUCY": {
+      "blob": "6733560fd05f92892e10450b3146e9bfeca08d89",
+      "bytes": 147378
+    },
+    "MABA": {
+      "blob": "b31b32fc2e673eefac2c2ba2cc3d25ef7ef13404",
+      "bytes": 191305
+    },
+    "MAGP": {
+      "blob": "48b2ef63e2c2dda019dda8cdaf4b7ae793328304",
+      "bytes": 191722
+    },
+    "MAHA": {
+      "blob": "8e7da77f3879eb2820d7567b4cc209c7ba096ee4",
+      "bytes": 72026
+    },
+    "MAIN": {
+      "blob": "d266b1deef1557e710d3eb9cbb62c4dbe3cf5815",
+      "bytes": 243524
+    },
+    "MAMI": {
+      "blob": "9451bb512ee3bbb07d6e216f712b7d5ce9628722",
+      "bytes": 201790
+    },
+    "MANG": {
+      "blob": "6bd991b66245c1b28ddeb04b474322741d931bb2",
+      "bytes": 45233
+    },
+    "MAPA": {
+      "blob": "80bd0e32d8f5389ce79f59ccae8d6e5351d022b5",
+      "bytes": 259419
+    },
+    "MAPB": {
+      "blob": "6566dbdb1f3e7d4d4260b09afabea93bd17b6cff",
+      "bytes": 222540
+    },
+    "MAPI": {
+      "blob": "c9432f85f7172d2918d1aaacd9ccdba938d23f15",
+      "bytes": 279594
+    },
+    "MARI": {
+      "blob": "e4dbceaeba01d46418f26109c822c2efb205592e",
+      "bytes": 237754
+    },
+    "MARK": {
+      "blob": "561fb648afd51a55c2a1518c0892ccd0bcf18e2b",
+      "bytes": 249197
+    },
+    "MASA": {
+      "blob": "7ab06ea77eee8b8e9e6f4dc4eda068b7bd395991",
+      "bytes": 219843
+    },
+    "MASB": {
+      "blob": "ffcb3731875a5cce3170e445910d487a53dc1dc8",
+      "bytes": 146779
+    },
+    "MAXI": {
+      "blob": "b00e0bd950026e98a1898b53a4bf06ffffed7973",
+      "bytes": 67873
+    },
+    "MAYA": {
+      "blob": "f14680145ff15c714e31a4f78ca6ec0e862d67a8",
+      "bytes": 233940
+    },
+    "MBAP": {
+      "blob": "69059a42e6e9f3e8365442c711214e4a619c885e",
+      "bytes": 239101
+    },
+    "MBMA": {
+      "blob": "ba2a7042664cde8441b9a89a7504417ca646f266",
+      "bytes": 89675
+    },
+    "MBSS": {
+      "blob": "ee8cca7e368ebe96a9bb4bdac46c707b194d5383",
+      "bytes": 236054
+    },
+    "MBTO": {
+      "blob": "8d38b7972a3d7cbeecb7e4520383d6e18ae697d7",
+      "bytes": 219275
+    },
+    "MCAS": {
+      "blob": "f66b0dc9d75623c7d9fdcd3dda8280ed519e2769",
+      "bytes": 246737
+    },
+    "MCOL": {
+      "blob": "512928b86102bb6e307e10e6fa63df6d59a76553",
+      "bytes": 151316
+    },
+    "MCOR": {
+      "blob": "c64511bb8e2a139f522fc3493c7b35f61d1c7747",
+      "bytes": 238079
+    },
+    "MDIA": {
+      "blob": "0af55e89cdbba11652a3092fedf0464d08ec42eb",
+      "bytes": 212378
+    },
+    "MDIY": {
+      "blob": "8428c5de5ae15d41a743ee2efa387d6ca18d3aec",
+      "bytes": 8195
+    },
+    "MDKA": {
+      "blob": "b0bfe6951717ffc7e479a4941c945d1369d49795",
+      "bytes": 293028
+    },
+    "MDKI": {
+      "blob": "23c18d11afc2bdc44b0f1a0e8504ce7138845e5a",
+      "bytes": 227165
+    },
+    "MDLN": {
+      "blob": "25873abb55af2dd89bf5a247b9ff7f00062d1f9f",
+      "bytes": 230004
+    },
+    "MDRN": {
+      "blob": "864ac41800b18ce1518ec592412db213d4efe9dc",
+      "bytes": 201687
+    },
+    "MEDC": {
+      "blob": "1a4218597b01565dd1cef86f72aa57166efa3694",
+      "bytes": 278717
+    },
+    "MEDS": {
+      "blob": "a8203cf47b1c2237197b90725c1307234f3f1719",
+      "bytes": 102357
+    },
+    "MEGA": {
+      "blob": "81ab82125d3337062554503bf7248474f1485526",
+      "bytes": 233467
+    },
+    "MEJA": {
+      "blob": "ef56a510e7aaf881226ee3884b09a3aa0a8a0098",
+      "bytes": 43660
+    },
+    "MENN": {
+      "blob": "ef5064818fcb81aab8a48b1efd7904d2235e6be5",
+      "bytes": 68798
+    },
+    "MERK": {
+      "blob": "131064cb40f9c410b95ef618b1e6f618fec0fbdc",
+      "bytes": 231421
+    },
+    "META": {
+      "blob": "4a83518a84e0d560d60a10ab0ce020dee7ee7ac5",
+      "bytes": 228746
+    },
+    "MFIN": {
+      "blob": "a6af3c0a26b1384a345269b819c116b5eb1e6911",
+      "bytes": 236202
+    },
+    "MFMI": {
+      "blob": "56918daec43f15df43b099843b62c0782f229ebc",
+      "bytes": 211942
+    },
+    "MGLV": {
+      "blob": "d4929d00994702a1226affcbf2e81b30e8a66edf",
+      "bytes": 136753
+    },
+    "MGNA": {
+      "blob": "558adcaed3dba2c386b3b45ab593aed3d0630201",
+      "bytes": 190195
+    },
+    "MGRO": {
+      "blob": "82687186c1c3cc890e3052e24e26816223813317",
+      "bytes": 241931
+    },
+    "MHKI": {
+      "blob": "199c5a80aef27df9474513f27ac037f320f17517",
+      "bytes": 36917
+    },
+    "MICE": {
+      "blob": "cc1d3fde17dadf249a0d26dbd0259b9fad544ba3",
+      "bytes": 218791
+    },
+    "MIDI": {
+      "blob": "b7e177484c60c614a99289cd62c7a1d33b9552d3",
+      "bytes": 236649
+    },
+    "MIKA": {
+      "blob": "32b2ae2f7726041d5ce19ab70435773639f2bc93",
+      "bytes": 274728
+    },
+    "MINA": {
+      "blob": "94a4f9e80e7eefffd3b1c973f1b8699c9ba70b8f",
+      "bytes": 216991
+    },
+    "MIRA": {
+      "blob": "93aafb0786cf360e6cc4824169606448af3bc0bd",
+      "bytes": 203709
+    },
+    "MITI": {
+      "blob": "cbf7bad683fec752949106dba53b8c435595ddb4",
+      "bytes": 216567
+    },
+    "MKAP": {
+      "blob": "5d5cc16fa2039c7d1e02c4deb661770f6c2e5347",
+      "bytes": 44634
+    },
+    "MKNT": {
+      "blob": "14344295719b826b2731e2123211f910191b75b7",
+      "bytes": 209118
+    },
+    "MKPI": {
+      "blob": "d522c209c89b10692d4fe60b03340ea3534d2caa",
+      "bytes": 230285
+    },
+    "MKTR": {
+      "blob": "1a4b18dfecb8e081f539204c2fce1af6d7b8b3da",
+      "bytes": 98539
+    },
+    "MLBI": {
+      "blob": "29902b807c66581bca21818e6a053bc72f9e0e0d",
+      "bytes": 243500
+    },
+    "MLIA": {
+      "blob": "8e94a021422cb04084a307c87e6da53c7133e625",
+      "bytes": 246884
+    },
+    "MLPL": {
+      "blob": "b877a545eb8e172a0a4b404481020c43b77c4b79",
+      "bytes": 247341
+    },
+    "MLPT": {
+      "blob": "83998b6b13a3bf1ae14aa7ec88f6c4330197804e",
+      "bytes": 232528
+    },
+    "MMIX": {
+      "blob": "877acf3c48bbfe2e3ef9682b4462e98aeadad826",
+      "bytes": 92054
+    },
+    "MMLP": {
+      "blob": "1abb6d946a6a99377c95b123395a3706444e17d3",
+      "bytes": 242882
+    },
+    "MNCN": {
+      "blob": "2ed63dffdfa911e51633237d452947de7da559f3",
+      "bytes": 273043
+    },
+    "MOLI": {
+      "blob": "32b53d768161e2ecf547e9351d474ab8f4bf4a16",
+      "bytes": 226025
+    },
+    "MORA": {
+      "blob": "83334495d660e1bbbd0c2df31399ef648f54331f",
+      "bytes": 106781
+    },
+    "MPIX": {
+      "blob": "480bf1ab71d28ebafb6ab658e2fc81482b26d0b2",
+      "bytes": 40795
+    },
+    "MPMX": {
+      "blob": "61b00ddeeff5dca4107432b53373cc83478699a2",
+      "bytes": 254001
+    },
+    "MPOW": {
+      "blob": "bf1db21b60bae8c1f6345935d9056a0038df9a01",
+      "bytes": 220076
+    },
+    "MPPA": {
+      "blob": "89d74c84a006bfa3677d83856c94349b84ee4d64",
+      "bytes": 245867
+    },
+    "MPRO": {
+      "blob": "83acce989eb71e0da425c46a5a4dce088915beca",
+      "bytes": 219149
+    },
+    "MPXL": {
+      "blob": "4c78d2fd1fd2c54fd3c71da5d6e35010674debec",
+      "bytes": 77458
+    },
+    "MRAT": {
+      "blob": "c24949cb9c3e52b7e339ee0991f56fc014d38123",
+      "bytes": 222131
+    },
+    "MREI": {
+      "blob": "69af7fb0cc83917c6c9af567c404c7a9b68656b2",
+      "bytes": 220257
+    },
+    "MSIE": {
+      "blob": "704dc7438275c71dfc8fe9af4803c069ddeaf6ac",
+      "bytes": 56916
+    },
+    "MSIN": {
+      "blob": "09f0a4d3d9767b3262e2602ed3d20848bf47bc13",
+      "bytes": 259075
+    },
+    "MSJA": {
+      "blob": "1404517a923c98ea7687e69dc9baa9df69a4633e",
+      "bytes": 47558
+    },
+    "MSKY": {
+      "blob": "2f67cd56c283025362327a142e223edb72ed6622",
+      "bytes": 230550
+    },
+    "MSTI": {
+      "blob": "913bc7288623c3c19ceb20282034cc72c93f0405",
+      "bytes": 56507
+    },
+    "MTDL": {
+      "blob": "714f7ee5cf012db5cb76886a6071b9ef6b5c4a7b",
+      "bytes": 255404
+    },
+    "MTEL": {
+      "blob": "28d4bf75660646f8d00b6a68d61d347d3cd49877",
+      "bytes": 155710
+    },
+    "MTFN": {
+      "blob": "b6937d5fa6d6fcd9f9a969b7924180797ef7705a",
+      "bytes": 203060
+    },
+    "MTLA": {
+      "blob": "e0865e768a96d2e473512550a10bc251bd41be8b",
+      "bytes": 236652
+    },
+    "MTMH": {
+      "blob": "5ac12bd6c1a9ce132472bb0d91de07b073484193",
+      "bytes": 127814
+    },
+    "MTPS": {
+      "blob": "f7a4faa81bf0b3efdc08a4e687826b4282f0e8d0",
+      "bytes": 219138
+    },
+    "MTRA": {
+      "blob": "9f8f21fc6a6a03d4a74365974365c67fd9002c2c",
+      "bytes": 184872
+    },
+    "MTSM": {
+      "blob": "b67d394ae22b35f750b4a90d2a61e8bd41698b94",
+      "bytes": 210343
+    },
+    "MTWI": {
+      "blob": "be80d7bd636738fc07e767c652a2639c8bdfd7ea",
+      "bytes": 226913
+    },
+    "MUTU": {
+      "blob": "f93a85c840a910c85e4f6e059ca8581fd228bc77",
+      "bytes": 63792
+    },
+    "MYOH": {
+      "blob": "d07668ff6dbd7e1a6824aeb3d9eac5f97a8c374e",
+      "bytes": 237091
+    },
+    "MYOR": {
+      "blob": "8fa87fdf2ec90886104ae1b810ab6604ca04c612",
+      "bytes": 275583
+    },
+    "MYRX": {
+      "blob": "357b6b85bd5fe44a3160fb9978f9d2b6e03cf49a",
+      "bytes": 192605
+    },
+    "MYTX": {
+      "blob": "7b0ad12b9569c6f9626d7c960cb9fb957f9f8a01",
+      "bytes": 208338
+    },
+    "NAIK": {
+      "blob": "01e397d2d6c6b35bf0115ab63364f6956467bea7",
+      "bytes": 12424
+    },
+    "NANO": {
+      "blob": "ea40bd32a8afdef3d110746a12bba98bf3471c12",
+      "bytes": 112293
+    },
+    "NASA": {
+      "blob": "29f767d678227e6c7b569654e08a75510c1fa229",
+      "bytes": 217850
+    },
+    "NASI": {
+      "blob": "ddf5d14353fbbfb451b7c8c026d4421ef8a4a6a2",
+      "bytes": 130490
+    },
+    "NATO": {
+      "blob": "e62f5a7f5468386ea73eec6a1b616cf5817e50b3",
+      "bytes": 261266
+    },
+    "NAYZ": {
+      "blob": "e152247a3f8cbcfaef649f124b868dce01f39381",
+      "bytes": 76501
+    },
+    "NCKL": {
+      "blob": "3d90bd7fbc456ccf3b66528010f93dd6e1706e1b",
+      "bytes": 86061
+    },
+    "NELY": {
+      "blob": "fdcb40301e2e413820fda46b3b7c8a91f56b51c0",
+      "bytes": 229009
+    },
+    "NEST": {
+      "blob": "972864f6c960290c98b09a1d8cf1b889ab983f8b",
+      "bytes": 24849
+    },
+    "NETV": {
+      "blob": "6ee0a24cc1625482ec84e4315ab9df3d4fe4bde8",
+      "bytes": 130091
+    },
+    "NFCX": {
+      "blob": "571cb2a82e964b384b81aad4edf9614b7e4f21a0",
+      "bytes": 237824
+    },
+    "NICE": {
+      "blob": "9907e987e4cc57cccd9250f17fca89b7f84322fe",
+      "bytes": 49598
+    },
+    "NICK": {
+      "blob": "3acfd9e3298ff121ced6c6330f2d6e6c85cf87a3",
+      "bytes": 212992
+    },
+    "NICL": {
+      "blob": "df4e6152df7675840f1b45c7132c14bf85456ef0",
+      "bytes": 162499
+    },
+    "NIKL": {
+      "blob": "f7d06d9c87bcfe6d7fe2b3c83a96cc2b2c713abc",
+      "bytes": 236921
+    },
+    "NINE": {
+      "blob": "021be03b73b4825e52491daa8c740e2ff1254982",
+      "bytes": 80519
+    },
+    "NIPS": {
+      "blob": "a61bdb54a9f2b87b92b579c608a0c02a1647b155",
+      "bytes": 185715
+    },
+    "NIRO": {
+      "blob": "b3afdf280cfb95b66a4ecd53325c40e78fddbed3",
+      "bytes": 238850
+    },
+    "NISP": {
+      "blob": "f48970c215ab1a7a68001f9690abc61d9d9a0657",
+      "bytes": 249237
+    },
+    "NOBU": {
+      "blob": "a49faa504404017c213e58c899440826ef37c0cf",
+      "bytes": 231187
+    },
+    "NPGF": {
+      "blob": "473973be3619ed0e8053ecb72cb584109fe68e20",
+      "bytes": 153692
+    },
+    "NRCA": {
+      "blob": "629dc8ae225182db4d3f38b63b98fe003d72e29a",
+      "bytes": 228308
+    },
+    "NSSS": {
+      "blob": "0a9198f2a32ca8840960c1ae65e33c9410cdf410",
+      "bytes": 90861
+    },
+    "NTBK": {
+      "blob": "1e08a4ce99f885be7c555b87470ab69bdf3ae5e2",
+      "bytes": 116905
+    },
+    "NUSA": {
+      "blob": "a799d0ee3a085b1689d6f73330ffe89cbc69c924",
+      "bytes": 190495
+    },
+    "NZIA": {
+      "blob": "4e033da67dacbb70ec0cd0f08750b1ea0b8b30c5",
+      "bytes": 218899
+    },
+    "OASA": {
+      "blob": "a91551cf7ce7eba5c50b635be93008b5958451f6",
+      "bytes": 227981
+    },
+    "OBAT": {
+      "blob": "26f95b5a97519cd73c7a2d9238b9255aca8a2222",
+      "bytes": 5382
+    },
+    "OBMD": {
+      "blob": "c641a2e155033e58b80a364b0d8a1014ebb49626",
+      "bytes": 131647
+    },
+    "OCAP": {
+      "blob": "30f9b16e5bcb1616895b5103f87ebd1dc15823e1",
+      "bytes": 184595
+    },
+    "OILS": {
+      "blob": "0475e097b7d10d192bef744dbbe0249a048a0191",
+      "bytes": 140149
+    },
+    "OKAS": {
+      "blob": "018b2dce26068ddaba8fa23cfbcf617327988aac",
+      "bytes": 231225
+    },
+    "OLIV": {
+      "blob": "77ac8325398236569761c37dc547cb0fb586bf59",
+      "bytes": 103098
+    },
+    "OMED": {
+      "blob": "6dd75edd4902b63858e7eb5c1dd90183a2783344",
+      "bytes": 100195
+    },
+    "OMRE": {
+      "blob": "2a73508120a7ae641c0df81c56a60bf4fe7a5a01",
+      "bytes": 207595
+    },
+    "OPMS": {
+      "blob": "b85222a608a01732698b33ea71c801a270396d12",
+      "bytes": 221715
+    },
+    "PACK": {
+      "blob": "e9c815df238fc39605d2b3353644764f1f606406",
+      "bytes": 76844
+    },
+    "PADA": {
+      "blob": "48bd56607c0ac4a2cb736f15b2f66b6e6ebfab7b",
+      "bytes": 87286
+    },
+    "PADI": {
+      "blob": "61acee66b7030cb5cba53ee5a73e4e48394e5d58",
+      "bytes": 217237
+    },
+    "PALM": {
+      "blob": "baa7538ee39f3c3bc4404a65d016330546bcedc8",
+      "bytes": 232761
+    },
+    "PAMG": {
+      "blob": "b0d556e0ba078a1a0256ed8fd5b5e8d279d32e29",
+      "bytes": 227533
+    },
+    "PANI": {
+      "blob": "21d45813f206228374faa904f1f8d00c2f9dbd74",
+      "bytes": 240212
+    },
+    "PANR": {
+      "blob": "504e9acff066ec2bbb78ca7a420a7b3160c76431",
+      "bytes": 233791
+    },
+    "PANS": {
+      "blob": "dbae5365035fb80c74cd59cebf6e3f2667f75a71",
+      "bytes": 235341
+    },
+    "PART": {
+      "blob": "8699e9efbb77942bdea480efd387526b4506c651",
+      "bytes": 28659
+    },
+    "PBID": {
+      "blob": "68fbbcc15df15e582f1ef94159901d9154bbe5c9",
+      "bytes": 237468
+    },
+    "PBRX": {
+      "blob": "1c536dee968a18401c3bbfce04277863c3c525dc",
+      "bytes": 237551
+    },
+    "PBSA": {
+      "blob": "0c424b6a23e9680c861c6cad5bf7fb6912900279",
+      "bytes": 220116
+    },
+    "PCAR": {
+      "blob": "8e79242228778cc9c07a604a6858d23925054ffc",
+      "bytes": 219468
+    },
+    "PDES": {
+      "blob": "1ee53a18bb329d810d8699e40ceeba3e4bbb1e9a",
+      "bytes": 217182
+    },
+    "PDPP": {
+      "blob": "c5e5e63e9ea76e957f1f1410bf0fdf3ec06d7775",
+      "bytes": 99723
+    },
+    "PEGE": {
+      "blob": "887a77dcec6fc63291523c796525c6d337289fe9",
+      "bytes": 224719
+    },
+    "PEHA": {
+      "blob": "114cc782177abc2800f13d9eb4edcff9bb3e3a70",
+      "bytes": 226599
+    },
+    "PEVE": {
+      "blob": "589ec3fbe6723a04de73d6914cee2675fedcf7d6",
+      "bytes": 85933
+    },
+    "PGAS": {
+      "blob": "c883deb52edf21ee9e51164cc08920978e4ba231",
+      "bytes": 291630
+    },
+    "PGEO": {
+      "blob": "ba643d4359f7db4dfdcd4685c1615dbfc2ebff96",
+      "bytes": 94709
+    },
+    "PGJO": {
+      "blob": "b71f45448713919191424551f0c187caf581790b",
+      "bytes": 184262
+    },
+    "PGLI": {
+      "blob": "d14f4fec24687ac701246674a48a42c33ced229f",
+      "bytes": 213970
+    },
+    "PGUN": {
+      "blob": "9ab496274b7a6d54c942f90286962b5b85152c67",
+      "bytes": 180176
+    },
+    "PICO": {
+      "blob": "48040d8445cda00813d5ace8356ae7680a5624c0",
+      "bytes": 224987
+    },
+    "PIPA": {
+      "blob": "7daa5b0818c7a438bfc6c320b91d6dad036891c4",
+      "bytes": 71421
+    },
+    "PJAA": {
+      "blob": "18b51eb47567f35bc2e3d567f40897d4d46a56ce",
+      "bytes": 228314
+    },
+    "PKPK": {
+      "blob": "23c27a1a03cb1cabf744b7076b641682e16c3854",
+      "bytes": 223443
+    },
+    "PLAN": {
+      "blob": "577541641171151e3471129e8e368102056c72e0",
+      "bytes": 162789
+    },
+    "PLAS": {
+      "blob": "d9f3780b435471cec37dc319605a3eb580b05dba",
+      "bytes": 181154
+    },
+    "PLIN": {
+      "blob": "75bf501a3d1bdca29cc73f359ec0aef2d6283251",
+      "bytes": 216248
+    },
+    "PMJS": {
+      "blob": "66c4def662abc8c4339feca3c51609a7a371f1ea",
+      "bytes": 211420
+    },
+    "PMMP": {
+      "blob": "7d80c70c84f7bb78517eef3a3bdd89c02342ba26",
+      "bytes": 184334
+    },
+    "PNBN": {
+      "blob": "db7d78332ccc176b04f15b2c5fb884a6d503223c",
+      "bytes": 262566
+    },
+    "PNBS": {
+      "blob": "91a09f604d752fba5031b555725803685383a692",
+      "bytes": 236827
+    },
+    "PNGO": {
+      "blob": "9b73ed3de877e06e2de9012b0f00d4b66d1b9d6c",
+      "bytes": 178851
+    },
+    "PNIN": {
+      "blob": "640be2c91249a8e246120b082e7619c8f01c931c",
+      "bytes": 244322
+    },
+    "PNLF": {
+      "blob": "34ec3cd881c5687b46590d36287e1e6684ebb6cf",
+      "bytes": 264623
+    },
+    "PNSE": {
+      "blob": "fd093868b3755ab2ec241cd3449cb97f4faa1fdc",
+      "bytes": 198792
+    },
+    "POLA": {
+      "blob": "516eff8ab538725ad208d674ef7c584fb4cd08af",
+      "bytes": 216028
+    },
+    "POLI": {
+      "blob": "32629bd0b3eaad9c7c6fbb2d69b5a34d1287bfd0",
+      "bytes": 217739
+    },
+    "POLL": {
+      "blob": "1f76187e59dc96ea270377a513e5f2e129888eaa",
+      "bytes": 232406
+    },
+    "POLU": {
+      "blob": "a9983458ad0f95ebbec5835eba2a4d842e81e826",
+      "bytes": 212594
+    },
+    "POLY": {
+      "blob": "2c3fcedad9b0e463973b246c3354726802c83496",
+      "bytes": 212665
+    },
+    "POOL": {
+      "blob": "2774621ac10dea81b9ff4204efdcbb8f2fac8cf6",
+      "bytes": 191429
+    },
+    "PORT": {
+      "blob": "0278d383c843b08c646a11b874c1c0a6ae272bbc",
+      "bytes": 216483
+    },
+    "POSA": {
+      "blob": "1654a13e81a230a7e68e79d54b2679a4e715863c",
+      "bytes": 188981
+    },
+    "POWR": {
+      "blob": "4738da4a1df93e5771d5581b7c3b70348e3e8f51",
+      "bytes": 250469
+    },
+    "PPGL": {
+      "blob": "a9136242c25292e0ea007f3122179f9f3426ed3d",
+      "bytes": 174062
+    },
+    "PPRE": {
+      "blob": "f9e503a205f10314f8025b3c3d7631cf91add85c",
+      "bytes": 243422
+    },
+    "PPRI": {
+      "blob": "13ce3df169f34880dc383ff2863b05563367c3a1",
+      "bytes": 64269
+    },
+    "PPRO": {
+      "blob": "18133599bc121459a4d4ffdfdd2232f69e92b836",
+      "bytes": 237240
+    },
+    "PRAS": {
+      "blob": "25beec6a3697bae08ee6eb1ccacc8bb094ab2466",
+      "bytes": 208331
+    },
+    "PRAY": {
+      "blob": "960b5205bf77385aee5407b6f289eafdeab65ca9",
+      "bytes": 93033
+    },
+    "PRDA": {
+      "blob": "14f07dfe4ffb9e73e82a6324e4a529468919437b",
+      "bytes": 244653
+    },
+    "PRIM": {
+      "blob": "e008508724ac012b726c1d4505f79010ede9339b",
+      "bytes": 228266
+    },
+    "PSAB": {
+      "blob": "70056d6553b99231b8cbe77760df274ed0963acf",
+      "bytes": 250964
+    },
+    "PSDN": {
+      "blob": "1a18197028674de6657d291f78c02c1620184c18",
+      "bytes": 219174
+    },
+    "PSGO": {
+      "blob": "48210e79153e9601c70e7a5bf27b5ee8a628e2b9",
+      "bytes": 216791
+    },
+    "PSKT": {
+      "blob": "0bee3623f1559353dbd12eaad24ec71a17aa8560",
+      "bytes": 217305
+    },
+    "PSSI": {
+      "blob": "e7e90bd4ed6132ea2bbc9959154528d972305e84",
+      "bytes": 234651
+    },
+    "PTBA": {
+      "blob": "62247f31a5a5e91cc61a486b2120c6a1ac8bf6ad",
+      "bytes": 287330
+    },
+    "PTDU": {
+      "blob": "9fe05fbdbfe3e77e1efecca253fd02e737764cd8",
+      "bytes": 166424
+    },
+    "PTIS": {
+      "blob": "87e7ffbdc5b3b9dc12b5504a859ed98b16210e38",
+      "bytes": 214477
+    },
+    "PTMP": {
+      "blob": "c3857e9413e34c65ac3dc700f78031d6bb88089e",
+      "bytes": 84787
+    },
+    "PTMR": {
+      "blob": "7c4c29a5dc68c77466ff72ca5ad2e32236736e70",
+      "bytes": 16390
+    },
+    "PTPP": {
+      "blob": "738b850c36162733bdd8c7f3ac6275061089f07e",
+      "bytes": 266776
+    },
+    "PTPS": {
+      "blob": "0b65c2db7fd64c2f453117f2743e1fac6fa4a173",
+      "bytes": 58007
+    },
+    "PTPW": {
+      "blob": "f20a001477b925a12453e7e18ac7dbbbea44c774",
+      "bytes": 203208
+    },
+    "PTRO": {
+      "blob": "710d7a793a70fb3cac7eb5cf4ba7506a83efed4f",
+      "bytes": 252804
+    },
+    "PTSN": {
+      "blob": "cb4821873fe212f4c12053b35a7b521926de88ac",
+      "bytes": 234339
+    },
+    "PTSP": {
+      "blob": "58c4984a11e97494e8b412052862068295d30c04",
+      "bytes": 210885
+    },
+    "PUDP": {
+      "blob": "dde9cddd57156cbd18113bc0887bb5dbf03e3b5c",
+      "bytes": 211701
+    },
+    "PURA": {
+      "blob": "209eef3f5ffc9a39b75bf2c71d2ec0914c12f6d2",
+      "bytes": 207882
+    },
+    "PURE": {
+      "blob": "a989798c3869e62a0efe88ee26b11c2190ce9f3f",
+      "bytes": 201235
+    },
+    "PURI": {
+      "blob": "231115789660db8e5d256717fe831b8b312ef069",
+      "bytes": 178858
+    },
+    "PWON": {
+      "blob": "6d0f4fdfea542adbd9d51d886a2c6c19f136f0cc",
+      "bytes": 275811
+    },
+    "PYFA": {
+      "blob": "70fc21b9121ff5662b600f316c0b984024c60460",
+      "bytes": 230910
+    },
+    "PZZA": {
+      "blob": "08fb39a7a297c13bf8f47ed4f914f0085039fa7f",
+      "bytes": 234093
+    },
+    "RAAM": {
+      "blob": "2ff1c7922348f0b29201371714d6c550cbcfbaf1",
+      "bytes": 78466
+    },
+    "RAFI": {
+      "blob": "53e17cfa3909a0d0c6b765202d0693dc5101ee7c",
+      "bytes": 104032
+    },
+    "RAJA": {
+      "blob": "1a150c71cd6011267f9ff77d9c3636eece690c33",
+      "bytes": 251743
+    },
+    "RALS": {
+      "blob": "ed2591c368836b2d9f8ef48b5d3755fe3b2503ed",
+      "bytes": 254280
+    },
+    "RANC": {
+      "blob": "d7940ca9c8e8e9ba35d44d3c0a29af1ef1f3cb91",
+      "bytes": 227025
+    },
+    "RATU": {
+      "blob": "d76567f47edf6b010767f348fa847ade6cb5f52a",
+      "bytes": 6138
+    },
+    "RBMS": {
+      "blob": "48671ee0cbe7262e4d06a747555e46f1a9780e4a",
+      "bytes": 216489
+    },
+    "RCCC": {
+      "blob": "efd0312d1ea849d1b427c4ff80308610c3c6ea98",
+      "bytes": 98158
+    },
+    "RDTX": {
+      "blob": "da85435d392706d6850cc004c6e888f682e9542b",
+      "bytes": 218643
+    },
+    "REAL": {
+      "blob": "135bc4d1ca495ed10a31acabba8e7819a3c9b48b",
+      "bytes": 207062
+    },
+    "RELF": {
+      "blob": "999108028b9768aca6b50890b0176f40708b7a99",
+      "bytes": 64160
+    },
+    "RELI": {
+      "blob": "736b7e694da29c4752989e26637f7f0502c7aa6b",
+      "bytes": 211961
+    },
+    "RGAS": {
+      "blob": "95c14c261382607220cf776c7efa1390db4c33e2",
+      "bytes": 53133
+    },
+    "RICY": {
+      "blob": "8f9712cfd88a60b3a41b784068e112826f8a5994",
+      "bytes": 217918
+    },
+    "RIGS": {
+      "blob": "c5bcf174a69da8dfe234b54f7f504939d8e70f3a",
+      "bytes": 222273
+    },
+    "RIMO": {
+      "blob": "86a9de540bee4c228d34a41318f69a42bc439b64",
+      "bytes": 193404
+    },
+    "RISE": {
+      "blob": "bbbe3cd4fd7889566284ab243d0347b9aad073a9",
+      "bytes": 230872
+    },
+    "RMBA": {
+      "blob": "9352cb3f3f5bc7b5073a7ed3500c92cdc1d2952e",
+      "bytes": 175469
+    },
+    "RMKE": {
+      "blob": "5b4c21a783d059a4f1130b722f75dae2cdf6a1fb",
+      "bytes": 140650
+    },
+    "RMKO": {
+      "blob": "86cd87cd8b3c8332337d5a1a1f5c5c44f8a02218",
+      "bytes": 65148
+    },
+    "ROCK": {
+      "blob": "1d24f51f74fd60d9c932f528fe7a3fdd7e8d0a4f",
+      "bytes": 163926
+    },
+    "RODA": {
+      "blob": "e2857bfad7f35442e290024bdd41109cec7cf4a7",
+      "bytes": 221378
+    },
+    "RONY": {
+      "blob": "7578cb6c01429eecf8fb3f398310fc682ff7b982",
+      "bytes": 177306
+    },
+    "ROTI": {
+      "blob": "8ee7df22d11312de827ee16dedc2f1c8a5e0e9a9",
+      "bytes": 245781
+    },
+    "RSCH": {
+      "blob": "19e1330f5c96b60a7a6024998f11d2eb12f7fada",
+      "bytes": 63955
+    },
+    "RSGK": {
+      "blob": "70cb36a7cee74aac62b14ba90388d59421d1e569",
+      "bytes": 136821
+    },
+    "RUIS": {
+      "blob": "5cc289e32377129409a3f85de4731367855594b7",
+      "bytes": 220614
+    },
+    "RUNS": {
+      "blob": "e0434acb0be8b24f59dd78bbdc3b8b686e39f335",
+      "bytes": 127575
+    },
+    "SAFE": {
+      "blob": "bedea6329f92dcbdbac653efdfb553de17c1e552",
+      "bytes": 217862
+    },
+    "SAGE": {
+      "blob": "b11c47b666e62bb38c16e9d1a73ba7cbc2649d32",
+      "bytes": 76812
+    },
+    "SAME": {
+      "blob": "7a6947a801f912a282dea65b63ec164f667caaa4",
+      "bytes": 246757
+    },
+    "SAMF": {
+      "blob": "2049382d7bd9b97fbd89e9efe7b32c042be1016f",
+      "bytes": 202510
+    },
+    "SAPX": {
+      "blob": "f7976eaeddba54b7d3ef8cc6499bd12d145815bf",
+      "bytes": 218881
+    },
+    "SATU": {
+      "blob": "f592bc3a18cbf21920c51848fcbe3f1c748ef661",
+      "bytes": 223112
+    },
+    "SBAT": {
+      "blob": "33ebab0cc34ac6c1cd806be0df59e2f4b6620466",
+      "bytes": 188015
+    },
+    "SBMA": {
+      "blob": "187977507aa87279b4d4525fe33b8d0370b6f396",
+      "bytes": 142780
+    },
+    "SCCO": {
+      "blob": "2722c07e90def4f4ac0bea0fe17bc5e702830bd6",
+      "bytes": 227181
+    },
+    "SCMA": {
+      "blob": "07d3dca0d92f4bc21acf4d39435351cd9eea4255",
+      "bytes": 275184
+    },
+    "SCNP": {
+      "blob": "0c3cf52cf56d04fc65dcc04cd3628a97232e4d35",
+      "bytes": 179147
+    },
+    "SCPI": {
+      "blob": "8ccd4e8f8ebaf30623ce0d64c9dc84c558b8f9db",
+      "bytes": 177106
+    },
+    "SDMU": {
+      "blob": "b5bb39283b5869db6833e29ae59b5043a5cf4a03",
+      "bytes": 215681
+    },
+    "SDPC": {
+      "blob": "949af0027393bcd7dd7fe81721344b7ad760a292",
+      "bytes": 225435
+    },
+    "SDRA": {
+      "blob": "7162033988c6448adfb1e2ce90cf87958524f67b",
+      "bytes": 224196
+    },
+    "SEMA": {
+      "blob": "0b69adc828701fce6522bf205a69e1e5f2c8dc25",
+      "bytes": 130198
+    },
+    "SFAN": {
+      "blob": "18aaeaca1035a64deb6f6486acc59f449c74e1cc",
+      "bytes": 234905
+    },
+    "SGER": {
+      "blob": "7693b070e12b5d24819d2fda0196506436fd1e73",
+      "bytes": 201616
+    },
+    "SGRO": {
+      "blob": "40d25c59150fd65082fff543cbc589233d7c0165",
+      "bytes": 234609
+    },
+    "SHID": {
+      "blob": "1cf20ad0d683a9a4ac82e05ee07902a8a9931f69",
+      "bytes": 226629
+    },
+    "SHIP": {
+      "blob": "f0140b096f56a39a7414ec2138d2ca7f14fba675",
+      "bytes": 232958
+    },
+    "SICO": {
+      "blob": "35a9909f4183c347b60199accb24b325fcf0f874",
+      "bytes": 117347
+    },
+    "SIDO": {
+      "blob": "94e11159c534b29d7c853e1d98224debd26f0c7a",
+      "bytes": 269598
+    },
+    "SILO": {
+      "blob": "e7163c36d7e6d673ced0800edfd31c43477c91de",
+      "bytes": 256148
+    },
+    "SIMA": {
+      "blob": "965d96a73f729d99c6483ccd77d44da9fbf0277a",
+      "bytes": 180241
+    },
+    "SIMP": {
+      "blob": "d207658161402deace89049a1e7679639f662e80",
+      "bytes": 223464
+    },
+    "SINI": {
+      "blob": "f033982e90d6db85cd7c642bf52d0a7bb63ad019",
+      "bytes": 208586
+    },
+    "SIPD": {
+      "blob": "8c9076a8315a4b4b67373325d2d595e0a34e0f0c",
+      "bytes": 218904
+    },
+    "SKBM": {
+      "blob": "81886b1b3b4525ae7f6d706febf0fd21f2301ec8",
+      "bytes": 216953
+    },
+    "SKLT": {
+      "blob": "3055fff732877158e21971c42746a140b1b907fc",
+      "bytes": 215065
+    },
+    "SKRN": {
+      "blob": "20cb66c98afc84ad0ef1f6231a0d3e704c23a6b0",
+      "bytes": 236044
+    },
+    "SKYB": {
+      "blob": "c3a85405289a4e084e5ae3d06f79a858c1634e00",
+      "bytes": 181904
+    },
+    "SLIS": {
+      "blob": "0d8410996cbe8bea9ea8573a5e45995a9b0b752c",
+      "bytes": 230705
+    },
+    "SMAR": {
+      "blob": "8d6034a5ce2f5d3a59ae7a2116ad45a166337afc",
+      "bytes": 232716
+    },
+    "SMBR": {
+      "blob": "dde424471d56180714f4ec6c208ff6deaf954ab9",
+      "bytes": 245301
+    },
+    "SMCB": {
+      "blob": "4344e61f906372d1b8e7c66e90e119a2f46b6508",
+      "bytes": 236388
+    },
+    "SMDM": {
+      "blob": "1b9de2a8b7bb55e0bc2a52d321e132c411c435bb",
+      "bytes": 223908
+    },
+    "SMDR": {
+      "blob": "7efd42053eb4b2fa4f2d0493f19a22a779bb9442",
+      "bytes": 250178
+    },
+    "SMGA": {
+      "blob": "93f29cea282ad26f20b2bef9173303a27d7825ea",
+      "bytes": 45659
+    },
+    "SMGR": {
+      "blob": "21ef6cd17e307b6809d191f23155d0632f6ca8f8",
+      "bytes": 287360
+    },
+    "SMIL": {
+      "blob": "25b9ba5569961173e82a78d78d0c5bc387250b25",
+      "bytes": 82765
+    },
+    "SMKL": {
+      "blob": "821ad4b490d7587a7d27b7a83e45f32a0a8685cb",
+      "bytes": 228244
+    },
+    "SMKM": {
+      "blob": "245f1e58eb5c6d1defdb8ef98df6b1075d5d3d72",
+      "bytes": 116039
+    },
+    "SMLE": {
+      "blob": "7a7d8ef81579cc0b3259d9712eac90596750741e",
+      "bytes": 47323
+    },
+    "SMMA": {
+      "blob": "603ea213e70f715f858c4893af6d4923095549b6",
+      "bytes": 247974
+    },
+    "SMMT": {
+      "blob": "87fecb571be6163a2a7ca72f522ecbfae9eb1b75",
+      "bytes": 234184
+    },
+    "SMRA": {
+      "blob": "8a2bff6fac1f6ed42fd253148a94b5e249c047d1",
+      "bytes": 271115
+    },
+    "SMRU": {
+      "blob": "ec2610d76902f894d98add67b9605ac3907f8e23",
+      "bytes": 188200
+    },
+    "SMSM": {
+      "blob": "a9a19914b070b4006a66a2f9fae9cf9389a219cb",
+      "bytes": 258707
+    },
+    "SNLK": {
+      "blob": "74d1b8c6d311e71a48d5ea6bca1d32301b63eb85",
+      "bytes": 167368
+    },
+    "SOCI": {
+      "blob": "723494b0c28570b37c13224cea8fb44370a8c54c",
+      "bytes": 242711
+    },
+    "SOFA": {
+      "blob": "898aef19251806ef3d557bfd99ec4387dc08c9e3",
+      "bytes": 172208
+    },
+    "SOHO": {
+      "blob": "0923ec328ab2bd531d1bb8ba80eb3a5bceae6e61",
+      "bytes": 178376
+    },
+    "SOLA": {
+      "blob": "8628d0c2d934f39edf026bd6372b47345dd27f27",
+      "bytes": 31001
+    },
+    "SONA": {
+      "blob": "78758a4f41189834981bdeb91fc9ca0e7026309a",
+      "bytes": 205477
+    },
+    "SOSS": {
+      "blob": "90e9c13475c651fd3e4a787e218dee0e3c500d57",
+      "bytes": 216469
+    },
+    "SOTS": {
+      "blob": "0111730ee3bd90491c5f39c19de83b9524979247",
+      "bytes": 217876
+    },
+    "SOUL": {
+      "blob": "7bfd990daeef9f6c432818252f75389841859aa5",
+      "bytes": 78360
+    },
+    "SPMA": {
+      "blob": "d44802607cde91a44781f9ecb182fbde18f26555",
+      "bytes": 229045
+    },
+    "SPRE": {
+      "blob": "fef75a74ac9ac2ea77a034a59a88108282c2f3c0",
+      "bytes": 27339
+    },
+    "SPTO": {
+      "blob": "54fa5b0c65c541fa87e15724f5c8a8510079d7ea",
+      "bytes": 235613
+    },
+    "SQMI": {
+      "blob": "8d2d5561967831a78717b74300a7abba9faa5819",
+      "bytes": 238596
+    },
+    "SRAJ": {
+      "blob": "2071645646455d0ae1cd2adc04935b30e3f0a591",
+      "bytes": 232394
+    },
+    "SRIL": {
+      "blob": "bae98942a5f55e0ba20164ff55b167a3c0154a6c",
+      "bytes": 212484
+    },
+    "SRSN": {
+      "blob": "3ed99379049874a22ef7aff6bf5dbd1738415c92",
+      "bytes": 222050
+    },
+    "SRTG": {
+      "blob": "eedadbfec4f3a46f728a6a62f9c2016ba6a432c7",
+      "bytes": 264344
+    },
+    "SSIA": {
+      "blob": "366fa3d96887e8ed3f4b1489ac645fc8aa991769",
+      "bytes": 256703
+    },
+    "SSMS": {
+      "blob": "ce1c109b646b343eb2effaadbb0d2226707acc38",
+      "bytes": 258231
+    },
+    "SSTM": {
+      "blob": "84fdc59efe82e5f5c6ef3ad0830af7af805a0311",
+      "bytes": 207544
+    },
+    "STAA": {
+      "blob": "5e6a0890c3587b7386ec22061f0f585f952eb531",
+      "bytes": 132713
+    },
+    "STAR": {
+      "blob": "2583aa4270a45883aedf22f37e64b911e727d98a",
+      "bytes": 223788
+    },
+    "STRK": {
+      "blob": "7dea9e008abc695c633939be26a7f35dfb0243db",
+      "bytes": 55316
+    },
+    "STTP": {
+      "blob": "c9921bbd148383fba1ce16e5deade3b99f248e9e",
+      "bytes": 221041
+    },
+    "SUGI": {
+      "blob": "2f95a9157fb24dba67a7942f2127024cc21bd0f9",
+      "bytes": 185914
+    },
+    "SULI": {
+      "blob": "9ad5eb68a937edf1a2955c9ebe74558c1825ec4e",
+      "bytes": 221150
+    },
+    "SUNI": {
+      "blob": "d43afe51c826e837e385e0f9d5a39713933e0e45",
+      "bytes": 88599
+    },
+    "SUPR": {
+      "blob": "cbc98f1de1cc3faa357933a7c8bb90b8682c15a7",
+      "bytes": 204921
+    },
+    "SURE": {
+      "blob": "288db36065207fec265999148e8424ca482d85a3",
+      "bytes": 217275
+    },
+    "SURI": {
+      "blob": "f50bbcc4a0d61a3937a88c6809f70280750e9ec4",
+      "bytes": 52299
+    },
+    "SWAT": {
+      "blob": "a28d9b3bd58f9cad36a387445dac5e9d634175e2",
+      "bytes": 220194
+    },
+    "SWID": {
+      "blob": "e99b443be8a94e5eb3d1359e65d63c0d634e05fb",
+      "bytes": 105628
+    },
+    "TALF": {
+      "blob": "d68eae1b882bbb4c45d354179bf0e0e50596b0c5",
+      "bytes": 209882
+    },
+    "TAMA": {
+      "blob": "212e6e01348ccfa50c72ddba194ecbb58f6a396f",
+      "bytes": 193460
+    },
+    "TAMU": {
+      "blob": "3c3fdc72b85aa98759c549eee7a7c1b46afba6c8",
+      "bytes": 221858
+    },
+    "TAPG": {
+      "blob": "213268e331049005c76abfdfeb0f9a4ab9a82f1e",
+      "bytes": 179505
+    },
+    "TARA": {
+      "blob": "b2292827f868fc65989ef172847afbba7ee064f6",
+      "bytes": 216991
+    },
+    "TAXI": {
+      "blob": "bb54276c2456d686787e022d561da1f5d3d3f94a",
+      "bytes": 213068
+    },
+    "TAYS": {
+      "blob": "b48dd6dc1677b222509d6afbaaae3daf059dd623",
+      "bytes": 132341
+    },
+    "TBIG": {
+      "blob": "9aa2d430b09c1aeb4bd240fe4b8d619b76882143",
+      "bytes": 280487
+    },
+    "TBLA": {
+      "blob": "8b1c03d7e8f822da08ddf123c6a4cefd61911482",
+      "bytes": 242392
+    },
+    "TBMS": {
+      "blob": "8b8379225755d893476812480bb91f0fd3056101",
+      "bytes": 218555
+    },
+    "TCID": {
+      "blob": "de95147514f52d4c6bf1f4a685e61e27b16ba7b5",
+      "bytes": 222715
+    },
+    "TCPI": {
+      "blob": "4c6014eb2eab248eceeb863dce1e9af983eef068",
+      "bytes": 259157
+    },
+    "TDPM": {
+      "blob": "65851f6e9cac004e95c0cf195ec669691508cd0e",
+      "bytes": 204136
+    },
+    "TEBE": {
+      "blob": "e4a4b35d42824d6f5bd3ef44fdf8b7c4b0f0b3b9",
+      "bytes": 213055
+    },
+    "TECH": {
+      "blob": "b95ee5b728a270a08565c2150d76d26d52fd495a",
+      "bytes": 183529
+    },
+    "TELE": {
+      "blob": "00a78d5f433583866b3e4ba7a27370ba98ba667a",
+      "bytes": 204374
+    },
+    "TFAS": {
+      "blob": "fc366b037858ed99d0d609d31fba922a792cf26e",
+      "bytes": 224772
+    },
+    "TFCO": {
+      "blob": "5239399c855d8df1e9617345571e12b7712c7ad4",
+      "bytes": 202224
+    },
+    "TGKA": {
+      "blob": "2f6c4ea538e8d3642b47e060196205ef3472b2ec",
+      "bytes": 217126
+    },
+    "TGRA": {
+      "blob": "abd9bf3c323f5bb48d46893e8411f4c7c0c03733",
+      "bytes": 227594
+    },
+    "TGUK": {
+      "blob": "919825ff3591da8565b92f5bac63233748b3fb4f",
+      "bytes": 66565
+    },
+    "TIFA": {
+      "blob": "bde1df4bd66f937295e470bf302eb5e5e102d227",
+      "bytes": 212318
+    },
+    "TINS": {
+      "blob": "c1ea8a475f2597f2e12bcb51e93ce68274495039",
+      "bytes": 271125
+    },
+    "TIRA": {
+      "blob": "54fa16576baf04a33fb641c1d75a136a8650a973",
+      "bytes": 212177
+    },
+    "TIRT": {
+      "blob": "2c9b25deedf887d386a7d568f6fdf9aa9db9862a",
+      "bytes": 209215
+    },
+    "TKIM": {
+      "blob": "2bd63a081f20c6ba0c1d7dc5b53886b16c8c2108",
+      "bytes": 269081
+    },
+    "TLDN": {
+      "blob": "74ef656e2b2bcfb9b1678ea725ed58197c543782",
+      "bytes": 117081
+    },
+    "TLKM": {
+      "blob": "97dd3a11a1152469c53c0e45eb6f53b3a2783d46",
+      "bytes": 305490
+    },
+    "TMAS": {
+      "blob": "6ae64f3955a7faf0a48eb04ec9bec993c470de9d",
+      "bytes": 244592
+    },
+    "TMPO": {
+      "blob": "c2af883c6ede1717c9fc9423b530f7fb183a061e",
+      "bytes": 216652
+    },
+    "TNCA": {
+      "blob": "b1aa076db686b8dd61567c05fcbe7dc0faef8be9",
+      "bytes": 225454
+    },
+    "TOBA": {
+      "blob": "8dda8862405f10189b2e6bf27d043b61b02114a5",
+      "bytes": 241381
+    },
+    "TOOL": {
+      "blob": "37919c7ef54d5cc178cd314cc995eaeef31e7dae",
+      "bytes": 100648
+    },
+    "TOPS": {
+      "blob": "c12fb90c95d74c609e17f487faa2d19f9b96912c",
+      "bytes": 220935
+    },
+    "TOSK": {
+      "blob": "48df54831a406418bb475c6e6f620edf9821ff83",
+      "bytes": 43604
+    },
+    "TOTL": {
+      "blob": "1436bad3bbd212cdadbcd8c1fd9ac75fcc12918a",
+      "bytes": 239615
+    },
+    "TOTO": {
+      "blob": "71268641be18ba881aa51cf3941371d94e964b34",
+      "bytes": 232767
+    },
+    "TOWR": {
+      "blob": "3f6517e538218643ed0f011310044965926fc69e",
+      "bytes": 286395
+    },
+    "TOYS": {
+      "blob": "9055ba0e4e7116161c254b3cfa1295591d8d51a3",
+      "bytes": 180948
+    },
+    "TPIA": {
+      "blob": "6a16e1b2140d9814f24d288231b4a3e7fc2f512f",
+      "bytes": 284256
+    },
+    "TPMA": {
+      "blob": "d3722249dda80a7865db0a3faa5a91a121ca15b3",
+      "bytes": 233993
+    },
+    "TRAM": {
+      "blob": "a2e75141a1c7dbdbef8985019585ae670ad473f5",
+      "bytes": 193726
+    },
+    "TRGU": {
+      "blob": "c94d291f9b8aade470785cccdeedfb927db65f7c",
+      "bytes": 110119
+    },
+    "TRIL": {
+      "blob": "6c77c159c47dc876fca61063a1aabdf251d2d081",
+      "bytes": 180995
+    },
+    "TRIM": {
+      "blob": "6558a0b6c25df90cf0518890d42231f2d04d4bc3",
+      "bytes": 234092
+    },
+    "TRIN": {
+      "blob": "9f1b7d997dde7ceefe6513b57ccc4d97c9596742",
+      "bytes": 217145
+    },
+    "TRIO": {
+      "blob": "506d54cb467d94592328ff2d697f9c948ebaa9ca",
+      "bytes": 189366
+    },
+    "TRIS": {
+      "blob": "5534518a13722b41936d7a657a68c17d24627902",
+      "bytes": 226938
+    },
+    "TRJA": {
+      "blob": "419994a287d19c696008435cbedf5073b602fb4d",
+      "bytes": 188871
+    },
+    "TRON": {
+      "blob": "62e5de325c047260c31ca72a42a098485c863e47",
+      "bytes": 84106
+    },
+    "TRST": {
+      "blob": "72321ad5e448a92c4469656f66a3749fc21e9af6",
+      "bytes": 219909
+    },
+    "TRUE": {
+      "blob": "d1a01bdfc4ec958a2ce8b68c045473d23285e31d",
+      "bytes": 147504
+    },
+    "TRUK": {
+      "blob": "6b239060033373dfe8a4bce479c5cc7db0089bbb",
+      "bytes": 225601
+    },
+    "TRUS": {
+      "blob": "2f8e2046b86530381bb5b2c4247bcbd72d3e74aa",
+      "bytes": 211598
+    },
+    "TSPC": {
+      "blob": "97f50f2a68bd8b3990d52ebd0319fe135d5b830d",
+      "bytes": 249460
+    },
+    "TUGU": {
+      "blob": "762253c021ca95f2a51b8514aaf3d1a1ab77d503",
+      "bytes": 243141
+    },
+    "TURI": {
+      "blob": "b15ecf3c46d28f3e7b4ea82584574e29e1f5cec2",
+      "bytes": 154783
+    },
+    "TYRE": {
+      "blob": "1715bffc45b3f6606de8de120c4296966d17b0b1",
+      "bytes": 73939
+    },
+    "UANG": {
+      "blob": "bea2e6550fe526d1e683abff5fd822448545d479",
+      "bytes": 181628
+    },
+    "UCID": {
+      "blob": "1828c4e049730c81de2fb9a4e2dc7a6f2855b143",
+      "bytes": 227052
+    },
+    "UDNG": {
+      "blob": "ec281c35ddcb81d3cdd7580c92e8c2b466862ede",
+      "bytes": 49368
+    },
+    "UFOE": {
+      "blob": "2150749d71e71d6496eec2997ccb2d1eaf3535ef",
+      "bytes": 174373
+    },
+    "ULTJ": {
+      "blob": "76815d9b744ab792ebae045ea90185ef429840bb",
+      "bytes": 265191
+    },
+    "UNIC": {
+      "blob": "90fd12990ad5e8d292919590dfd4e4ec0e99135d",
+      "bytes": 223012
+    },
+    "UNIQ": {
+      "blob": "097347a3f5ba68a67ebf35287985655d6f2969da",
+      "bytes": 166537
+    },
+    "UNIT": {
+      "blob": "8b00f2b2100bd4d1afe942923f9d4d123c7c8ba5",
+      "bytes": 183103
+    },
+    "UNSP": {
+      "blob": "1a9dafc5ab09c67e4f2bbaeff649693e4d292a00",
+      "bytes": 228803
+    },
+    "UNTD": {
+      "blob": "d654e9163ebdfcfa36ef6305ef4837ca26c1f556",
+      "bytes": 44518
+    },
+    "UNTR": {
+      "blob": "293a0585a5d709341f015c5047901b9a3eb70cbb",
+      "bytes": 296491
+    },
+    "UNVR": {
+      "blob": "7b24c69274e363c2a99584c1049a3eb241716a5b",
+      "bytes": 293075
+    },
+    "URBN": {
+      "blob": "195cd52b4ee4f7e0cb705f545e68753b59a4b0d8",
+      "bytes": 225526
+    },
+    "UVCR": {
+      "blob": "af8ab0ba600d78fd5ccf6c85d8a96dac8e874090",
+      "bytes": 145672
+    },
+    "VAST": {
+      "blob": "bab5f18f9481521cf6d5a3bef1d9deb27aaeb64a",
+      "bytes": 81026
+    },
+    "VERN": {
+      "blob": "44610729e0c22d31cabf9570eea19d882f06749d",
+      "bytes": 16854
+    },
+    "VICI": {
+      "blob": "b1d179c39c0876498113e0bfaa7cd3fe14fdb226",
+      "bytes": 174001
+    },
+    "VICO": {
+      "blob": "162e950db7080045177bdefee276c11b8dc361f8",
+      "bytes": 226889
+    },
+    "VINS": {
+      "blob": "d403a1cf0b52bc2bc71c397b01677deb133010bc",
+      "bytes": 223997
+    },
+    "VISI": {
+      "blob": "7f11944e9c7c043eaafa6e2b734d3b544e62d0a9",
+      "bytes": 42887
+    },
+    "VIVA": {
+      "blob": "902d4b905be3ff362f1da1a4dce61415fc2f6221",
+      "bytes": 220901
+    },
+    "VKTR": {
+      "blob": "b71468edece040013506180696243dd6fa637585",
+      "bytes": 78713
+    },
+    "VOKS": {
+      "blob": "ce78ad03e3024320848c38654d0d74c737b7b5bf",
+      "bytes": 224671
+    },
+    "VRNA": {
+      "blob": "362cf26a5068169b14a9fe70f2bbbb5cf707fd41",
+      "bytes": 217372
+    },
+    "VTNY": {
+      "blob": "eb2fca3e8a0d1a6b1106262fc1e1ba0c042bdb58",
+      "bytes": 96609
+    },
+    "WAPO": {
+      "blob": "3988833305bb1be6afa3879cf071b99cb66802c0",
+      "bytes": 221785
+    },
+    "WEGE": {
+      "blob": "f240ec49600aff80f81ce87c6dac30e84188bd4b",
+      "bytes": 244043
+    },
+    "WEHA": {
+      "blob": "a48cea59598677807ef2908526ea216cc90af928",
+      "bytes": 231084
+    },
+    "WGSH": {
+      "blob": "e5d2ccc354d235ef3883faf1cb956d26eb603ef6",
+      "bytes": 122864
+    },
+    "WICO": {
+      "blob": "6526ba9fa040e6798486db964e69c806eb1b8a12",
+      "bytes": 202639
+    },
+    "WIDI": {
+      "blob": "d4ce5809f24b7e85688307044d0460693113e932",
+      "bytes": 61367
+    },
+    "WIFI": {
+      "blob": "fc723ad0f5c558555f7c515cbdb32e1e8d096618",
+      "bytes": 188947
+    },
+    "WIIM": {
+      "blob": "d6ecb96c372254aa7942b83b19f52961032a76a9",
+      "bytes": 246151
+    },
+    "WIKA": {
+      "blob": "7693180cebe08f699786947dca49ea22122c62ae",
+      "bytes": 264016
+    },
+    "WINE": {
+      "blob": "3f6076f558fdfcaed0c4cf58bd53947cb9971761",
+      "bytes": 88441
+    },
+    "WINR": {
+      "blob": "bd05ed12c3a68c6728e6aeb8720d5f4062535dec",
+      "bytes": 110338
+    },
+    "WINS": {
+      "blob": "026eac0840abcb9555c2da815f91fca662c83b52",
+      "bytes": 240291
+    },
+    "WIRG": {
+      "blob": "80f976b4bfbeb13f36ef4b9ac147ffdbc6da22eb",
+      "bytes": 132037
+    },
+    "WMPP": {
+      "blob": "ceeed24825129e7817cf3bc8716a04fbfa5646e4",
+      "bytes": 129947
+    },
+    "WMUU": {
+      "blob": "934d9515b542dc2845a49ae20a1e177887b6e06f",
+      "bytes": 172737
+    },
+    "WOMF": {
+      "blob": "627f3cca5dbacf20ef506a0a4eb023eb19af173d",
+      "bytes": 226356
+    },
+    "WOOD": {
+      "blob": "85980c9321720ea22e7ba7ee1450956d96843b41",
+      "bytes": 249883
+    },
+    "WOWS": {
+      "blob": "fc531e5a13c5d589cb5cd80b934d2d0e79825142",
+      "bytes": 206772
+    },
+    "WSBP": {
+      "blob": "5f38b8a5e8673e2ed2b83528c88f864839f246b9",
+      "bytes": 234483
+    },
+    "WSKT": {
+      "blob": "752977439ede46d93b4045cc8e02d3512d8ae22d",
+      "bytes": 243927
+    },
+    "WTON": {
+      "blob": "0b16a3184138daf45ec66510188f881bdc619db6",
+      "bytes": 244563
+    },
+    "YELO": {
+      "blob": "cb39d3be4a6b5354abbf7f684bfa3de9ab2a9d2c",
+      "bytes": 225784
+    },
+    "YOII": {
+      "blob": "c4cc2bc513def5cb2c13bc9579fd0b9743389953",
+      "bytes": 5617
+    },
+    "YPAS": {
+      "blob": "6f796bf873a054fa60231aa10de2d9f9af2dcb6a",
+      "bytes": 206035
+    },
+    "YULE": {
+      "blob": "1c4d45305231d3d88cf64cee0af6699179f3fc9a",
+      "bytes": 234217
+    },
+    "ZATA": {
+      "blob": "1d2e257b60c0914a637c77ced4961e3671c2f4d6",
+      "bytes": 89876
+    },
+    "ZBRA": {
+      "blob": "58db672e9a13f9a29b0be88e693ab4b5db2549e6",
+      "bytes": 222402
+    },
+    "ZINC": {
+      "blob": "0f4e3cc5f42a4cfbe118c6ba97af95f9e1b99bb6",
+      "bytes": 249810
+    },
+    "ZONE": {
+      "blob": "9752771a82be0ef19a3c626bda3de65d88fb25df",
+      "bytes": 223564
+    },
+    "ZYRX": {
+      "blob": "625b43b462f219fdbd54d5a3a96e19e144dc5344",
+      "bytes": 162792
+    }
+  }
+}

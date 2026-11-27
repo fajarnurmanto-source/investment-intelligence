@@ -23,9 +23,17 @@ final class MarketSourceRegistry
     public function describe(array $document): ?string
     {
         $identity = $document['provider_identity'] ?? null;
+        $blob = null;
+        if (($document['acquisition_mode'] ?? null) === 'PINNED_HISTORICAL_SNAPSHOT') {
+            try {
+                $blob = app(IdxHistoricalCatalog::class)->resolve((string) ($document['ticker'] ?? ''))['blob'];
+            } catch (\InvalidArgumentException) {
+                return null;
+            }
+        }
         if (($document['acquisition_mode'] ?? null) === 'PINNED_HISTORICAL_SNAPSHOT'
             && ($document['source_commit'] ?? null) === IdxHistoricalSnapshotSource::COMMIT
-            && ($document['source_blob'] ?? null) === (IdxHistoricalSnapshotSource::BLOBS[$document['ticker'] ?? ''] ?? false)
+            && ($document['source_blob'] ?? null) === $blob
             && $identity === ($document['ticker'] ?? '').'@XIDX') {
             return 'idx_pinned';
         }
