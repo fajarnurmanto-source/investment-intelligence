@@ -90,6 +90,14 @@ final class LicensedMarketFeedService
                 throw new \InvalidArgumentException('II_FEED_SIZE_INVALID');
             }
             }
+            if (($cfg['direct_once'] ?? false) === true) {
+                $settings = app(MarketFeedSettings::class);
+                $current = $settings->current();
+                if (!$settings->canManage($owner) || ($current['authorization_generation'] ?? null) !== ($cfg['authorization_generation'] ?? null)
+                    || ($current['enabled'] ?? false) || ($current['discovery_enabled'] ?? false)) {
+                    throw new \InvalidArgumentException('II_DIRECT_AUTHORIZATION_CHANGED');
+                }
+            }
             $rows = $this->parse($raw, $metadata['session_timezone'], $provider === 'twelve_data' && $previous !== null ? 1 : 60);
             $fingerprint = hash('sha256', json_encode($provider === 'local' ? [$source, $url, $cfg['rights_reference'], $metadata, $rows] : [$source, $url, $cfg['rights_reference'], $metadata, $rows, $identity], JSON_THROW_ON_ERROR));
             if ($previous !== null) {
