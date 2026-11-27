@@ -64,3 +64,11 @@ jobs:
         shell: pwsh
         run: |
           pwsh -NoProfile -ExecutionPolicy Bypass -File ".\\tools\\testing\\Invoke-II-AutomatedTests.ps1"
+
+      - name: Verify canonical Artisan launcher from another directory
+        shell: pwsh
+        run: |
+          pwsh -NoProfile -ExecutionPolicy Bypass -File .\tools\production\tests\Test-IIArtisanLauncher.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tools\production\tests\Test-IIArtisanLauncher.ps1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
