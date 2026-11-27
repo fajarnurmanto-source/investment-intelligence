@@ -70,6 +70,38 @@ final class HistoricalSignalBootstrapTest extends TestCase
         }
     }
 
+    public function test_network_outage_recovers_registered_archive_without_reporting_fresh_acquisition(): void
+    {
+        $owner = $this->owner();
+        $raw = $this->csv();
+        $snapshot = IdxHistoricalSnapshotSource::normalize($raw) + [
+            'ticker' => 'BBCA', 'source_name' => 'Synthetic recovery fixture',
+            'source_url' => 'https://example.test/historical',
+            'source_commit' => IdxHistoricalSnapshotSource::COMMIT, 'source_blob' => IdxHistoricalSnapshotSource::BLOB,
+            'source_sha256' => hash('sha256', $raw), 'provider_identity' => 'BBCA@XIDX',
+        ];
+        $source = new class($snapshot) implements HistoricalMarketSnapshotSource {
+            public bool $offline = false;
+            public function __construct(private array $data) {}
+            public function snapshot(): array
+            {
+                if ($this->offline) {
+                    throw new \RuntimeException('II_IDX_SNAPSHOT_NETWORK_ERROR');
+                }
+                return $this->data;
+            }
+        };
+        $this->app->instance(HistoricalMarketSnapshotSource::class, $source);
+        $args = ['--user' => $owner->id, '--rights-confirmed' => true, '--import' => true];
+        $this->artisan('ii:bootstrap-idx-history', $args)->expectsOutput('II_HISTORICAL_BOOTSTRAP=IMPORTED')->assertSuccessful();
+        $source->offline = true;
+        $this->artisan('ii:bootstrap-idx-history', $args)->expectsOutput('II_HISTORICAL_BOOTSTRAP=OFFLINE_ARCHIVE')->assertFailed();
+        $this->assertCount(1, Storage::disk('local')->files('ii_signal_center/u'.$owner->id));
+        $this->actingAs($owner)->get('/ii/signals')->assertOk()->assertSee('BBCA')->assertSee('STALE');
+        $source->offline = false;
+        $this->artisan('ii:bootstrap-idx-history', $args)->expectsOutput('II_HISTORICAL_BOOTSTRAP=UNCHANGED')->assertSuccessful();
+    }
+
     public function test_normalizer_rejects_share_basis_changes(): void
     {
         $this->expectExceptionMessage('II_IDX_SNAPSHOT_SHARE_BASIS_CHANGED');

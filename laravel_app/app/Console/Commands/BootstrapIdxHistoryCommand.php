@@ -28,6 +28,9 @@ final class BootstrapIdxHistoryCommand extends Command
                 try {
                     $result = $bootstrap->run($owner, true, (bool) $this->option('import'), $symbol);
                     $this->line(json_encode($result, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES));
+                    if ($result['status'] === 'OFFLINE_ARCHIVE') {
+                        $failed++;
+                    }
                 } catch (\Throwable $e) {
                     $failed++;
                     $code = $e->getMessage();
@@ -44,7 +47,7 @@ final class BootstrapIdxHistoryCommand extends Command
             $result = $bootstrap->run($owner, (bool) $this->option('rights-confirmed'), (bool) $this->option('import'), $ticker);
             $this->line(json_encode($result, JSON_THROW_ON_ERROR | JSON_UNESCAPED_SLASHES));
             $this->info('II_HISTORICAL_BOOTSTRAP='.$result['status']);
-            return self::SUCCESS;
+            return $result['status'] === 'OFFLINE_ARCHIVE' ? self::FAILURE : self::SUCCESS;
         } catch (\Throwable $e) {
             $code = $e->getMessage();
             $this->error(preg_match('/^II_[A-Z0-9_]+$/D', $code) ? $code : 'II_HISTORICAL_BOOTSTRAP_FAILED');
