@@ -21,12 +21,20 @@ final class IdxPrimaryEvidenceReconciliation
             throw new \InvalidArgumentException('II_IDX_EVIDENCE_SIZE_INVALID');
         }
         $r = json_decode($raw, true, 16, JSON_THROW_ON_ERROR);
+        return $this->compareReceipt($candidate, $r, hash('sha256', $doc), hash('sha256', $raw));
+    }
+
+    public function compareReceipt(array $candidate, array $r, string $documentSha, string $receiptSha): array
+    {
+        if (($candidate['pin_verified'] ?? false) !== true) {
+            throw new \InvalidArgumentException('II_IDX_CANDIDATE_PIN_REQUIRED');
+        }
         $url = $r['source_url'] ?? '';
         $parts = is_string($url) ? parse_url($url) : false;
         if (!is_array($parts) || ($parts['scheme'] ?? '') !== 'https'
             || !in_array(strtolower($parts['host'] ?? ''), ['idx.id','www.idx.id','idx.co.id','www.idx.co.id'], true)
             || isset($parts['user']) || isset($parts['pass']) || isset($parts['port'])
-            || ($r['document_sha256'] ?? null) !== hash('sha256', $doc)
+            || ($r['document_sha256'] ?? null) !== $documentSha
             || ($r['rights_confirmed'] ?? null) !== true
             || ($r['ticker'] ?? null) !== $candidate['ticker']
             || ($r['currency'] ?? null) !== 'IDR'
@@ -69,7 +77,7 @@ final class IdxPrimaryEvidenceReconciliation
         }
         return ['status'=>$conflicted ? 'CONFLICT' : ($missing ? 'INCOMPLETE' : 'TRANSCRIPTION_AGREEMENT'),
             'ticker'=>$candidate['ticker'],'candidate_sha256'=>$candidate['sha256'],
-            'document_sha256'=>hash('sha256',$doc),'receipt_sha256'=>hash('sha256',$raw),
+            'document_sha256'=>$documentSha,'receipt_sha256'=>$receiptSha,
             'source_url'=>$url,'matched_fields'=>$matched,'conflicted_fields'=>$conflicted,'missing_fields'=>$missing,
             'checks'=>$results,'evidence_authenticity'=>'UNVERIFIED_USER_TRANSCRIPTION',
             'independence'=>'UNPROVEN','admitted'=>false,'trading_authorized'=>false];
