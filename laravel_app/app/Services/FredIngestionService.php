@@ -44,7 +44,7 @@ class FredIngestionService
             $response = Http::withHeaders([
                 'Accept' => 'text/csv',
                 'User-Agent' => 'Investment-Intelligence/laravel-research-connector',
-            ])->connectTimeout(5)->timeout(20)->retry(3, 400, throw: false)->get($url);
+            ])->connectTimeout(5)->timeout(20)->retry(3, 400, throw: false)->withOptions(['allow_redirects' => false])->get($url);
 
             if (!$response->successful()) {
                 throw new \RuntimeException('FRED returned HTTP '.$response->status().'.');

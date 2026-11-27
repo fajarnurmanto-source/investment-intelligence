@@ -16,6 +16,7 @@ final class MarketDataByokQuoteService
         if (! preg_match('/^[A-Z]{1,5}(?:\.[A-Z])?$/D', $symbol)) {
             throw new \InvalidArgumentException('BYOK_SYMBOL_INVALID');
         }
+        app(ZeroCostAcquisitionPolicy::class)->assertAllowed(new \GuzzleHttp\Psr7\Request('GET', 'https://api.marketdata.app/v1/stocks/quotes/'.$symbol.'/'));
         try {
             $response = Http::withToken($key)->acceptJson()
                 ->withHeaders(['User-Agent' => 'InvestmentIntelligence-BYOK/0.1 (local-device)'])

@@ -20,6 +20,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        \Illuminate\Support\Facades\Http::globalOptions(['allow_redirects' => false]);
+        \Illuminate\Support\Facades\Http::globalRequestMiddleware(function (\Psr\Http\Message\RequestInterface $request) {
+            app(\App\Services\ZeroCostAcquisitionPolicy::class)->assertAllowed($request);
+            return $request;
+        });
     }
 }
