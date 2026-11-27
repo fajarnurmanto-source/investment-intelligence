@@ -19,3 +19,8 @@ Current P0: authorization generation; unify CLI/UI credential changes; failure a
 - Quality before availability: distinguish structural validity, lineage integrity, independent corroboration, adjustment basis, freshness, entitlement and admission. No fabricated values or automatic promotion of stale or disputed data. Preserve last usable archive; managed corrupt/unregistered snapshots must not displace valid history.
 - Evaluate upstream independence, costs, storage and retention rights, calendar/identity/corporate actions before routing or fallback. Unknown or incompatible data remains research-only; no trading authority. No scraping that violates terms.
 - Measure continuity per capability, not global provider availability; keep offline historical research operational without claiming current signals. Test offline, outage, partial failure, conflict and recovery. Real provider and local acceptance remain separate from synthetic CI.
+
+## Connector fusion and zero-cost mandate (approved 2026-11-27)
+- Reuse before rebuild: inspect pinned upstream code and license; adapt compatible capabilities into Laravel, preserve attribution and required license notices. Repository license is not data entitlement.
+- Data acquisition and subscription budget IDR 0; no paid upgrades, trials with rollover or unknown-cost activation. Prefer authorized public historical files and local continuity. No unsupported access or independent accuracy claims.
+- Validate real source bytes, coverage, identity and share basis; reject conflicting or malformed series. Preserve existing accepted data and distinguish actual source acquisition, synthetic CI and production runtime acceptance.
