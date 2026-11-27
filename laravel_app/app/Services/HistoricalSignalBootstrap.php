@@ -9,18 +9,21 @@ final class HistoricalSignalBootstrap
 {
     public function __construct(private readonly SignalInsightService $signals) {}
 
-    public function run(int $owner, bool $rightsConfirmed, bool $persist, string $ticker = 'BBCA'): array
+    public function run(int $owner, bool $rightsConfirmed, bool $persist, string $ticker = 'BBCA', ?string $expectedGeneration = null): array
     {
         if (!$rightsConfirmed) {
             throw new \InvalidArgumentException('II_HISTORICAL_RIGHTS_CONFIRMATION_REQUIRED');
         }
         $blob = app(IdxHistoricalCatalog::class)->resolve($ticker)['blob'];
         $settings = app(MarketFeedSettings::class);
-        return Cache::lock('ii-market-universe-run', 3600)->block(1, function () use ($owner, $settings, $persist, $ticker, $blob): array {
+        return Cache::lock('ii-market-universe-run', 3600)->block(1, function () use ($owner, $settings, $persist, $ticker, $blob, $expectedGeneration): array {
             if ($owner < 1 || !$settings->canManage($owner) || (int) ($settings->current()['owner_id'] ?? 0) !== $owner) {
                 throw new \InvalidArgumentException('II_HISTORICAL_OWNER_REQUIRED');
             }
             $cfg = $settings->current();
+            if ($expectedGeneration !== null && ($cfg['authorization_generation'] ?? null) !== $expectedGeneration) {
+                throw new \InvalidArgumentException('II_HISTORICAL_AUTHORIZATION_CHANGED');
+            }
             if (($cfg['enabled'] ?? false) || ($cfg['discovery_enabled'] ?? false)) {
                 throw new \InvalidArgumentException('II_HISTORICAL_STOP_AUTOMATION_FIRST');
             }

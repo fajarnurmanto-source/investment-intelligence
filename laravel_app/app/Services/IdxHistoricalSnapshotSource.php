@@ -46,7 +46,7 @@ final class IdxHistoricalSnapshotSource implements HistoricalMarketSnapshotSourc
         try {
             $response = Http::connectTimeout(5)->timeout(30)->withOptions(['allow_redirects' => false])
                 ->get($rawUrl);
-        } catch (\Throwable) {
+        } catch (\Illuminate\Http\Client\ConnectionException) {
             throw new \RuntimeException('II_IDX_SNAPSHOT_NETWORK_ERROR');
         }
         if ($response->status() === 429 || $response->serverError()) {
