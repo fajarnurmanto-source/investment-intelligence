@@ -49,7 +49,7 @@ final class MarketDataWorkspaceController extends Controller
                     ->where('status', 'CATALOG_ONLY_ENTITLEMENT_UNVERIFIED')->count(),
             ];
         }
-        return response()->view('ii.market-data', ['overview' => $coverage->overview($owner, $cfg), 'control' => $control, 'continuity' => app(\App\Services\ResearchContinuityService::class)->overview($owner)])
+        return response()->view('ii.market-data', ['overview' => $coverage->overview($owner, $cfg), 'control' => $control, 'continuity' => app(\App\Services\ResearchContinuityService::class)->overview($owner), 'accuracy' => app(\App\Services\MarketAccuracyOverview::class)->overview($owner)])
             ->header('Cache-Control', 'private, no-store')->header('X-Content-Type-Options', 'nosniff');
     }
 

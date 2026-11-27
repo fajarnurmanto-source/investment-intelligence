@@ -56,8 +56,20 @@ class SignalInsightService
 
     public function latestDocuments(int $userId): array
     {
-        $disk = Storage::disk('local');
         $latest = [];
+        foreach ($this->validVersions($userId) as $document) {
+            $ticker = $document['ticker'];
+            if (!isset($latest[$ticker]) || strcmp((string) ($document['imported_at'] ?? ''), (string) ($latest[$ticker]['imported_at'] ?? '')) > 0) {
+                $latest[$ticker] = $document;
+            }
+        }
+        return $latest;
+    }
+
+    /** Read owner-scoped immutable versions for diagnostic comparison. */
+    public function validVersions(int $userId): iterable
+    {
+        $disk = Storage::disk('local');
         foreach ($disk->files($this->directory($userId)) as $path) {
             if (!str_ends_with($path, '.json')) {
                 continue;
@@ -103,12 +115,8 @@ class SignalInsightService
                 && $document['lineage_source_status'] !== 'REGISTERED') {
                 continue;
             }
-            // Storage filenames are unique; lexical timestamps select the newest import.
-            if (!isset($latest[$ticker]) || strcmp((string) ($document['imported_at'] ?? ''), (string) ($latest[$ticker]['imported_at'] ?? '')) > 0) {
-                $latest[$ticker] = $document;
-            }
+            yield $document;
         }
-        return $latest;
     }
 
     public function insight(array $document): array
