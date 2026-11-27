@@ -38,8 +38,9 @@ final class IdxHistoricalSnapshotSource implements HistoricalMarketSnapshotSourc
 
     public function snapshot(): array
     {
-        $blob = self::BLOBS[$this->ticker] ?? throw new \InvalidArgumentException('II_IDX_SNAPSHOT_TICKER_UNSUPPORTED');
-        $path = 'Saham/LQ45/'.$this->ticker.'.csv';
+        $entry = app(IdxHistoricalCatalog::class)->resolve($this->ticker);
+        $blob = $entry['blob'];
+        $path = $entry['path'];
         $url = 'https://github.com/wildangunawan/Dataset-Saham-IDX/blob/'.self::COMMIT.'/'.$path;
         $rawUrl = 'https://raw.githubusercontent.com/wildangunawan/Dataset-Saham-IDX/'.self::COMMIT.'/'.$path;
         try {
@@ -52,7 +53,7 @@ final class IdxHistoricalSnapshotSource implements HistoricalMarketSnapshotSourc
         if (!$response->successful() || strlen($raw) > self::MAX_BYTES || $raw === '') {
             throw new \InvalidArgumentException('II_IDX_SNAPSHOT_RESPONSE_REJECTED');
         }
-        if (!hash_equals($blob, self::gitBlobHash($raw))) {
+        if ((isset($entry['bytes']) && strlen($raw) !== $entry['bytes']) || !hash_equals($blob, self::gitBlobHash($raw))) {
             throw new \InvalidArgumentException('II_IDX_SNAPSHOT_BLOB_MISMATCH');
         }
         $result = self::normalize($raw);

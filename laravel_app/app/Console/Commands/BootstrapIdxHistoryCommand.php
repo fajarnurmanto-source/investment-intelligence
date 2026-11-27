@@ -7,7 +7,7 @@ use Illuminate\Console\Command;
 
 final class BootstrapIdxHistoryCommand extends Command
 {
-    protected $signature = 'ii:bootstrap-idx-history {--user= : Verified local market owner ID} {--rights-confirmed : Confirm personal noncommercial rights under source terms} {--import : Persist the inspected historical series locally} {--ticker=BBCA : One approved IDX ticker or ALL}';
+    protected $signature = 'ii:bootstrap-idx-history {--user= : Verified local market owner ID} {--rights-confirmed : Confirm personal noncommercial rights under source terms} {--import : Persist the inspected historical series locally} {--ticker=BBCA : One catalog IDX ticker or ALL (original 17 only)}';
     protected $description = 'Preview or import the pinned IDX historical research snapshots; no scheduler activation';
 
     public function handle(HistoricalSignalBootstrap $bootstrap): int

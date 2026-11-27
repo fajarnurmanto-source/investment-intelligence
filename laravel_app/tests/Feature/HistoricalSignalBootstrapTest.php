@@ -102,6 +102,27 @@ final class HistoricalSignalBootstrapTest extends TestCase
         $this->artisan('ii:bootstrap-idx-history', $args)->expectsOutput('II_HISTORICAL_BOOTSTRAP=UNCHANGED')->assertSuccessful();
     }
 
+    public function test_catalog_candidates_have_pinned_identity_and_fail_closed(): void
+    {
+        $owner = $this->owner();
+        $catalog = app(\App\Services\IdxHistoricalCatalog::class);
+        $this->assertCount(955, $catalog->entries());
+        $this->assertSame('94e11159c534b29d7c853e1d98224debd26f0c7a', $catalog->candidate('SIDO')['blob']);
+        $this->assertSame('Saham/LQ45/BBCA.csv', $catalog->resolve('BBCA')['path']);
+        Http::preventStrayRequests();
+        $url = 'https://raw.githubusercontent.com/wildangunawan/Dataset-Saham-IDX/'.IdxHistoricalSnapshotSource::COMMIT.'/Saham/Semua/SIDO.csv';
+        Http::fake([$url => Http::response($this->csv())]);
+        $args = ['--user' => $owner->id, '--ticker' => 'SIDO', '--import' => true];
+        $this->artisan('ii:bootstrap-idx-history', $args)->expectsOutput('II_HISTORICAL_RIGHTS_CONFIRMATION_REQUIRED')->assertFailed();
+        Http::assertNothingSent();
+        $this->artisan('ii:bootstrap-idx-history', $args + ['--rights-confirmed' => true])
+            ->expectsOutput('II_IDX_SNAPSHOT_BLOB_MISMATCH')->assertFailed();
+        Http::assertSentCount(1);
+        $this->assertNull(app(SignalInsightService::class)->latestDocument($owner->id, 'SIDO'));
+        $this->artisan('ii:discover-idx-history', ['--user' => $owner->id, '--limit' => 21, '--rights-confirmed' => true])
+            ->expectsOutput('II_IDX_CATALOG_POLICY_REQUIRED')->assertFailed();
+    }
+
     public function test_normalizer_rejects_share_basis_changes(): void
     {
         $this->expectExceptionMessage('II_IDX_SNAPSHOT_SHARE_BASIS_CHANGED');
