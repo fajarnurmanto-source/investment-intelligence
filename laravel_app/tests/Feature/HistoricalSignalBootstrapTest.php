@@ -50,6 +50,23 @@ final class HistoricalSignalBootstrapTest extends TestCase
         $this->assertNull(app(SignalInsightService::class)->latestDocument($owner->id, 'BBCA'));
     }
 
+    public function test_allowlist_and_per_ticker_checksum_fail_closed(): void
+    {
+        $owner = $this->owner();
+        Http::preventStrayRequests();
+        $url = str_replace('BBCA.csv', 'BBRI.csv', IdxHistoricalSnapshotSource::RAW_URL);
+        Http::fake([$url => Http::response($this->csv())]);
+        $args = ['--user' => $owner->id, '--rights-confirmed' => true, '--import' => true];
+        $this->artisan('ii:bootstrap-idx-history', $args + ['--ticker' => '../BAD'])
+            ->expectsOutput('II_IDX_SNAPSHOT_TICKER_UNSUPPORTED')->assertFailed();
+        Http::assertNothingSent();
+        $this->artisan('ii:bootstrap-idx-history', $args + ['--ticker' => 'BBRI'])
+            ->expectsOutput('II_IDX_SNAPSHOT_BLOB_MISMATCH')->assertFailed();
+        Http::assertSentCount(1);
+        $this->assertNull(app(SignalInsightService::class)->latestDocument($owner->id, 'BBRI'));
+        $this->assertCount(10, IdxHistoricalSnapshotSource::BLOBS);
+    }
+
     public function test_normalizer_rejects_share_basis_changes(): void
     {
         $this->expectExceptionMessage('II_IDX_SNAPSHOT_SHARE_BASIS_CHANGED');
