@@ -43,3 +43,6 @@ Schedule::command('ii:discover-market-universe')->dailyAt('10:00')->timezone('UT
         $cfg = app(\App\Services\MarketFeedSettings::class)->current();
         return ($cfg['discovery_enabled'] ?? false) === true && ($cfg['provider'] ?? null) === 'twelve_data';
     });
+
+// Explicit owner opt-in; five immutable public candidates per 15-minute tick.
+Schedule::command('ii:historical-cycle scheduled')->everyFifteenMinutes()->withoutOverlapping();
