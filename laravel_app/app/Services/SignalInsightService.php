@@ -54,7 +54,7 @@ class SignalInsightService
         return $records;
     }
 
-    private function latestDocuments(int $userId): array
+    public function latestDocuments(int $userId): array
     {
         $disk = Storage::disk('local');
         $latest = [];
@@ -71,6 +71,9 @@ class SignalInsightService
                 || !preg_match('/^[A-Z0-9.\-]{1,16}$/', (string) ($document['ticker'] ?? ''))
                 || !is_array($document['rows'] ?? null)
                 || count($document['rows']) < 60) {
+                continue;
+            }
+            if (!app(ResearchSeriesIntegrity::class)->valid($document)) {
                 continue;
             }
             // Historical JSON can predate the BYOK firewall. Refuse known
@@ -92,6 +95,13 @@ class SignalInsightService
                 && hash_equals($node['evidence_sha256'], $jsonHash)) {
                 $document['lineage_source_node_id'] = $node['id'];
                 $document['lineage_source_status'] = 'REGISTERED';
+            }
+            // Managed snapshots must retain registered integrity; a damaged newer
+            // version cannot displace a valid earlier version. Legacy uploads
+            // remain explicitly unverified for research compatibility.
+            if (in_array($document['acquisition_mode'] ?? null, ['PINNED_HISTORICAL_SNAPSHOT', 'LICENSED_PROVIDER_API', 'LICENSED_LOCAL_FEED'], true)
+                && $document['lineage_source_status'] !== 'REGISTERED') {
+                continue;
             }
             // Storage filenames are unique; lexical timestamps select the newest import.
             if (!isset($latest[$ticker]) || strcmp((string) ($document['imported_at'] ?? ''), (string) ($latest[$ticker]['imported_at'] ?? '')) > 0) {

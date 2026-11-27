@@ -13,3 +13,9 @@ Approved 2026-11-26. Applies to all II changes; Laravel-only runtime.
 - Preserve existing baseline, user data and APP_KEY; use verified backup and controlled deployment. No destructive resets or silent expansion of data rights.
 
 Current P0: authorization generation; unify CLI/UI credential changes; failure and role isolation tests. P1: discovery freshness/quota, integration gate, deployment. P2: live provider acceptance.
+
+## Hybrid data resilience mandate (approved 2026-11-27)
+- Local-first, provider-agnostic and rights-aware. Separate historical, direct and discovery paths; seven benchmark repositories are references, not evidence of independent data supply or license.
+- Quality before availability: distinguish structural validity, lineage integrity, independent corroboration, adjustment basis, freshness, entitlement and admission. No fabricated values or automatic promotion of stale or disputed data. Preserve last usable archive; managed corrupt/unregistered snapshots must not displace valid history.
+- Evaluate upstream independence, costs, storage and retention rights, calendar/identity/corporate actions before routing or fallback. Unknown or incompatible data remains research-only; no trading authority. No scraping that violates terms.
+- Measure continuity per capability, not global provider availability; keep offline historical research operational without claiming current signals. Test offline, outage, partial failure, conflict and recovery. Real provider and local acceptance remain separate from synthetic CI.

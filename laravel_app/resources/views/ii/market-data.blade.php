@@ -5,6 +5,20 @@
 <h1>Autonomous Data Control Center</h1>
 <p class="lead">Pantau cakupan observasi, kesegaran data, dan hasil akuisisi lokal.</p>
 <div class="boundary">Status konfigurasi: {{ $overview['status'] }}. Data tetap USER_IMPORTED_UNVERIFIED; tidak ada otorisasi trading.</div>
+<section class="panel" aria-labelledby="research-continuity">
+<h2 id="research-continuity">Kontinuitas riset lokal</h2>
+<p><strong>{{ $continuity['mode'] }}</strong> · {{ count($continuity['instruments']) }} instrumen · {{ $continuity['registered'] }} lineage terdaftar · {{ $continuity['recent'] }} seri relatif baru.</p>
+<p class="muted">Status arsip tidak bergantung pada discovery. Koneksi provider: {{ $continuity['live_provider_status'] }}. Lineage terdaftar bukan verifikasi harga independen; umur data dihitung dalam hari kalender.</p>
+@forelse($continuity['instruments'] as $item)
+<article style="border-top:1px solid #94a3b8;padding:10px 0">
+<strong>{{ $item['ticker'] }}</strong> · {{ $item['freshness'] }} · {{ $item['lineage'] }}
+<p>{{ $item['sessions'] }} sesi · terakhir {{ $item['last_date'] }} · basis {{ $item['basis'] }} · {{ $item['source'] }}</p>
+</article>
+@empty
+<p>Belum ada arsip riset nyata yang dapat dibaca.</p>
+@endforelse
+<p><a href="{{ route('ii.signals.index') }}">Buka Trading Signal Center</a></p>
+</section>
 @if(session('market_status'))
 <div class="boundary" role="status">{{ session('market_status') }}</div>
 @endif
