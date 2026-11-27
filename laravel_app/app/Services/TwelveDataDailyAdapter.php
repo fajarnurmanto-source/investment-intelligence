@@ -43,6 +43,7 @@ final class TwelveDataDailyAdapter
         if ($start !== null) {
             $query['start_date'] = $start;
         }
+        app(ZeroCostAcquisitionPolicy::class)->assertAllowed(new \GuzzleHttp\Psr7\Request('GET', self::URL));
         $credits = app(MarketProviderCreditGuard::class);
         $credits->assertAvailable((int) $cfg['owner_id']);
         app(MarketAcquisitionLedger::class)->reserve($cfg);

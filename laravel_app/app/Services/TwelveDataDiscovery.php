@@ -64,6 +64,7 @@ final class TwelveDataDiscovery
 
     private function request(array $policy, string $key, string $endpoint, array $query): array
     {
+        app(ZeroCostAcquisitionPolicy::class)->assertAllowed(new \GuzzleHttp\Psr7\Request('GET', 'https://api.twelvedata.com/'.$endpoint));
         $credits = app(MarketProviderCreditGuard::class);
         $credits->assertAvailable((int) $policy['owner_id']);
         app(MarketAcquisitionLedger::class)->reserve($policy);
