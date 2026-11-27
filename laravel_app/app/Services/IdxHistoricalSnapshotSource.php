@@ -49,6 +49,9 @@ final class IdxHistoricalSnapshotSource implements HistoricalMarketSnapshotSourc
         } catch (\Throwable) {
             throw new \RuntimeException('II_IDX_SNAPSHOT_NETWORK_ERROR');
         }
+        if ($response->status() === 429 || $response->serverError()) {
+            throw new \RuntimeException('II_IDX_SNAPSHOT_TEMPORARY_ERROR');
+        }
         $raw = $response->body();
         if (!$response->successful() || strlen($raw) > self::MAX_BYTES || $raw === '') {
             throw new \InvalidArgumentException('II_IDX_SNAPSHOT_RESPONSE_REJECTED');
