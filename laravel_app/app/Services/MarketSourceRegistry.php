@@ -10,7 +10,8 @@ final class MarketSourceRegistry
         return [
             'idx_pinned' => ['name' => 'Dataset-Saham-IDX', 'upstream' => 'IDX', 'capability' => 'HISTORICAL_EOD', 'status' => 'IMPLEMENTED_PINNED', 'rights' => 'NONCOMMERCIAL_ATTESTATION_REQUIRED'],
             'twelve_data' => ['name' => 'Twelve Data', 'upstream' => null, 'capability' => 'DIRECT_EOD', 'status' => 'IMPLEMENTED_LIVE_UNVERIFIED', 'rights' => 'ACCOUNT_POLICY_REQUIRED'],
-            'yahoo' => ['name' => 'Yahoo Finance', 'upstream' => null, 'capability' => 'EOD_CANDIDATE', 'status' => 'CANDIDATE', 'rights' => 'NOT_ASSESSED'],
+            'aethereal' => ['name' => 'Aethereal IDX', 'upstream' => 'YAHOO_FINANCE', 'capability' => 'EOD_DIAGNOSTIC', 'status' => 'UPSTREAM_RIGHTS_PENDING', 'rights' => 'NOT_CLEARED'],
+            'yahoo' => ['name' => 'Yahoo Finance', 'upstream' => 'YAHOO_FINANCE', 'capability' => 'EOD_CANDIDATE', 'status' => 'CANDIDATE', 'rights' => 'NOT_ASSESSED'],
             'msn' => ['name' => 'MSN Money', 'upstream' => null, 'capability' => 'EOD_CANDIDATE', 'status' => 'CANDIDATE', 'rights' => 'NOT_ASSESSED'],
             'alltick' => ['name' => 'AllTick', 'upstream' => null, 'capability' => 'EOD_CANDIDATE', 'status' => 'CANDIDATE', 'rights' => 'NOT_ASSESSED'],
             'itick' => ['name' => 'iTick', 'upstream' => null, 'capability' => 'EOD_CANDIDATE', 'status' => 'CANDIDATE', 'rights' => 'NOT_ASSESSED'],
