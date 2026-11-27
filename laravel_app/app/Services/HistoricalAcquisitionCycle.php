@@ -63,6 +63,15 @@ final class HistoricalAcquisitionCycle
         return (array) DB::table('ii_historical_cycles')->where('user_id', $owner)->first();
     }
 
+    private function readback(int $owner): array
+    {
+        $row = DB::table('ii_historical_cycles')->where('user_id', $owner)->first();
+        if ($row === null) {
+            throw new \RuntimeException('II_CYCLE_CHECKPOINT_READBACK_FAILED');
+        }
+        return (array) $row;
+    }
+
     public function tick(int $owner, int $limit = 5): array
     {
         if ($limit < 1 || $limit > 5) {
@@ -70,19 +79,19 @@ final class HistoricalAcquisitionCycle
         }
         return Cache::lock('ii-historical-cycle-'.$owner, 1800)->block(1, function () use ($owner, $limit): array {
             [$tickers, $hash] = $this->scope();
-            $query = DB::table('ii_historical_cycles')->where('user_id', $owner);
-            $row = $query->first();
+            $query = fn () => DB::table('ii_historical_cycles')->where('user_id', $owner);
+            $row = $query()->first();
             if (!$row || !$row->enabled) {
                 return ['state' => 'DISABLED'];
             }
             try {
                 $generation = $this->generation($owner);
             } catch (\InvalidArgumentException) {
-                $query->update(['enabled' => false, 'state' => 'POLICY_PAUSED', 'updated_at' => now('UTC')]);
+                $query()->update(['enabled' => false, 'state' => 'POLICY_PAUSED', 'updated_at' => now('UTC')]);
                 return ['state' => 'POLICY_PAUSED'];
             }
             if ($row->manifest_hash !== $hash || $row->generation !== $generation) {
-                $query->update(['enabled' => false, 'state' => 'POLICY_PAUSED', 'updated_at' => now('UTC')]);
+                $query()->update(['enabled' => false, 'state' => 'POLICY_PAUSED', 'updated_at' => now('UTC')]);
                 return ['state' => 'POLICY_PAUSED'];
             }
             if ($row->next_attempt_at && now('UTC')->lt(\Illuminate\Support\Carbon::parse($row->next_attempt_at, 'UTC'))) {
@@ -124,11 +133,11 @@ final class HistoricalAcquisitionCycle
                     } else {
                         $retry = in_array($code, ['II_IDX_SNAPSHOT_NETWORK_ERROR','II_IDX_SNAPSHOT_TEMPORARY_ERROR','II_CYCLE_SOURCE_UNAVAILABLE'], true);
                         $attempts = $row->attempts + 1;
-                        $query->update(['attempts' => $attempts, 'state' => $retry ? 'BACKOFF' : 'REVIEW_REQUIRED',
+                        $query()->update(['attempts' => $attempts, 'state' => $retry ? 'BACKOFF' : 'REVIEW_REQUIRED',
                             'enabled' => $retry, 'last_code' => preg_match('/^II_[A-Z0-9_]+$/D', $code) ? $code : 'II_CYCLE_UNKNOWN_ERROR',
                             'next_attempt_at' => $retry ? now('UTC')->addMinutes(min(360, 15 * (2 ** min(5, $attempts - 1)))) : null,
                             'updated_at' => now('UTC')]);
-                        return (array) $query->first();
+                        return $this->readback($owner);
                     }
                 }
                 DB::transaction(function () use ($query, $row, $owner, $hash, $ticker, $status, $code, $sha): void {
@@ -136,18 +145,18 @@ final class HistoricalAcquisitionCycle
                         ['user_id' => $owner, 'manifest_hash' => $hash, 'ticker' => $ticker],
                         ['status' => $status, 'code' => $code, 'source_sha256' => $sha, 'updated_at' => now('UTC')]
                     );
-                    $query->update(['cursor' => $row->cursor + 1,
+                    $query()->update(['cursor' => $row->cursor + 1,
                         'accepted' => $row->accepted + (int) ($status !== 'REJECTED'),
                         'rejected' => $row->rejected + (int) ($status === 'REJECTED'),
                         'attempts' => 0, 'state' => 'RUNNING', 'last_code' => $code,
                         'next_attempt_at' => null, 'updated_at' => now('UTC')]);
                 });
-                $row = $query->first();
+                $row = (object) $this->readback($owner);
             }
             if ($row->cursor >= count($tickers)) {
-                $query->update(['enabled' => false, 'state' => 'COMPLETE', 'updated_at' => now('UTC')]);
+                $query()->update(['enabled' => false, 'state' => 'COMPLETE', 'updated_at' => now('UTC')]);
             }
-            return (array) $query->first();
+            return (array) $query()->first();
         });
     }
 }

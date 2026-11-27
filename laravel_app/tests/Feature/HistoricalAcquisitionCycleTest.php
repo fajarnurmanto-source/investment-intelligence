@@ -29,6 +29,7 @@ final class HistoricalAcquisitionCycleTest extends TestCase
         $this->artisan('ii:historical-cycle', ['action' => 'enable', '--user' => $owner->id])->assertFailed();
         Http::assertNothingSent();
         $cycle->enable($owner->id, true);
+        $this->assertDatabaseHas('ii_historical_cycles', ['user_id' => $owner->id, 'enabled' => true, 'state' => 'READY']);
         $first = $cycle->tick($owner->id);
         $this->assertSame('BACKOFF', $first['state']);
         $this->assertSame(0, (int) $first['cursor']);
