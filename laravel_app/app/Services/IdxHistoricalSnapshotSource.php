@@ -25,6 +25,13 @@ final class IdxHistoricalSnapshotSource implements HistoricalMarketSnapshotSourc
         'UNTR' => '293a0585a5d709341f015c5047901b9a3eb70cbb',
         'KLBF' => '2612c5bd5d5354ebca158ef1caaff4cfba977768',
         'INDF' => '33d2cbb7d4398285feab4440105eba52b4e1989e',
+        'PGAS' => 'c883deb52edf21ee9e51164cc08920978e4ba231',
+        'PTBA' => '62247f31a5a5e91cc61a486b2120c6a1ac8bf6ad',
+        'MEDC' => '1a4218597b01565dd1cef86f72aa57166efa3694',
+        'SMGR' => '21ef6cd17e307b6809d191f23155d0632f6ca8f8',
+        'EXCL' => 'c1560921ca392ad1f99f1903be25010328527ce5',
+        'TOWR' => '3f6517e538218643ed0f011310044965926fc69e',
+        'BRIS' => '5e1f552dcbb0d7bcc4175c03791ec4d19b71d420',
     ];
 
     public function __construct(private readonly string $ticker = 'BBCA') {}

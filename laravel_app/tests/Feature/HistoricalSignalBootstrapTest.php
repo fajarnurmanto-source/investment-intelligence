@@ -64,7 +64,10 @@ final class HistoricalSignalBootstrapTest extends TestCase
             ->expectsOutput('II_IDX_SNAPSHOT_BLOB_MISMATCH')->assertFailed();
         Http::assertSentCount(1);
         $this->assertNull(app(SignalInsightService::class)->latestDocument($owner->id, 'BBRI'));
-        $this->assertCount(10, IdxHistoricalSnapshotSource::BLOBS);
+        $this->assertCount(17, IdxHistoricalSnapshotSource::BLOBS);
+        foreach (['ADRO', 'INCO', 'JSMR'] as $excluded) {
+            $this->assertArrayNotHasKey($excluded, IdxHistoricalSnapshotSource::BLOBS);
+        }
     }
 
     public function test_normalizer_rejects_share_basis_changes(): void
