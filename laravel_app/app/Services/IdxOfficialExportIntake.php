@@ -38,20 +38,23 @@ final class IdxOfficialExportIntake
             || !$this->date($date) || !$this->date($access) || $date >= $today || $access < $date || $access > $today
             || ($r['currency'] ?? null) !== 'IDR' || ($r['basis'] ?? null) !== 'AS_TRADED'
             || ($r['price_market'] ?? null) !== 'REGULAR'
-            || ($r['format'] ?? null) !== 'ORIGINAL_CSV'
+            || !in_array($r['format'] ?? null, ['ORIGINAL_CSV','ORIGINAL_XLSX'], true)
             || ($r['numeric_format'] ?? null) !== 'PLAIN_DECIMAL') {
             throw new \InvalidArgumentException('II_IDX_EXPORT_REVIEW_INVALID');
         }
         $map = $r['columns'] ?? null;
         if (!is_array($map) || !isset($map['ticker']) || count($map) < 2
             || array_diff(array_keys($map), ['ticker','open','high','low','close','volume','nonregular_volume'])
-            || count(array_unique(array_values($map))) !== count($map)) {
+) {
             throw new \InvalidArgumentException('II_IDX_EXPORT_MAPPING_INVALID');
         }
         foreach ($map as $name) {
             if (!is_string($name) || trim($name) === '' || strlen($name) > 150) {
                 throw new \InvalidArgumentException('II_IDX_EXPORT_MAPPING_INVALID');
             }
+        }
+        if (count(array_unique(array_values($map))) !== count($map)) {
+            throw new \InvalidArgumentException('II_IDX_EXPORT_MAPPING_INVALID');
         }
         $volumeScope = $r['volume_scope'] ?? null;
         $volumeUnit = $r['volume_unit'] ?? null;
@@ -63,21 +66,28 @@ final class IdxOfficialExportIntake
         if (isset($map['nonregular_volume']) && (!isset($map['volume']) || $volumeScope !== 'TOTAL_MINUS_NONREGULAR')) {
             throw new \InvalidArgumentException('II_IDX_EXPORT_VOLUME_SCOPE_INVALID');
         }
-        $csv = Reader::createFromString($raw);
-        $csv->setHeaderOffset(0);
-        $header = $csv->getHeader();
+        if ($r['format'] === 'ORIGINAL_XLSX') {
+            [$header, $records] = app(IdxXlsxExportReader::class)->read($raw, $r['sheet'] ?? null, $r['header_row'] ?? null);
+            $locator = 'XLSX worksheet '.$r['sheet'].' row ';
+        } else {
+            $csv = Reader::createFromString($raw);
+            $csv->setHeaderOffset(0);
+            $header = $csv->getHeader();
+            $records = $csv->getRecords();
+            $locator = 'CSV record offset ';
+        }
         if (count($header) !== count(array_unique($header)) || array_diff(array_values($map), $header)) {
             throw new \InvalidArgumentException('II_IDX_EXPORT_HEADER_INVALID');
         }
         $seen = [];
         $result = null;
         $rowCount = 0;
-        foreach ($csv->getRecords() as $offset => $row) {
+        foreach ($records as $offset => $row) {
             if (++$rowCount > 2000) {
                 throw new \InvalidArgumentException('II_IDX_EXPORT_ROW_LIMIT');
             }
             $code = trim((string)($row[$map['ticker']] ?? ''));
-            if (!preg_match('/^[A-Z0-9]{4}$/D', $code) || isset($seen[$code])) {
+            if (!preg_match('/^[A-Z0-9]{4,5}$/D', $code) || isset($seen[$code])) {
                 throw new \InvalidArgumentException('II_IDX_EXPORT_TICKER_INVALID');
             }
             $seen[$code] = true;
@@ -120,7 +130,7 @@ final class IdxOfficialExportIntake
                     throw new \InvalidArgumentException('II_IDX_EXPORT_OHLC_INVALID');
                 }
             }
-            $result = ['date'=>$date,'locator'=>'CSV record offset '.$offset,'values'=>$values];
+            $result = ['date'=>$date,'locator'=>$locator.$offset,'values'=>$values];
         }
         if ($result === null) {
             throw new \InvalidArgumentException('II_IDX_EXPORT_TICKER_MISSING');
