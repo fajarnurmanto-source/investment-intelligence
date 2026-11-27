@@ -17,7 +17,7 @@ final class IdxXlsxExportReaderTest extends TestCase
         $zip->addFromString('xl/workbook.xml','<workbook xmlns="'.$ns.'" xmlns:r="'.$rel.'"><sheets><sheet name="Summary" sheetId="1" r:id="rId1"/></sheets></workbook>');
         $zip->addFromString('xl/_rels/workbook.xml.rels','<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="'.$rel.'/worksheet" Target="worksheets/sheet1.xml"/></Relationships>');
         $zip->addFromString('xl/sharedStrings.xml','<sst xmlns="'.$ns.'"><si><t>Code</t></si><si><t>BBCA</t></si></sst>');
-        $zip->addFromString('xl/worksheets/sheet1.xml','<worksheet xmlns="'.$ns.'"><sheetData><row r="1"><c r="A1" t="s"><v>0</v></c><c r="C1" t="inlineStr"><is><t>Close</t></is></c></row><row r="2"><c r="A2" t="s"><v>1</v></c><c r="C2">'.($formula ? '<f>100+1</f>' : '').'<v>101</v></c></row></sheetData></worksheet>');
+        $zip->addFromString('xl/worksheets/sheet1.xml','<worksheet xmlns="'.$ns.'"><sheetData><row r="1"><c r="A1" t="str"><v>Code</v></c><c r="C1" t="inlineStr"><is><t>Close</t></is></c></row><row r="2"><c r="A2" t="s"><v>1</v></c><c r="C2">'.($formula ? '<f>100+1</f>' : '').'<v>101</v></c></row><row r="3"><c r="A3" t="str"><v>GOTOM</v></c><c r="C3"><v>100</v></c></row></sheetData></worksheet>');
         $zip->close();
     }
 

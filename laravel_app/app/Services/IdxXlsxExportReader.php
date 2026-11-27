@@ -110,7 +110,7 @@ final class IdxXlsxExportReader
                         $v = $strings[(int)$v];
                     } elseif ($type === 'inlineStr') {
                         $v = $this->string($cell);
-                    } elseif (!in_array($type,['','n'],true)) {
+                    } elseif (!in_array($type,['','n','str'],true)) {
                         throw new \InvalidArgumentException('II_IDX_XLSX_CELL_TYPE_INVALID');
                     }
                     if (strlen($v)>4096) {

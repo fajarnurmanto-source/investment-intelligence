@@ -87,7 +87,7 @@ final class IdxOfficialExportIntake
                 throw new \InvalidArgumentException('II_IDX_EXPORT_ROW_LIMIT');
             }
             $code = trim((string)($row[$map['ticker']] ?? ''));
-            if (!preg_match('/^[A-Z0-9]{4}$/D', $code) || isset($seen[$code])) {
+            if (!preg_match('/^[A-Z0-9]{4,5}$/D', $code) || isset($seen[$code])) {
                 throw new \InvalidArgumentException('II_IDX_EXPORT_TICKER_INVALID');
             }
             $seen[$code] = true;
