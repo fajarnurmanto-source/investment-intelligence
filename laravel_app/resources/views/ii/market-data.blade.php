@@ -19,6 +19,22 @@
 @endforelse
 <p><a href="{{ route('ii.signals.index') }}">Buka Trading Signal Center</a></p>
 </section>
+<section class="panel" aria-labelledby="accuracy-review">
+<h2 id="accuracy-review">Data Accuracy Review</h2>
+<p class="muted">Pemeriksaan lokal tanpa request provider. Kesepakatan harga bukan bukti independensi. Tidak ada promosi otomatis atau penggabungan data.</p>
+@forelse($accuracy['items'] as $item)
+<p><strong>{{ $item['ticker'] }}</strong> · {{ $item['sources'] }} sumber · {{ $item['status'] }}</p>
+@foreach($item['comparisons'] as $comparison)
+<p>{{ $comparison['status'] }} · {{ $comparison['overlap_sessions'] }} sesi bersama · {{ $comparison['conflict_sessions'] }} sesi konflik · {{ $comparison['independence'] }}</p>
+@endforeach
+@empty
+<p>Belum ada versi sumber terkelola yang dapat dibandingkan.</p>
+@endforelse
+<h3>Registry sumber</h3>
+@foreach($accuracy['registry'] as $source)
+<p><strong>{{ $source['name'] }}</strong> · {{ $source['capability'] }} · {{ $source['status'] }} · {{ $source['rights'] }}</p>
+@endforeach
+</section>
 @if(session('market_status'))
 <div class="boundary" role="status">{{ session('market_status') }}</div>
 @endif
