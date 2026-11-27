@@ -49,17 +49,25 @@ final class HistoricalAcquisitionCycle
         });
     }
 
+    private function assertOwner(int $owner): void
+    {
+        $settings = app(MarketFeedSettings::class);
+        if ($owner < 1 || (int) ($settings->current()['owner_id'] ?? 0) !== $owner || !$settings->canManage($owner)) {
+            throw new \InvalidArgumentException('II_CYCLE_OWNER_OR_POLICY_INVALID');
+        }
+    }
+
     public function stop(int $owner): void
     {
         Cache::lock('ii-historical-cycle-'.$owner, 1800)->block(1, function () use ($owner): void {
-            $this->generation($owner);
+            $this->assertOwner($owner);
             DB::table('ii_historical_cycles')->where('user_id', $owner)->update(['enabled' => false, 'state' => 'PAUSED', 'updated_at' => now('UTC')]);
         });
     }
 
     public function status(int $owner): array
     {
-        $this->generation($owner);
+        $this->assertOwner($owner);
         return (array) DB::table('ii_historical_cycles')->where('user_id', $owner)->first();
     }
 
@@ -114,7 +122,7 @@ final class HistoricalAcquisitionCycle
                         $status = 'LOCAL_VERIFIED';
                         $sha = $doc['source_sha256'];
                     } else {
-                        $result = $this->bootstrap->run($owner, true, true, $ticker);
+                        $result = $this->bootstrap->run($owner, true, true, $ticker, $generation);
                         if (!in_array($result['status'], ['IMPORTED', 'UNCHANGED'], true)) {
                             throw new \RuntimeException('II_CYCLE_SOURCE_UNAVAILABLE');
                         }
@@ -156,7 +164,7 @@ final class HistoricalAcquisitionCycle
             if ($row->cursor >= count($tickers)) {
                 $query()->update(['enabled' => false, 'state' => 'COMPLETE', 'updated_at' => now('UTC')]);
             }
-            return (array) $query()->first();
+            return $this->readback($owner);
         });
     }
 }
