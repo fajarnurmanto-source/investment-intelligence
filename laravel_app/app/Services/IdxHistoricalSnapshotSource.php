@@ -14,11 +14,30 @@ final class IdxHistoricalSnapshotSource implements HistoricalMarketSnapshotSourc
     public const TERMS = 'https://www.idx.id/id/syarat-penggunaan';
     public const MAX_BYTES = 1048576;
 
+    public const BLOBS = [
+        'BBCA' => '1606574aab3985cc2f1d2cf953ba426909001a6a',
+        'BBRI' => '43da07160634bca31bc91be2acd0b4296c3c863b',
+        'BMRI' => '4693b9364ab017740c11201f654de165f4333c2d',
+        'TLKM' => '97dd3a11a1152469c53c0e45eb6f53b3a2783d46',
+        'ASII' => '0468bafe9056112b41451653bab5ba3975aaedaa',
+        'ANTM' => 'fddbc94fc2cb892881fa958560e6788621033111',
+        'ICBP' => '515a5c3211588b66f5cbb1407df0a1f186cc8625',
+        'UNTR' => '293a0585a5d709341f015c5047901b9a3eb70cbb',
+        'KLBF' => '2612c5bd5d5354ebca158ef1caaff4cfba977768',
+        'INDF' => '33d2cbb7d4398285feab4440105eba52b4e1989e',
+    ];
+
+    public function __construct(private readonly string $ticker = 'BBCA') {}
+
     public function snapshot(): array
     {
+        $blob = self::BLOBS[$this->ticker] ?? throw new \InvalidArgumentException('II_IDX_SNAPSHOT_TICKER_UNSUPPORTED');
+        $path = 'Saham/LQ45/'.$this->ticker.'.csv';
+        $url = 'https://github.com/wildangunawan/Dataset-Saham-IDX/blob/'.self::COMMIT.'/'.$path;
+        $rawUrl = 'https://raw.githubusercontent.com/wildangunawan/Dataset-Saham-IDX/'.self::COMMIT.'/'.$path;
         try {
             $response = Http::connectTimeout(5)->timeout(30)->withOptions(['allow_redirects' => false])
-                ->get(self::RAW_URL);
+                ->get($rawUrl);
         } catch (\Throwable) {
             throw new \RuntimeException('II_IDX_SNAPSHOT_NETWORK_ERROR');
         }
@@ -26,7 +45,7 @@ final class IdxHistoricalSnapshotSource implements HistoricalMarketSnapshotSourc
         if (!$response->successful() || strlen($raw) > self::MAX_BYTES || $raw === '') {
             throw new \InvalidArgumentException('II_IDX_SNAPSHOT_RESPONSE_REJECTED');
         }
-        if (!hash_equals(self::BLOB, self::gitBlobHash($raw))) {
+        if (!hash_equals($blob, self::gitBlobHash($raw))) {
             throw new \InvalidArgumentException('II_IDX_SNAPSHOT_BLOB_MISMATCH');
         }
         $result = self::normalize($raw);
@@ -36,16 +55,16 @@ final class IdxHistoricalSnapshotSource implements HistoricalMarketSnapshotSourc
         }
         return $result + [
             'source_name' => 'Dataset-Saham-IDX / Bursa Efek Indonesia',
-            'source_url' => self::URL,
+            'source_url' => $url,
             'source_commit' => self::COMMIT,
-            'source_blob' => self::BLOB,
+            'source_blob' => $blob,
             'source_sha256' => hash('sha256', $raw),
             'publisher' => 'PT Bursa Efek Indonesia',
             'terms_url' => self::TERMS,
             'license_status' => 'CC_BY_NC_4_0_DECLARED_BY_MAINTAINER',
             'usage_rights' => 'NONCOMMERCIAL_USER_ATTESTED',
-            'provider_identity' => 'BBCA@XIDX',
-            'ticker' => 'BBCA',
+            'provider_identity' => $this->ticker.'@XIDX',
+            'ticker' => $this->ticker,
         ];
     }
 

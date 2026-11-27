@@ -9,13 +9,14 @@ final class HistoricalSignalBootstrap
 {
     public function __construct(private readonly SignalInsightService $signals) {}
 
-    public function run(int $owner, bool $rightsConfirmed, bool $persist): array
+    public function run(int $owner, bool $rightsConfirmed, bool $persist, string $ticker = 'BBCA'): array
     {
         if (!$rightsConfirmed) {
             throw new \InvalidArgumentException('II_HISTORICAL_RIGHTS_CONFIRMATION_REQUIRED');
         }
+        $blob = IdxHistoricalSnapshotSource::BLOBS[$ticker] ?? throw new \InvalidArgumentException('II_IDX_SNAPSHOT_TICKER_UNSUPPORTED');
         $settings = app(MarketFeedSettings::class);
-        return Cache::lock('ii-market-universe-run', 3600)->block(1, function () use ($owner, $settings, $persist): array {
+        return Cache::lock('ii-market-universe-run', 3600)->block(1, function () use ($owner, $settings, $persist, $ticker, $blob): array {
             if ($owner < 1 || !$settings->canManage($owner) || (int) ($settings->current()['owner_id'] ?? 0) !== $owner) {
                 throw new \InvalidArgumentException('II_HISTORICAL_OWNER_REQUIRED');
             }
@@ -23,16 +24,20 @@ final class HistoricalSignalBootstrap
             if (($cfg['enabled'] ?? false) || ($cfg['discovery_enabled'] ?? false)) {
                 throw new \InvalidArgumentException('II_HISTORICAL_STOP_AUTOMATION_FIRST');
             }
-            return Cache::lock('ii-market-feed-'.$owner.'-BBCA', 120)->block(1, function () use ($owner, $settings, $cfg, $persist): array {
-                $previous = $this->signals->latestDocument($owner, 'BBCA');
+            return Cache::lock('ii-market-feed-'.$owner.'-'.$ticker, 120)->block(1, function () use ($owner, $settings, $cfg, $persist, $ticker, $blob): array {
+                $previous = $this->signals->latestDocument($owner, $ticker);
                 if ($persist && $previous !== null && (
                     ($previous['acquisition_mode'] ?? null) !== 'PINNED_HISTORICAL_SNAPSHOT'
-                    || ($previous['source_blob'] ?? null) !== IdxHistoricalSnapshotSource::BLOB
+                    || ($previous['source_blob'] ?? null) !== $blob
                     || ($previous['lineage_source_status'] ?? null) !== 'REGISTERED'
                 )) {
                     throw new \InvalidArgumentException('II_HISTORICAL_EXISTING_SERIES_CONFLICT');
                 }
-                $snapshot = app(HistoricalMarketSnapshotSource::class)->snapshot();
+                $snapshot = ($ticker === 'BBCA' ? app(HistoricalMarketSnapshotSource::class) : app()->make(IdxHistoricalSnapshotSource::class, ['ticker' => $ticker]))->snapshot();
+                if (($snapshot['ticker'] ?? null) !== $ticker || ($snapshot['source_blob'] ?? null) !== $blob
+                    || ($snapshot['provider_identity'] ?? null) !== $ticker.'@XIDX') {
+                    throw new \InvalidArgumentException('II_IDX_SNAPSHOT_IDENTITY_MISMATCH');
+                }
                 if ($settings->current() !== $cfg || !$settings->canManage($owner)) {
                     throw new \InvalidArgumentException('II_HISTORICAL_AUTHORIZATION_CHANGED');
                 }
@@ -63,10 +68,10 @@ final class HistoricalSignalBootstrap
                         }
                         $status = 'UNCHANGED';
                     } else {
-                        $this->signals->save($owner, 'BBCA', $document);
+                        $this->signals->save($owner, $ticker, $document);
                         $status = 'IMPORTED';
                     }
-                    $stored = $this->signals->latestDocument($owner, 'BBCA');
+                    $stored = $this->signals->latestDocument($owner, $ticker);
                     if (($stored['lineage_source_status'] ?? null) !== 'REGISTERED'
                         || ($stored['source_sha256'] ?? null) !== $document['source_sha256']) {
                         throw new \RuntimeException('II_HISTORICAL_PERSISTENCE_UNVERIFIED');
