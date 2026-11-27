@@ -24,3 +24,8 @@ Current P0: authorization generation; unify CLI/UI credential changes; failure a
 - Reuse before rebuild: inspect pinned upstream code and license; adapt compatible capabilities into Laravel, preserve attribution and required license notices. Repository license is not data entitlement.
 - Data acquisition and subscription budget IDR 0; no paid upgrades, trials with rollover or unknown-cost activation. Prefer authorized public historical files and local continuity. No unsupported access or independent accuracy claims.
 - Validate real source bytes, coverage, identity and share basis; reject conflicting or malformed series. Preserve existing accepted data and distinguish actual source acquisition, synthetic CI and production runtime acceptance.
+
+## Autonomous incident closure mandate (approved 2026-11-27)
+- A manual developer correction is not durable incident closure. For every observed actual runtime failure record detection, root cause or uncertainty, safe automated recovery or containment, regression reproducer, recovery evidence and remaining human-only prerequisites. Do not claim autonomous remediation merely from a successful manual repair.
+- Reuse native Laravel mechanisms for bounded retry, locking, versioned recovery, health checks and safe fallback. Never silently alter permissions, costs, credentials, prices, admission or user data. External entitlement changes require authorized intervention; II must diagnose, contain and remain usable where possible.
+- Test failure, recovery, repeated execution and return to normal; distinguish degraded research availability from successful fresh acquisition. Keep production acceptance evidence separate from synthetic CI.

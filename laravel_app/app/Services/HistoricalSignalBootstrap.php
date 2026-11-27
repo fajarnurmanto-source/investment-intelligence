@@ -33,7 +33,32 @@ final class HistoricalSignalBootstrap
                 )) {
                     throw new \InvalidArgumentException('II_HISTORICAL_EXISTING_SERIES_CONFLICT');
                 }
-                $snapshot = ($ticker === 'BBCA' ? app(HistoricalMarketSnapshotSource::class) : app()->make(IdxHistoricalSnapshotSource::class, ['ticker' => $ticker]))->snapshot();
+                try {
+                    $snapshot = ($ticker === 'BBCA' ? app(HistoricalMarketSnapshotSource::class) : app()->make(IdxHistoricalSnapshotSource::class, ['ticker' => $ticker]))->snapshot();
+                } catch (\RuntimeException $exception) {
+                    // A transient outage is not a successful acquisition. Recover
+                    // research availability only from the same immutable source.
+                    if ($exception->getMessage() !== 'II_IDX_SNAPSHOT_NETWORK_ERROR'
+                        || $previous === null
+                        || ($previous['acquisition_mode'] ?? null) !== 'PINNED_HISTORICAL_SNAPSHOT'
+                        || ($previous['source_blob'] ?? null) !== $blob
+                        || ($previous['source_commit'] ?? null) !== IdxHistoricalSnapshotSource::COMMIT
+                        || ($previous['provider_identity'] ?? null) !== $ticker.'@XIDX'
+                        || ($previous['lineage_source_status'] ?? null) !== 'REGISTERED'
+                        || !$settings->canManage($owner) || $settings->current() !== $cfg) {
+                        throw $exception;
+                    }
+                    $insight = $this->signals->insight($previous);
+                    if (!$insight['stale'] || $insight['trading_authorized'] || $insight['decision'] !== 'HOLD') {
+                        throw $exception;
+                    }
+                    return ['status' => 'OFFLINE_ARCHIVE', 'ticker' => $ticker,
+                        'source_commit' => $previous['source_commit'], 'source_blob' => $blob,
+                        'source_sha256' => $previous['source_sha256'], 'rows' => $insight['rows'],
+                        'last_date' => $insight['last_date'], 'state' => $insight['state'],
+                        'decision' => 'HOLD', 'trading_authorized' => false,
+                        'failure' => 'II_IDX_SNAPSHOT_NETWORK_ERROR', 'fresh_acquisition' => false];
+                }
                 if (($snapshot['ticker'] ?? null) !== $ticker || ($snapshot['source_blob'] ?? null) !== $blob
                     || ($snapshot['provider_identity'] ?? null) !== $ticker.'@XIDX') {
                     throw new \InvalidArgumentException('II_IDX_SNAPSHOT_IDENTITY_MISMATCH');
