@@ -10,6 +10,7 @@
 <h1>Kelola data pasar</h1>
 <p class="lead">Pantau ketersediaan riwayat harga, kualitas sumber dan pengambilan data otomatis.</p>
 <div class="boundary">Data penelitian belum diverifikasi secara independen dan tidak memberikan izin transaksi.</div>
+<p class="caption">Pengaturan sumber: {{ $overview['status'] === 'NOT_CONFIGURED' ? 'Belum dikonfigurasi' : 'Lihat status operasional dan cakupan data di bawah' }}.</p>
 <section class="panel" aria-labelledby="research-continuity">
 <h2 id="research-continuity">Arsip penelitian</h2>
 <p><strong>{{ $continuity['mode'] }}</strong> · {{ count($continuity['instruments']) }} instrumen · {{ $continuity['registered'] }} lineage terdaftar · {{ $continuity['recent'] }} seri relatif baru.</p>
