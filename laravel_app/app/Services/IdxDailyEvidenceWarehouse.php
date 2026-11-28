@@ -21,6 +21,54 @@ final class IdxDailyEvidenceWarehouse
     public function ingest(int $owner, string $file, string $review, bool $commit = false): array
     {
         $this->owner($owner);
+        $prepared = $this->prepare($file, $review);
+        if (!$commit) {
+            return $prepared['result'];
+        }
+        return Cache::lock('ii-idx-evidence-'.$owner,120)->block(2, function () use ($owner, $prepared) {
+            $this->owner($owner);
+            return DB::transaction(fn () => $this->storePrepared($owner, $prepared));
+        });
+    }
+
+    /** Validate all pairs before acquiring the write lock; commit all or none. */
+    public function ingestBatch(int $owner, array $pairs, bool $commit = false): array
+    {
+        $this->owner($owner);
+        if (!array_is_list($pairs) || count($pairs) < 1 || count($pairs) > 5) {
+            throw new \InvalidArgumentException('II_IDX_BATCH_SIZE_INVALID');
+        }
+        $prepared = [];
+        $total = 0;
+        foreach ($pairs as $pair) {
+            if (!is_array($pair) || !is_string($pair['file'] ?? null) || !is_string($pair['review'] ?? null)
+                || !is_file($pair['file']) || !is_file($pair['review'])
+                || ($total += filesize($pair['file'])) > IdxOfficialExportIntake::MAX_BYTES) {
+                throw new \InvalidArgumentException('II_IDX_BATCH_INPUT_INVALID');
+            }
+            $item = $this->prepare($pair['file'], $pair['review']);
+            $date = $item['result']['session_date'];
+            if (isset($prepared[$date])) {
+                throw new \InvalidArgumentException('II_IDX_BATCH_DUPLICATE_DATE');
+            }
+            $prepared[$date] = $item;
+        }
+        ksort($prepared);
+        $apply = function () use ($owner, $prepared, $commit): array {
+            $this->owner($owner);
+            $results = [];
+            foreach ($prepared as $item) {
+                $results[] = $this->storePrepared($owner, $item, $commit);
+            }
+            return ['status'=>$commit ? 'BATCH_COMMITTED' : 'BATCH_PREVIEW',
+                'sessions'=>$results, 'rows'=>array_sum(array_column($results,'rows')),
+                'admitted'=>false, 'trading_authorized'=>false];
+        };
+        return Cache::lock('ii-idx-evidence-'.$owner,120)->block(2, fn () => DB::transaction($apply));
+    }
+
+    private function prepare(string $file, string $review): array
+    {
         if (!is_file($file) || !is_file($review)) {
             throw new \InvalidArgumentException('II_IDX_WAREHOUSE_FILE_REQUIRED');
         }
@@ -85,35 +133,45 @@ final class IdxDailyEvidenceWarehouse
             'structural_candidates'=>count(array_filter($rows,fn($row)=>$row['quality']==='STRUCTURAL_CANDIDATE')),
             'rights'=>'USER_ATTESTED_LOCAL_NONCOMMERCIAL','authenticity'=>'USER_ATTESTED_EXPORT',
             'admitted'=>false,'trading_authorized'=>false];
+        return compact('session','sha','reviewSha','meta','rows','result');
+    }
+
+    private function storePrepared(int $owner, array $prepared, bool $commit = true): array
+    {
+        ['session'=>$session,'sha'=>$sha,'reviewSha'=>$reviewSha,'meta'=>$meta,'rows'=>$rows,'result'=>$result] = $prepared;
+        $existing=DB::table('ii_idx_evidence_batches')->where('user_id',$owner)->where('session_date',$session)->first();
+        if ($existing) {
+            $stored = DB::table('ii_idx_evidence_rows')->where('batch_id',$existing->id)->orderBy('row_number')
+                ->get(['ticker','row_number','quality','payload'])->map(fn ($row) => [
+                    'ticker'=>$row->ticker,'row_number'=>(int)$row->row_number,'quality'=>$row->quality,'payload'=>$row->payload
+                ])->all();
+            if ($existing->source_sha256!==$sha || $existing->review_sha256!==$reviewSha
+                || !hash_equals($reviewSha, hash('sha256',$existing->review_json)) || $stored!==$rows) {
+                throw new \RuntimeException('II_IDX_WAREHOUSE_EXISTING_BATCH_CONFLICT');
+            }
+            return array_replace($result,['status'=>'UNCHANGED','batch_id'=>$existing->id]);
+        }
         if (!$commit) {
             return $result;
         }
-        return Cache::lock('ii-idx-evidence-'.$owner,120)->block(2,function () use ($owner,$session,$sha,$reviewSha,$meta,$rows,$result) {
-            $this->owner($owner);
-            return DB::transaction(function () use ($owner,$session,$sha,$reviewSha,$meta,$rows,$result) {
-                $existing=DB::table('ii_idx_evidence_batches')->where('user_id',$owner)->where('session_date',$session)->first();
-                if ($existing) {
-                    if ($existing->source_sha256!==$sha || $existing->review_sha256!==$reviewSha
-                        || DB::table('ii_idx_evidence_rows')->where('batch_id',$existing->id)->count()!==count($rows)) {
-                        throw new \RuntimeException('II_IDX_WAREHOUSE_EXISTING_BATCH_CONFLICT');
-                    }
-                    return array_replace($result,['status'=>'UNCHANGED','batch_id'=>$existing->id]);
-                }
-                $id=DB::table('ii_idx_evidence_batches')->insertGetId(['user_id'=>$owner,'session_date'=>$session,
-                    'source_sha256'=>$sha,'review_sha256'=>$reviewSha,'review_json'=>$meta,'created_at'=>now('UTC')]);
-                foreach (array_chunk($rows,50) as $chunk) {
-                    DB::table('ii_idx_evidence_rows')->insert(array_map(fn($row)=>$row+['batch_id'=>$id],$chunk));
-                }
-                return array_replace($result,['status'=>'STORED_EVIDENCE_ONLY','batch_id'=>$id]);
-            });
-        });
+        $id=DB::table('ii_idx_evidence_batches')->insertGetId(['user_id'=>$owner,'session_date'=>$session,
+            'source_sha256'=>$sha,'review_sha256'=>$reviewSha,'review_json'=>$meta,'created_at'=>now('UTC')]);
+        foreach (array_chunk($rows,50) as $chunk) {
+            DB::table('ii_idx_evidence_rows')->insert(array_map(fn($row)=>$row+['batch_id'=>$id],$chunk));
+        }
+        return array_replace($result,['status'=>'STORED_EVIDENCE_ONLY','batch_id'=>$id]);
     }
 
     public function status(int $owner): array
     {
         $this->owner($owner);
         $batches=DB::table('ii_idx_evidence_batches')->where('user_id',$owner)->orderByDesc('session_date')->limit(30)->get(['id','session_date','source_sha256','review_sha256']);
-        return ['batches'=>$batches->map(fn($b)=>['session_date'=>$b->session_date,'sha256'=>$b->source_sha256,
+        $scope = DB::table('ii_idx_evidence_batches')->where('user_id',$owner);
+        $coverage = (clone $scope)->selectRaw('COUNT(*) as sessions, MIN(session_date) as first_date, MAX(session_date) as last_date')->first();
+        $observations = DB::table('ii_idx_evidence_rows')->whereIn('batch_id',(clone $scope)->select('id'))->count();
+        return ['coverage'=>['sessions'=>(int)$coverage->sessions,'first_date'=>$coverage->first_date,
+            'last_date'=>$coverage->last_date,'observations'=>$observations],
+            'batches'=>$batches->map(fn($b)=>['session_date'=>$b->session_date,'sha256'=>$b->source_sha256,
             'review_sha256'=>$b->review_sha256,'rows'=>DB::table('ii_idx_evidence_rows')->where('batch_id',$b->id)->count()])->all(),
             'admitted'=>false,'trading_authorized'=>false];
     }
