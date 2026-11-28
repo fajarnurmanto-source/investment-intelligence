@@ -39,8 +39,8 @@ class FredPipelineTest extends TestCase
         $user->forceFill(['ii_research_role' => 'analyst'])->save();
         $this->actingAs($user)->get('/ii/macro')->assertOk()->assertSee('Inflasi YoY')->assertSee('CPIAUCSL');
         $this->get('/ii/macro')->assertOk()
-            ->assertSee('Ekspor CSV ditahan')
-            ->assertDontSee('Unduh CSV pribadi (reviewed)');
+            ->assertSee('Unduhan belum diizinkan')
+            ->assertDontSee('Unduh CSV pribadi');
         $this->actingAs($user)->get('/ii/macro/report/rights')->assertOk()
             ->assertJsonPath('status', 'DENIED')
             ->assertJsonPath('issues.0', 'CPIAUCSL:RIGHTS_REVIEW_REQUIRED');
