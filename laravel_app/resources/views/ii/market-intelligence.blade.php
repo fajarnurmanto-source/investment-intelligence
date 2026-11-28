@@ -52,7 +52,14 @@
 @if($archive ?? null)
 <section class="panel mi-upload">
 <div><h2>Arsip perdagangan</h2><p>Gunakan data yang telah tersimpan dengan izin retensi untuk membandingkan tanggal tanpa unggah ulang.</p>
-<p class="note">{{ count($archive['batches']) }} sesi terakhir tersedia dalam daftar (maksimal 30). Tanggal yang tidak tersedia tidak diasumsikan sebagai hari libur atau sesi kosong.</p>
+<div class="mi-kpis">
+<div class="mi-kpi"><span class="note">Sesi tersimpan</span><strong>{{ $archive['coverage']['sessions'] }}</strong></div>
+<div class="mi-kpi"><span class="note">Observasi tersimpan</span><strong>{{ number_format($archive['coverage']['observations'],0,',','.') }}</strong></div>
+</div>
+@if($archive['coverage']['sessions'] > 0)
+<p>Rentang arsip: {{ $archive['coverage']['first_date'] }} – {{ $archive['coverage']['last_date'] }}.</p>
+@endif
+<p class="note">{{ count($archive['batches']) }} sesi terakhir tersedia dalam daftar (maksimal 30). Rentang tanggal tidak membuktikan arsip lengkap. Tanggal yang tidak tersedia belum dibandingkan dengan kalender perdagangan resmi.</p>
 @if(count($archive['batches']) < 2)<p class="note">Diperlukan sedikitnya dua sesi arsip. Penambahan arsip memerlukan konfirmasi hak penyimpanan lokal secara terpisah.</p>@endif
 </div>
 @if(count($archive['batches']) >= 2)
