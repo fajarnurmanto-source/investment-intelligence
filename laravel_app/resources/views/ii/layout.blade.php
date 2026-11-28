@@ -4,7 +4,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="robots" content="noindex,nofollow,noarchive">
-    <meta name="theme-color" content="#0a1524">
+    <meta name="theme-color" content="#f4f6f9">
+    <link rel="icon" type="image/svg+xml" href="{{ asset('ii/brand.svg') }}">
     <title>@yield('title','Investment Intelligence') · II</title>
     <style>
         :root{color-scheme:dark;--bg:#070f1c;--panel:#111e30;--surface:#15253b;--text:#edf5ff;--muted:#91a9c5;--line:#26394f;--cyan:#61d5e8;--green:#97e4bf;--amber:#fac77a;--red:#fca5a5}
@@ -43,39 +44,40 @@
         @media(max-width:980px){.shell{display:block}.sidebar{height:auto;position:static;padding:13px 16px;border-right:0;border-bottom:1px solid var(--line)}.logo{margin:0 0 11px}.group,.menu .disabled{display:none}.menu{display:flex;overflow-x:auto;gap:5px;scrollbar-color:#4d8ca0 #0a1524}.menu a{white-space:nowrap;font-size:.8rem;padding:9px}.top{padding:15px 20px}.content{padding:26px 20px 70px}.grid{grid-template-columns:1fr}}
         @media(max-width:540px){.top{flex-wrap:wrap;align-items:flex-start}.top .idbox{width:100%;justify-content:space-between}.content{padding:24px 14px 60px}.panel{padding:17px}.boundary{padding:12px 14px}.menu{margin:0 -6px}.logo{font-size:.93rem}}
     </style>
+    <link rel="stylesheet" href="{{ asset('ii/institutional.css') }}">
     @stack('styles')
 </head>
-<body>
+<body class="ii-institutional @yield('surface', 'ii-legacy-content')">
 <a class="skip-link" href="#ii-main">Lewati navigasi ke konten utama</a>
 <div class="shell">
     <aside class="sidebar">
-        <a class="logo" href="{{ route('ii.dashboard') }}"><span class="mark">II</span><span>Investment Intelligence<small>Ruang riset investasi</small></span></a>
+        <a class="logo" href="{{ route('ii.dashboard') }}"><img src="{{ asset('ii/brand.svg') }}" width="42" height="42" alt=""><span>Investment Intelligence<small>Ruang riset investasi</small></span></a>
         <nav class="menu" aria-label="Navigasi utama">
             <div class="group">Pasar & strategi</div>
-            <a href="{{ route('ii.dashboard') }}" @class(['active'=>request()->routeIs('ii.dashboard')])><span class="glyph">▦</span> Beranda</a>
-            <a href="{{ route('ii.market-intelligence.index') }}" @class(['active'=>request()->routeIs('ii.market-intelligence.*')])><span class="glyph">▥</span> Analisis pasar</a>
-            <a href="{{ route('ii.signals.index') }}" @class(['active'=>request()->routeIs('ii.signals.*')])><span class="glyph">⌁</span> Sinyal pasar</a>
-            <a href="{{ route('ii.strategy.index') }}" @class(['active'=>request()->routeIs('ii.strategy.index')])><span class="glyph">◎</span> Uji strategi</a>
-            <a href="{{ route('ii.strategy.validate') }}" @class(['active'=>request()->routeIs('ii.strategy.validate')])><span class="glyph">◇</span> Evaluasi strategi</a>
-            <a href="{{ route('ii.strategy.rolling') }}" @class(['active'=>request()->routeIs('ii.strategy.rolling')])><span class="glyph">▤</span> Uji lintas periode</a>
-            <a href="{{ route('ii.risk-budget.index') }}" @class(['active'=>request()->routeIs('ii.risk-budget.*')])><span class="glyph">▧</span> Batas risiko</a>
-            <a href="{{ route('ii.portfolio.index') }}" @class(['active'=>request()->routeIs('ii.portfolio.*')])><span class="glyph">◈</span> Simulasi portofolio</a>
-            <a href="{{ route('ii.macro.index') }}" @class(['active'=>request()->routeIs('ii.macro.*')])><span class="glyph">◌</span> Ekonomi makro</a>
+            <a href="{{ route('ii.dashboard') }}" @class(['active'=>request()->routeIs('ii.dashboard')])><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> Dashboard</a>
+            <a href="{{ route('ii.market-intelligence.index') }}" @class(['active'=>request()->routeIs('ii.market-intelligence.*')])><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 3v18h18M7 15l4-5 4 3 6-8"/></svg> Analisis pasar</a>
+            <a href="{{ route('ii.signals.index') }}" @class(['active'=>request()->routeIs('ii.signals.*')])><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 12h4l3-7 4 14 3-7h4"/></svg> Sinyal pasar</a>
+            <a href="{{ route('ii.strategy.index') }}" @class(['active'=>request()->routeIs('ii.strategy.index')])><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></svg> Backtesting</a>
+            <a href="{{ route('ii.strategy.validate') }}" @class(['active'=>request()->routeIs('ii.strategy.validate')])><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M9 12l2 2 4-4M5 3h14v18H5z"/></svg> Evaluasi strategi</a>
+            <a href="{{ route('ii.strategy.rolling') }}" @class(['active'=>request()->routeIs('ii.strategy.rolling')])><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M8 15h8"/></svg> Uji lintas periode</a>
+            <a href="{{ route('ii.risk-budget.index') }}" @class(['active'=>request()->routeIs('ii.risk-budget.*')])><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3l8 3v6c0 5-5 8-8 9-3-1-8-4-8-9V6zM9 12l2 2 4-4"/></svg> Batas risiko</a>
+            <a href="{{ route('ii.portfolio.index') }}" @class(['active'=>request()->routeIs('ii.portfolio.*')])><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="3" y="5" width="18" height="15" rx="2"/><path d="M16 11h5v5h-5a2.5 2.5 0 0 1 0-5z"/></svg> Simulasi portofolio</a>
+            <a href="{{ route('ii.macro.index') }}" @class(['active'=>request()->routeIs('ii.macro.*')])><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg> Ekonomi makro</a>
             <div class="group">Riset perusahaan</div>
-            <a href="{{ route('ii.company') }}"><span class="glyph">▤</span> Profil perusahaan</a>
-            <a href="{{ route('ii.fundamentals.index') }}" @class(['active'=>request()->routeIs('ii.fundamentals.*')])><span class="glyph">▥</span> Fundamental saham</a>
-            <a href="{{ route('ii.screener.index') }}" @class(['active'=>request()->routeIs('ii.screener.*')])><span class="glyph">⌕</span> Seleksi saham</a>
-            <a href="{{ route('ii.cases.index') }}"><span class="glyph">▣</span> Catatan riset</a>
-            <a href="{{ route('ii.workspace') }}"><span class="glyph">◫</span> Tinjau riset</a>
+            <a href="{{ route('ii.company') }}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 21V7l8-4v18M12 10h8v11M2 21h20M7 10v2M7 15v2M16 14v2"/></svg> Profil perusahaan</a>
+            <a href="{{ route('ii.fundamentals.index') }}" @class(['active'=>request()->routeIs('ii.fundamentals.*')])><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 3v18h18M7 16v-5M12 16V7M17 16V4"/></svg> Fundamental saham</a>
+            <a href="{{ route('ii.screener.index') }}" @class(['active'=>request()->routeIs('ii.screener.*')])><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="10" cy="10" r="6"/><path d="m15 15 6 6"/></svg> Cari saham</a>
+            <a href="{{ route('ii.cases.index') }}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 3h14v18H5zM8 8h8M8 12h8M8 16h5"/></svg> Catatan riset</a>
+            <a href="{{ route('ii.workspace') }}"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 4h16v16H4zM8 12l3 3 5-6"/></svg> Tinjau riset</a>
             <div class="group">Pengaturan data</div>
-            <a href="{{ route('ii.market-data.index') }}" @class(['active'=>request()->routeIs('ii.market-data.*')])><span class="glyph">▤</span> Kelola data pasar</a>
-            <a href="{{ route('ii.byok.index') }}" @class(['active'=>request()->routeIs('ii.byok.*')])><span class="glyph">◇</span> Sumber data</a>
+            <a href="{{ route('ii.market-data.index') }}" @class(['active'=>request()->routeIs('ii.market-data.*')])><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v7c0 4 16 4 16 0V5M4 12v7c0 4 16 4 16 0v-7"/></svg> Kelola data pasar</a>
+            <a href="{{ route('ii.byok.index') }}" @class(['active'=>request()->routeIs('ii.byok.*')])><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-2 2M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l2-2"/></svg> Sumber data</a>
         </nav>
     </aside>
     <div class="main">
         <header class="top">
             <div><div style="font-weight:730">Ruang kerja investasi</div><div class="subtle">Riset, analisis, dan simulasi</div></div>
-            <div class="idbox"><span>{{ auth()->user()->email }}<br><strong>{{ strtoupper(auth()->user()->ii_research_role) }}</strong></span>
+            <div class="idbox"><span>{{ auth()->user()->email }}<br><strong>{{ ['analyst'=>'Analis','reviewer'=>'Peninjau','admin'=>'Administrator'][auth()->user()->ii_research_role] ?? 'Pengguna' }}</strong></span>
                 <form method="POST" action="{{ route('ii.logout') }}">@csrf<button type="submit" class="quiet">Keluar</button></form>
             </div>
         </header>
