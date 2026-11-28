@@ -37,7 +37,7 @@ final class MarketControlCenterTest extends TestCase
         $owner = $this->admin();
         $other = $this->admin();
         $this->actingAs($owner)->get('/ii/market-data')->assertOk()
-            ->assertSee('Autonomous Data Control Center')->assertSee('Otorisasi discovery');
+            ->assertSee('Kelola data pasar')->assertSee('Izinkan pencarian instrumen');
         $this->post('/ii/market-data/policy', array_replace($this->policy(), ['storage_permitted' => '0']))
             ->assertSessionHasErrors('storage_permitted');
         $this->assertDatabaseCount('ii_market_feed_settings', 0);
@@ -126,7 +126,7 @@ final class MarketControlCenterTest extends TestCase
         $this->actingAs($owner)->post('/ii/market-data/policy', $this->policy())->assertRedirect();
         $owner->forceFill(['ii_research_role' => 'reviewer'])->save();
         $this->actingAs($owner)->post('/ii/market-data/action', ['action' => 'stop', 'confirm' => '1'])->assertForbidden();
-        $this->get('/ii/market-data')->assertOk()->assertDontSee('Simpan kebijakan (nonaktif)');
+        $this->get('/ii/market-data')->assertOk()->assertDontSee('Simpan pengaturan dan nonaktifkan otomatisasi');
     }
 
     public function test_cli_disconnect_revokes_persisted_authorization(): void
@@ -269,7 +269,7 @@ final class MarketControlCenterTest extends TestCase
         $owner = User::factory()->create();
         $owner->forceFill(['ii_research_role' => 'analyst'])->save();
         $this->actingAs($owner)->get('/ii/market-data')->assertOk()
-            ->assertSee('Autonomous Data Control Center');
+            ->assertSee('Kelola data pasar');
         $this->post('/ii/market-data/policy', $this->policy())
             ->assertSessionHas('market_status', 'POLICY_SAVED_DISABLED');
         $this->assertSame('analyst', $owner->fresh()->ii_research_role);
