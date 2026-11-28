@@ -124,6 +124,43 @@ final class IdxMultisessionUploadTest extends TestCase
         $this->actingAs($owner)->post('http://localhost/ii/market-intelligence',['mode'=>'history','dates'=>$dates])->assertStatus(422);
     }
 
+    public function test_momentum_workspace_reads_reviewed_history_and_abstains(): void
+    {
+        $owner = User::factory()->create(['ii_research_role'=>'analyst']);
+        app(MarketFeedSettings::class)->initializeOwner($owner->id);
+        $warehouse = app(IdxDailyEvidenceWarehouse::class);
+        $url = 'http://localhost/ii/market-intelligence';
+        $this->actingAs($owner)->withServerVariables(['REMOTE_ADDR'=>'127.0.0.1'])
+            ->post($url,['mode'=>'momentum'])->assertOk()
+            ->assertViewHas('momentum',fn($r)=>$r['available']===0 && $r['windows'][0]['status']==='INSUFFICIENT_HISTORY');
+        $review = tempnam(sys_get_temp_dir(),'ii-momentum-review-');
+        $files = [];
+        try {
+            for ($i=0;$i<5;$i++) {
+                $day = 3+$i;
+                $date = '2025-11-0'.$day;
+                $files[] = $file = $this->workbook('0'.$day.' Nov 2025',(string)(100+10*$i),'100',true);
+                $path = $file->getRealPath();
+                file_put_contents($review,json_encode([
+                    'source_url'=>IdxOfficialExportIntake::SOURCE,'terms_url'=>IdxOfficialExportIntake::TERMS,
+                    'document_sha256'=>hash_file('sha256',$path),'acquisition'=>'MANUAL_OFFICIAL_DOWNLOAD',
+                    'usage'=>'PERSONAL_NONCOMMERCIAL_RESEARCH','rights_confirmed'=>true,'no_redistribution'=>true,
+                    'local_retention_confirmed'=>true,'direct_cost_idr'=>0,'reviewer'=>'Synthetic fixture',
+                    'session_date'=>$date,'access_date'=>'2025-11-08','format'=>'ORIGINAL_XLSX','sheet'=>'Sheet1','header_row'=>1
+                ],JSON_THROW_ON_ERROR));
+                $warehouse->ingest($owner->id,$path,$review,true);
+            }
+            $this->post($url,['mode'=>'momentum'])->assertOk()->assertSee('Market Momentum Intelligence')
+                ->assertSee('Data belum cukup')->assertViewHas('momentum',fn($r)=>$r['available']===5
+                    && $r['windows'][0]['matched_count']===1 && abs($r['windows'][0]['median_change_pct']-40)<1e-9
+                    && $r['windows'][1]['status']==='INSUFFICIENT_HISTORY');
+            $other=User::factory()->create(['ii_research_role'=>'analyst']);
+            $this->actingAs($other)->post($url,['mode'=>'momentum'])->assertForbidden();
+        } finally {
+            unlink($review);
+        }
+    }
+
     public function test_batch_preview_atomic_store_replay_and_coverage(): void
     {
         $owner = User::factory()->create(['ii_research_role'=>'analyst']);
