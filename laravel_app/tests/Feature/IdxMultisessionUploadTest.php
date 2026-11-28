@@ -5,6 +5,10 @@ namespace Tests\Feature;
 use App\Models\User;
 use App\Services\IdxDailyEvidenceWarehouse;
 use App\Services\IdxSessionIntelligence;
+use App\Services\IdxOfficialExportIntake;
+use App\Services\MarketFeedSettings;
+use App\Services\IdxMultisessionIntelligence;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
@@ -70,6 +74,54 @@ final class IdxMultisessionUploadTest extends TestCase
                 'workbook'=>$this->workbook('04 Nov 2025','120','300', true),
                 'rights'=>'1',
             ])->assertOk()->assertViewHas('result', fn ($r) => $r['universe'] === 1 && $r['breadth']['up'] === 1);
+    }
+
+    public function test_stored_bilingual_sessions_match_upload_and_are_owner_private(): void
+    {
+        $owner = User::factory()->create(['ii_research_role'=>'analyst']);
+        app(MarketFeedSettings::class)->initializeOwner($owner->id);
+        $warehouse = app(IdxDailyEvidenceWarehouse::class);
+        $files = [$this->workbook('03 Nov 2025','100','100'), $this->workbook('04 Nov 2025','120','300', true)];
+        $dates = ['2025-11-03', '2025-11-04'];
+        $raw = [];
+        $reviewPath = tempnam(sys_get_temp_dir(), 'ii-review-');
+        try {
+            foreach ($files as $i => $file) {
+                $path = $file->getRealPath();
+                $raw[] = file_get_contents($path);
+                $receipt = ['source_url'=>IdxOfficialExportIntake::SOURCE,'terms_url'=>IdxOfficialExportIntake::TERMS,
+                    'document_sha256'=>hash_file('sha256',$path),'acquisition'=>'MANUAL_OFFICIAL_DOWNLOAD',
+                    'usage'=>'PERSONAL_NONCOMMERCIAL_RESEARCH','rights_confirmed'=>true,'no_redistribution'=>true,
+                    'local_retention_confirmed'=>false,'direct_cost_idr'=>0,'reviewer'=>'Synthetic fixture',
+                    'session_date'=>$dates[$i],'access_date'=>'2025-11-05','format'=>'ORIGINAL_XLSX','sheet'=>'Sheet1','header_row'=>1];
+                file_put_contents($reviewPath,json_encode($receipt,JSON_THROW_ON_ERROR));
+                try {
+                    $warehouse->ingest($owner->id,$path,$reviewPath,true);
+                    $this->fail('Retention not confirmed');
+                } catch (\InvalidArgumentException $e) {
+                    $this->assertSame('II_IDX_WAREHOUSE_REVIEW_INVALID',$e->getMessage());
+                }
+                $receipt['local_retention_confirmed'] = true;
+                file_put_contents($reviewPath,json_encode($receipt,JSON_THROW_ON_ERROR));
+                $this->assertSame('STORED_EVIDENCE_ONLY',$warehouse->ingest($owner->id,$path,$reviewPath,true)['status']);
+                $this->assertSame('UNCHANGED',$warehouse->ingest($owner->id,$path,$reviewPath,true)['status']);
+            }
+        } finally {
+            unlink($reviewPath);
+        }
+        $expected = app(IdxMultisessionIntelligence::class)->analyze($raw) + ['archive_source'=>true];
+        $this->assertSame($expected,$warehouse->historicalCompare($owner->id,array_reverse($dates)));
+        $this->actingAs($owner)->withServerVariables(['REMOTE_ADDR'=>'127.0.0.1'])
+            ->get('http://localhost/ii/market-intelligence')->assertOk()->assertSee('Analisis arsip');
+        $this->post('http://localhost/ii/market-intelligence',['mode'=>'history','dates'=>$dates])
+            ->assertOk()->assertViewHas('comparison',$expected);
+        $other = User::factory()->create(['ii_research_role'=>'analyst']);
+        $this->actingAs($other)->get('http://localhost/ii/market-intelligence')->assertOk()->assertDontSee('Arsip perdagangan');
+        $this->post('http://localhost/ii/market-intelligence',['mode'=>'history','dates'=>$dates])->assertForbidden();
+        $this->assertDatabaseCount('ii_idx_evidence_batches',2);
+        $this->assertDatabaseCount('ii_idx_evidence_rows',2);
+        DB::table('ii_idx_evidence_batches')->where('user_id',$owner->id)->where('session_date',$dates[0])->update(['review_json'=>'{}']);
+        $this->actingAs($owner)->post('http://localhost/ii/market-intelligence',['mode'=>'history','dates'=>$dates])->assertStatus(422);
     }
 
     public function test_multisession_requires_rights_and_distinct_dates(): void
