@@ -10,7 +10,7 @@
 <header>
 <p class="eyebrow">Riset saham / Bursa Efek Indonesia</p>
 <h1>Analisis pasar</h1>
-<p class="lead">Pahami arah pergerakan saham, aktivitas transaksi, dan data yang perlu diperiksa dalam satu hari perdagangan.</p>
+<p class="lead">Lihat arah pasar dan saham yang menonjol dalam satu hari perdagangan.</p>
 </header>
 <div class="mi-steps"><span><b>01</b> Pilih data</span><span><b>02</b> Lihat ringkasan</span><span><b>03</b> Telusuri saham</span></div>
 @if($notice)
@@ -22,7 +22,7 @@
 <h2>Mulai analisis</h2>
 <p>Unduh ringkasan saham harian dari BEI, kemudian pilih file Excel asli dari komputer Anda.</p>
 <a href="{{ \App\Services\IdxOfficialExportIntake::SOURCE }}" target="_blank" rel="noopener noreferrer">Buka sumber data BEI</a>
-<p class="note">File diproses di aplikasi lokal. Hasil tidak disimpan oleh fitur ini atau dikirim ke penyedia AI.</p>
+<p class="note">File diproses di komputer Anda. Hasil tidak disimpan atau dikirim ke penyedia AI oleh fitur ini.</p>
 </div>
 <form method="POST" action="{{ route('ii.market-intelligence.analyze') }}" enctype="multipart/form-data">
 @csrf
@@ -38,7 +38,7 @@
 <section class="panel">
 <div class="section-header" style="margin:0 0 16px"><div><h2>Ringkasan perdagangan</h2><p class="note">{{ $result['session'] }} · Data dari file yang Anda pilih</p></div><a class="button quiet" href="{{ route('ii.market-intelligence.index') }}">Analisis file lain</a></div>
 <div class="mi-kpis">
-@foreach(['Saham dibaca'=>$result['universe'],'Harga naik'=>$b['up'],'Harga turun'=>$b['down'],'Harga tetap'=>$b['flat']] as $label=>$n)
+@foreach(['Jumlah saham'=>$result['universe'],'Harga naik'=>$b['up'],'Harga turun'=>$b['down'],'Harga tetap'=>$b['flat']] as $label=>$n)
 <div class="mi-kpi"><span class="note">{{ $label }}</span><strong>{{ number_format($n,0,',','.') }}</strong></div>
 @endforeach
 </div>
@@ -52,18 +52,18 @@
 </section>
 <div class="mi-two">
 @foreach(['Perubahan harga tertinggi'=>'top_price_moves','Perubahan harga terendah'=>'bottom_price_moves'] as $label=>$key)
-<section class="panel"><h2>{{ $label }}</h2><p class="note">Dibanding harga Previous pada file, bukan hasil prediksi.</p><div class="tablewrap"><table><thead><tr><th>Saham</th><th>Perubahan</th></tr></thead><tbody>
+<section class="panel"><h2>{{ $label }}</h2><p class="note">Dibanding harga sebelumnya yang tercatat dalam file.</p><div class="tablewrap"><table><thead><tr><th>Saham</th><th>Perubahan</th></tr></thead><tbody>
 @forelse($result[$key] as $row)<tr><td><a href="{{ route('ii.company', ['ticker'=>$row['ticker']]) }}">{{ $row['ticker'] }}</a></td><td class="{{ $row['close_vs_previous_pct'] > 0 ? 'mi-positive' : ($row['close_vs_previous_pct'] < 0 ? 'mi-negative' : '') }}">{{ number_format($row['close_vs_previous_pct'],2,',','.') }}%</td></tr>@empty<tr><td colspan="2">Data belum mencukupi.</td></tr>@endforelse
 </tbody></table></div></section>
 @endforeach
 </div>
-<section class="panel"><h2>Aktivitas transaksi</h2><p class="note">Angka berikut mengikuti kolom asli file. Satuan dan cakupan pasar belum diperiksa; jangan gunakan sebagai nilai rupiah atau jumlah lembar terverifikasi.</p>
+<section class="panel"><h2>Aktivitas transaksi</h2><p class="note">Satuan dan cakupan transaksi belum dipastikan. Angka di bawah bukan nilai rupiah atau jumlah lembar yang telah terverifikasi.</p><details><summary>Lihat rincian transaksi</summary>
 <div class="mi-two">
-@foreach(['Selisih beli-jual asing tertinggi'=>['top_foreign_raw_net','raw_net'],'Selisih beli-jual asing terendah'=>['bottom_foreign_raw_net','raw_net'],'Nilai transaksi terbesar'=>['top_raw_value','raw_value']] as $label=>$spec)
+@foreach(['Selisih beli-jual asing tertinggi'=>['top_foreign_raw_net','raw_net'],'Selisih beli-jual asing terendah'=>['bottom_foreign_raw_net','raw_net'],'Nilai transaksi terbesar (angka sumber)'=>['top_raw_value','raw_value']] as $label=>$spec)
 <div><h3>{{ $label }}</h3><div class="tablewrap"><table><thead><tr><th>Saham</th><th>Angka sumber</th></tr></thead><tbody>@forelse($result[$spec[0]] as $row)<tr><td>{{ $row['ticker'] }}</td><td>{{ number_format($row[$spec[1]],0,',','.') }}</td></tr>@empty<tr><td colspan="2">Data belum mencukupi.</td></tr>@endforelse</tbody></table></div></div>
 @endforeach
-</div><p class="note">Data beli-jual tersedia untuk {{ $result['foreign_field_coverage'] }} saham; data aktivitas lengkap untuk {{ $result['liquidity_field_coverage'] }} saham.</p></section>
-<section class="panel"><details><summary>Kualitas dan sumber data</summary><p>Harga pembukaan nol: {{ $b['zero_open'] }}. Volume nol: {{ $b['zero_volume'] }}. Volume kosong atau tidak valid: {{ $b['missing_volume'] }}. Data harga tidak memenuhi syarat: {{ $b['invalid_ohlc'] }}. Kelompok ini dapat saling beririsan.</p><p>Perbandingan menggunakan volume positif, harga pembukaan dan penutupan positif, rentang harga yang konsisten serta harga Previous positif.</p><p class="mi-hash">Identitas file (SHA-256): {{ $result['sha256'] }}</p><p>File belum diverifikasi secara independen. Analisis hanya menggambarkan satu sesi, bukan rekomendasi beli atau jual.</p></details></section>
+</div><p class="note">Data beli-jual tersedia untuk {{ $result['foreign_field_coverage'] }} saham; data aktivitas lengkap untuk {{ $result['liquidity_field_coverage'] }} saham.</p></details></section>
+<section class="panel"><details><summary>Kualitas dan sumber data</summary><p>Harga pembukaan nol: {{ $b['zero_open'] }}. Volume nol: {{ $b['zero_volume'] }}. Volume kosong atau tidak valid: {{ $b['missing_volume'] }}. Data harga tidak memenuhi syarat: {{ $b['invalid_ohlc'] }}. Kelompok ini dapat saling beririsan.</p><p>Perbandingan menggunakan volume positif, harga pembukaan dan penutupan positif, rentang harga yang konsisten serta harga sebelumnya lebih dari nol.</p><p class="mi-hash">Sidik digital file (SHA-256): {{ $result['sha256'] }}</p><p>File belum diverifikasi secara independen. Analisis hanya menggambarkan satu sesi, bukan rekomendasi beli atau jual.</p></details></section>
 @endif
 </div>
 @endsection
