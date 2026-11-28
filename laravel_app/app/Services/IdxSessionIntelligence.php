@@ -8,10 +8,31 @@ final class IdxSessionIntelligence
     public function analyze(string $raw): array
     {
         [$header, $rows] = app(IdxXlsxExportReader::class)->read($raw, 'Sheet1', 1);
-        if ($header !== IdxDailyEvidenceWarehouse::HEADERS) {
+        $rows = $this->normalizeExport($header, $rows);
+        return $this->summarize($rows) + ['sha256' => hash('sha256', $raw)];
+    }
+
+    public const INDONESIAN_HEADERS = ['No','Kode Saham','Nama Perusahaan','Remarks','Sebelumnya','Open Price','Tanggal Perdagangan Terakhir','First Trade','Tertinggi','Terendah','Penutupan','Selisih','Volume','Nilai','Frekuensi','Index Individual','Offer','Offer Volume','Bid','Bid Volume','Listed Shares','Tradeble Shares','Weight For Index','Foreign Sell','Foreign Buy','Non Regular Volume','Non Regular Value','Non Regular Frequency'];
+
+    public function normalizeExport(array $header, array $rows): array
+    {
+        $canonical = IdxDailyEvidenceWarehouse::HEADERS;
+        if ($header === $canonical) {
+            return $rows;
+        }
+        if ($header !== self::INDONESIAN_HEADERS) {
             throw new \InvalidArgumentException('II_IDX_INTELLIGENCE_SCHEMA_INVALID');
         }
-        return $this->summarize($rows) + ['sha256' => hash('sha256', $raw)];
+        return array_map(static function (array $row) use ($canonical): array {
+            $normalized = [];
+            foreach (self::INDONESIAN_HEADERS as $index => $name) {
+                if (!array_key_exists($name, $row)) {
+                    throw new \InvalidArgumentException('II_IDX_INTELLIGENCE_SCHEMA_INVALID');
+                }
+                $normalized[$canonical[$index]] = $row[$name];
+            }
+            return $normalized;
+        }, $rows);
     }
 
     public function summarize(array $rows): array

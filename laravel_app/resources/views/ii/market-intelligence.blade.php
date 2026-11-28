@@ -14,13 +14,41 @@
 <header>
 <p class="eyebrow">Riset saham / Bursa Efek Indonesia</p>
 <h1>Analisis pasar</h1>
-<p class="lead">Lihat arah pasar dan saham yang menonjol dalam satu hari perdagangan.</p>
+<p class="lead">Lihat arah pasar dalam satu sesi atau bandingkan beberapa tanggal perdagangan.</p>
 </header>
 <div class="mi-steps"><span><b>01</b> Pilih data</span><span><b>02</b> Lihat ringkasan</span><span><b>03</b> Telusuri saham</span></div>
 @if($notice)
 <div class="error" role="alert">{{ $notice }}</div>
 @endif
-@if(!$result)
+@if($comparison ?? null)
+<section class="panel">
+<div class="section-header"><h2>Perbandingan sesi perdagangan</h2><a class="button quiet" href="{{ route('ii.market-intelligence.index') }}">Analisis baru</a></div>
+<div class="mi-kpis">
+<div class="mi-kpi"><span class="note">Sesi terpilih</span><strong>{{ count($comparison['sessions']) }}</strong></div>
+<div class="mi-kpi"><span class="note">Saham dengan data lengkap di semua sesi</span><strong>{{ $comparison['matched_count'] }}</strong></div>
+<div class="mi-kpi"><span class="note">Median perubahan harga kelompok</span><strong>{{ $comparison['median_change_pct'] === null ? '—' : number_format($comparison['median_change_pct'],2,',','.') . '%' }}</strong></div>
+</div>
+<p class="note">Tanggal yang dipilih belum tentu berurutan. Perubahan harga penutupan mentah belum disesuaikan untuk aksi korporasi atau dividen; bukan return total, perubahan IHSG, atau rekomendasi transaksi.</p>
+<div class="tablewrap"><table><thead><tr><th>Tanggal</th><th>Naik</th><th>Turun</th><th>Tetap</th><th>Memenuhi syarat / total</th></tr></thead><tbody>
+@foreach($comparison['sessions'] as $session)
+<tr><td>{{ $session['date'] }}</td><td>{{ $session['up'] }}</td><td>{{ $session['down'] }}</td><td>{{ $session['flat'] }}</td><td>{{ $session['eligible'] }} / {{ $session['universe'] }}</td></tr>
+@endforeach
+</tbody></table></div>
+</section>
+<div class="mi-two">
+@foreach(['Perubahan harga tertinggi'=>'leaders','Perubahan harga terendah'=>'laggards'] as $label=>$key)
+<section class="panel"><h2>{{ $label }}</h2><p class="note">Perbandingan penutupan tanggal awal dan akhir, untuk saham dengan data yang memenuhi syarat di semua tanggal terpilih.</p>
+<div class="tablewrap"><table><thead><tr><th>Saham</th><th>Harga berubah</th><th>Selisih dari median (poin %)</th></tr></thead><tbody>
+@forelse($comparison[$key] as $row)
+<tr><td><a href="{{ route('ii.company',['ticker'=>$row['ticker']]) }}">{{ $row['ticker'] }}</a></td><td>{{ number_format($row['price_change_pct'],2,',','.') }}%</td><td>{{ number_format($row['relative_to_matched_median_pp'],2,',','.') }}</td></tr>
+@empty<tr><td colspan="3">Belum ada saham yang dapat dibandingkan.</td></tr>@endforelse
+</tbody></table></div></section>
+@endforeach
+</div>
+<section class="panel"><h2>Aktivitas perdagangan relatif</h2><p class="note">Rasio angka volume terakhir terhadap rata-rata tanggal sebelumnya yang dipilih. Satuan, cakupan dan kesetaraan basis volume antarfile belum diverifikasi. Rasio ini bukan deteksi anomali statistik atau ukuran likuiditas yang terverifikasi.</p>
+<div class="tablewrap"><table><thead><tr><th>Saham</th><th>Rasio volume mentah</th></tr></thead><tbody>@forelse($comparison['activity'] as $row)<tr><td>{{ $row['ticker'] }}</td><td>{{ number_format($row['raw_volume_ratio'],2,',','.') }}×</td></tr>@empty<tr><td colspan="2">Data belum mencukupi.</td></tr>@endforelse</tbody></table></div></section>
+<section class="panel"><details><summary>Sumber dan batas analisis</summary><p>File diproses lokal tanpa penyimpanan permanen. Hak penggunaan dikonfirmasi pengguna, bukan verifikasi lisensi atau keaslian independen. Tidak ada persetujuan transaksi.</p>@foreach($comparison['sessions'] as $session)<p class="mi-hash">{{ $session['date'] }} · {{ $session['sha256'] }}</p>@endforeach</details></section>
+@elseif(!$result)
 <section class="panel mi-upload">
 <div>
 <h2>Mulai analisis</h2>
@@ -35,6 +63,11 @@
 <button type="submit">Analisis pasar</button>
 </form>
 </section>
+<section class="panel mi-upload"><div><h2>Bandingkan beberapa tanggal</h2><p>Pilih 2–5 ringkasan saham asli BEI dari tanggal berbeda. Lihat perubahan harga, arah pasar dan aktivitas relatif.</p><p class="note">Total file maksimal 19 MB. Hanya untuk penelitian pribadi dengan hak penggunaan yang telah Anda pastikan.</p></div>
+<form method="POST" action="{{ route('ii.market-intelligence.analyze') }}" enctype="multipart/form-data">@csrf
+<div class="field"><label for="mi-files">File ringkasan saham (.xlsx)</label><input id="mi-files" type="file" name="workbooks[]" accept=".xlsx" multiple required></div>
+<label class="mi-check"><input type="checkbox" name="rights" value="1" required><span>Saya memiliki hak penggunaan untuk seluruh file dan tidak akan mendistribusikannya.</span></label>
+<button type="submit">Bandingkan sesi</button></form></section>
 <section class="panel"><h2>Apa yang akan Anda lihat?</h2><div class="mi-two"><div><h3>Arah pasar</h3><p class="muted">Berapa saham naik, turun, atau tidak berubah dibanding harga sebelumnya.</p></div><div><h3>Aktivitas perdagangan</h3><p class="muted">Saham dengan pergerakan harga dan aktivitas transaksi yang menonjol.</p></div></div></section>
 @else
 @php($b = $result['breadth'])
