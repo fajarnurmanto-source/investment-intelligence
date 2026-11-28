@@ -59,8 +59,8 @@ class FredPipelineTest extends TestCase
             'source_owner' => 'U.S. Bureau of Labor Statistics',
         ]);
         $this->get('/ii/macro')->assertOk()
-            ->assertSee('Unduh CSV pribadi (reviewed)')
-            ->assertDontSee('Ekspor CSV ditahan');
+            ->assertSee('Unduh CSV pribadi')
+            ->assertDontSee('Unduhan belum diizinkan');
         $response = $this->get('/ii/macro/report.csv')->assertOk()
             ->assertHeader('Content-Type', 'text/csv; charset=UTF-8')
             ->assertHeader('X-II-Rights-Scope', 'LOCAL_PERSONAL_NONCOMMERCIAL_CSV');
