@@ -17,9 +17,7 @@ final class IdxMultisessionIntelligence
                 throw new \InvalidArgumentException('Workbook size exceeds limit.');
             }
             [$header, $rows] = app(IdxXlsxExportReader::class)->read($raw, 'Sheet1', 1);
-            if ($header !== IdxDailyEvidenceWarehouse::HEADERS) {
-                throw new \InvalidArgumentException('Unexpected workbook schema.');
-            }
+            $rows = app(IdxSessionIntelligence::class)->normalizeExport($header, $rows);
             $sessions[] = ['rows' => $rows, 'sha256' => hash('sha256', $raw)];
         }
         return $this->compare($sessions);
