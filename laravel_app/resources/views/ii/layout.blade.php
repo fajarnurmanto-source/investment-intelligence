@@ -49,30 +49,32 @@
 <a class="skip-link" href="#ii-main">Lewati navigasi ke konten utama</a>
 <div class="shell">
     <aside class="sidebar">
-        <a class="logo" href="{{ route('ii.dashboard') }}"><span class="mark">II</span><span>Investment Intelligence<small>Decision Platform · Research Preview</small></span></a>
+        <a class="logo" href="{{ route('ii.dashboard') }}"><span class="mark">II</span><span>Investment Intelligence<small>Ruang riset investasi</small></span></a>
         <nav class="menu" aria-label="Navigasi utama">
-            <div class="group">Decision workspace</div>
-            <a href="{{ route('ii.dashboard') }}" @class(['active'=>request()->routeIs('ii.dashboard')])><span class="glyph">▦</span> Dashboard</a>
-            <a href="{{ route('ii.signals.index') }}" @class(['active'=>request()->routeIs('ii.signals.*')])><span class="glyph">⌁</span> Trading Signal Center</a>
-            <a href="{{ route('ii.strategy.index') }}" @class(['active'=>request()->routeIs('ii.strategy.index')])><span class="glyph">◎</span> Strategy Lab</a>
-            <a href="{{ route('ii.strategy.validate') }}" @class(['active'=>request()->routeIs('ii.strategy.validate')])><span class="glyph">◇</span> Strategy Validation</a>
-            <a href="{{ route('ii.strategy.rolling') }}" @class(['active'=>request()->routeIs('ii.strategy.rolling')])><span class="glyph">▤</span> Rolling Validation</a>
-            <a href="{{ route('ii.risk-budget.index') }}" @class(['active'=>request()->routeIs('ii.risk-budget.*')])><span class="glyph">▧</span> Risk Budget</a>
-            <a href="{{ route('ii.portfolio.index') }}" @class(['active'=>request()->routeIs('ii.portfolio.*')])><span class="glyph">◈</span> Portfolio Sandbox</a>
-            <a href="{{ route('ii.macro.index') }}" @class(['active'=>request()->routeIs('ii.macro.*')])><span class="glyph">◌</span> Macro Intelligence</a>
-            <div class="group">Investment research</div>
-            <a href="{{ route('ii.company') }}"><span class="glyph">▤</span> Company Research</a>
-            <a href="{{ route('ii.fundamentals.index') }}" @class(['active'=>request()->routeIs('ii.fundamentals.*')])><span class="glyph">▥</span> Issuer Fundamentals</a>
-            <a href="{{ route('ii.screener.index') }}" @class(['active'=>request()->routeIs('ii.screener.*')])><span class="glyph">⌕</span> Fundamental Screener</a>
-            <a href="{{ route('ii.cases.index') }}"><span class="glyph">▣</span> Research Cases</a>
-            <a href="{{ route('ii.workspace') }}"><span class="glyph">◫</span> Reviewer Workspace</a>
-            <div class="group">Data provenance</div>
-            <span class="disabled"><span class="glyph">◇</span> FRED · Laravel connector</span>
+            <div class="group">Pasar & strategi</div>
+            <a href="{{ route('ii.dashboard') }}" @class(['active'=>request()->routeIs('ii.dashboard')])><span class="glyph">▦</span> Beranda</a>
+            <a href="{{ route('ii.market-intelligence.index') }}" @class(['active'=>request()->routeIs('ii.market-intelligence.*')])><span class="glyph">▥</span> Analisis pasar</a>
+            <a href="{{ route('ii.signals.index') }}" @class(['active'=>request()->routeIs('ii.signals.*')])><span class="glyph">⌁</span> Sinyal pasar</a>
+            <a href="{{ route('ii.strategy.index') }}" @class(['active'=>request()->routeIs('ii.strategy.index')])><span class="glyph">◎</span> Uji strategi</a>
+            <a href="{{ route('ii.strategy.validate') }}" @class(['active'=>request()->routeIs('ii.strategy.validate')])><span class="glyph">◇</span> Evaluasi strategi</a>
+            <a href="{{ route('ii.strategy.rolling') }}" @class(['active'=>request()->routeIs('ii.strategy.rolling')])><span class="glyph">▤</span> Uji lintas periode</a>
+            <a href="{{ route('ii.risk-budget.index') }}" @class(['active'=>request()->routeIs('ii.risk-budget.*')])><span class="glyph">▧</span> Batas risiko</a>
+            <a href="{{ route('ii.portfolio.index') }}" @class(['active'=>request()->routeIs('ii.portfolio.*')])><span class="glyph">◈</span> Simulasi portofolio</a>
+            <a href="{{ route('ii.macro.index') }}" @class(['active'=>request()->routeIs('ii.macro.*')])><span class="glyph">◌</span> Ekonomi makro</a>
+            <div class="group">Riset perusahaan</div>
+            <a href="{{ route('ii.company') }}"><span class="glyph">▤</span> Profil perusahaan</a>
+            <a href="{{ route('ii.fundamentals.index') }}" @class(['active'=>request()->routeIs('ii.fundamentals.*')])><span class="glyph">▥</span> Fundamental saham</a>
+            <a href="{{ route('ii.screener.index') }}" @class(['active'=>request()->routeIs('ii.screener.*')])><span class="glyph">⌕</span> Seleksi saham</a>
+            <a href="{{ route('ii.cases.index') }}"><span class="glyph">▣</span> Catatan riset</a>
+            <a href="{{ route('ii.workspace') }}"><span class="glyph">◫</span> Tinjau riset</a>
+            <div class="group">Pengaturan data</div>
+            <a href="{{ route('ii.market-data.index') }}" @class(['active'=>request()->routeIs('ii.market-data.*')])><span class="glyph">▤</span> Kelola data pasar</a>
+            <a href="{{ route('ii.byok.index') }}" @class(['active'=>request()->routeIs('ii.byok.*')])><span class="glyph">◇</span> Sumber data</a>
         </nav>
     </aside>
     <div class="main">
         <header class="top">
-            <div><div style="font-weight:730">II Product Workspace</div><div class="subtle">Research + Signal + Portfolio roadmap</div></div>
+            <div><div style="font-weight:730">Ruang kerja investasi</div><div class="subtle">Riset, analisis, dan simulasi</div></div>
             <div class="idbox"><span>{{ auth()->user()->email }}<br><strong>{{ strtoupper(auth()->user()->ii_research_role) }}</strong></span>
                 <form method="POST" action="{{ route('ii.logout') }}">@csrf<button type="submit" class="quiet">Keluar</button></form>
             </div>
