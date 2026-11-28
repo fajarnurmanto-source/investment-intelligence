@@ -1,5 +1,6 @@
 @extends('ii.layout')
-@section('title','Issuer Fundamentals')
+@section('title','Laporan keuangan')
+@section('surface','ii-light-content')
 @push('styles')
 <style>
     .finance-layout{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(320px,.9fr);gap:20px;align-items:start}.financial-card{margin-bottom:16px}
@@ -20,6 +21,7 @@
     .status-line:last-child{border:0}.status-line strong{display:block}.status-line small{color:var(--muted);display:block}
     @media(max-width:900px){.workspace-summary{grid-template-columns:repeat(2,minmax(0,1fr))}}
     @media(max-width:560px){.fundamental-workspaces{display:grid;grid-template-columns:1fr 1fr}.fundamental-workspaces a{text-align:center;font-size:.75rem;padding:9px 5px}.workspace-summary{grid-template-columns:1fr 1fr;gap:7px}}
+.stat{background:#f1f5f7;border:1px solid #dce2e9}.checkline{color:#34475a}.fundamental-workspaces a{color:#34475a}.fundamental-workspaces a:hover,.fundamental-workspaces a[aria-current="page"]{background:#e0efec;color:#0e625e;border-color:#a9ccc5}.finance-layout>*{min-width:0}
 </style>
 @endpush
 @section('content')
@@ -27,9 +29,9 @@
     @php($requestedWorkspace = request()->query('workspace', 'overview'))
     @php($workspace = in_array($requestedWorkspace, ['overview', 'sources', 'prices', 'reconciliation', 'activation'], true) ? $requestedWorkspace : 'overview')
     @php($readyCount = collect($records)->filter(fn ($item) => str_starts_with((string) ($item['valuation_status'] ?? ''), 'AVAILABLE_'))->count())
-    <p class="eyebrow">II / Multi-Issuer Intelligence V2</p><h1>Issuer Fundamentals</h1>
+    <p class="eyebrow">Riset perusahaan</p><h1>Laporan keuangan</h1>
     <p class="lead">Impor dokumen, CSV normalisasi, atau XBRL yang diperoleh secara sah. II menyimpan versi sumber secara immutable, menormalkan satuan, menilai kelengkapan, dan hanya menghitung rasio saat semua input wajib tersedia.</p>
-    <div class="boundary"><strong>NOT_ADMITTED · HOLD · TRADING_AUTHORITY=NONE.</strong> Keterbukaan publik tidak otomatis memberikan hak redistribusi atau otoritas trading. Rasio yang kekurangan input ditampilkan sebagai N/A—tanpa asumsi pengganti.</div>
+    <div class="boundary"><strong>Data belum disahkan sebagai dasar keputusan investasi.</strong> Keterbukaan publik tidak otomatis memberikan hak redistribusi atau otoritas trading. Rasio yang kekurangan input ditampilkan sebagai N/A—tanpa asumsi pengganti.</div>
     @if(session('fundamental_notice'))<div class="success" role="status">{{ session('fundamental_notice') }}</div>@endif
     @if($errors->any())<div class="error" role="alert"><strong>Impor belum disimpan.</strong> {{ $errors->first() }}</div>@endif
     <nav class="fundamental-workspaces" aria-label="Ruang kerja fundamental">
@@ -59,7 +61,7 @@
                 <div class="stat"><span>Butuh langkah lanjutan</span><strong>{{ $coverage['review_required'] }}</strong></div>
             </div>
             <a class="button" href="{{ route('ii.fundamentals.coverage.export') }}">Ekspor daftar aktivasi CSV</a>
-            <div class="boundary" style="margin-top:16px"><strong>NOT_ADMITTED · HOLD · TRADING_AUTHORITY=NONE</strong> · Daftar ini adalah antrian akuisisi dan review data, bukan rekomendasi saham atau izin perdagangan.</div>
+            <div class="boundary" style="margin-top:16px"><strong>Belum disahkan sebagai dasar keputusan investasi</strong> · Daftar ini adalah antrian akuisisi dan review data, bukan rekomendasi saham atau izin perdagangan.</div>
         </section>
         <section class="panel" aria-labelledby="source-guide-title" style="margin-top:16px">
             <h2 id="source-guide-title">Rute sumber resmi, tanpa scraping</h2>
@@ -163,7 +165,7 @@
         @endforelse
         @if($marketPrices->isNotEmpty())
         <section class="panel" aria-label="Ringkasan provenance harga" style="margin-top:18px">
-            <h2>Provenance harga terbaru</h2>
+            <h2>Sumber harga terbaru</h2>
             <p class="caption">Sumber ditampilkan sebagai bukti, bukan izin redistribusi atau otorisasi trading.</p>
             @foreach($marketPrices->take(5) as $price)
                 <div class="status-line">
@@ -253,7 +255,7 @@
     </div>
     <div>
     @if($workspace === 'sources')
-    <section class="panel form-card" aria-labelledby="import-title"><span class="badge">IMMUTABLE SOURCE REGISTER</span><h2 id="import-title" style="margin-top:12px">Impor laporan emiten</h2>
+    <section class="panel form-card" aria-labelledby="import-title"><span class="badge">Dokumen sumber</span><h2 id="import-title" style="margin-top:12px">Impor laporan emiten</h2>
         <form method="POST" action="{{ route('ii.fundamentals.import') }}" enctype="multipart/form-data">@csrf
             <div class="split"><div class="field"><label for="ticker">Kode emiten</label><input id="ticker" name="ticker" required maxlength="16" placeholder="TLKM.JK" value="{{ old('ticker') }}"></div><div class="field"><label for="issuer_name">Nama emiten</label><input id="issuer_name" name="issuer_name" required maxlength="200" value="{{ old('issuer_name') }}"></div></div>
             <div class="split"><div class="field"><label for="sector">Sektor</label><input id="sector" name="sector" maxlength="80" placeholder="Telecommunication" value="{{ old('sector') }}"></div><div class="field"><label for="fiscal_period_type">Jenis periode</label><select id="fiscal_period_type" name="fiscal_period_type"><option value="annual">Annual</option><option value="quarterly">Quarterly</option><option value="half_year">Half year</option><option value="trailing_twelve_months">TTM</option></select></div></div>
@@ -270,7 +272,7 @@
             <div class="field"><label class="checkline"><input type="checkbox" name="rights_confirmed" value="1" required>Saya berhak menggunakan berkas ini dan status hak di atas akurat.</label></div><button type="submit" style="width:100%">Simpan, normalisasi & nilai kualitas</button>
         </form><p class="hint" style="margin-top:16px"><a href="{{ route('ii.fundamentals.example') }}">Unduh template CSV lengkap</a>. Versi sumber lama tidak pernah ditimpa.</p>
     </section>
-    <section class="panel form-card"><span class="badge blue">QUEUE · 20 ITEMS MAX</span><h2 style="margin-top:12px">Batch manifest</h2><p class="hint">Unggah manifest JSON schema <span class="mono">ii.issuer-batch.v2</span> dan berkas yang namanya cocok. Setiap item memiliki provenance, status, error, dan retry sendiri. <a href="{{ route('ii.fundamentals.batch-example') }}">Unduh contoh sintetis</a>.</p>
+    <section class="panel form-card"><span class="badge blue">Maksimal 20 dokumen</span><h2 style="margin-top:12px">Batch manifest</h2><p class="hint">Unggah manifest JSON schema <span class="mono">ii.issuer-batch.v2</span> dan berkas yang namanya cocok. Setiap item memiliki provenance, status, error, dan retry sendiri. <a href="{{ route('ii.fundamentals.batch-example') }}">Unduh contoh sintetis</a>.</p>
         <form method="POST" action="{{ route('ii.fundamentals.batches.import') }}" enctype="multipart/form-data">@csrf
             <div class="field"><label for="manifest">Manifest JSON</label><input id="manifest" type="file" name="manifest" accept=".json,application/json" required></div>
             <div class="field"><label for="issuer_files">Dokumen/CSV/XBRL (1–20)</label><input id="issuer_files" type="file" name="issuer_files[]" accept=".csv,.xbrl,.xml,.pdf" multiple required></div><button type="submit" style="width:100%">Validasi & antrekan batch</button>
@@ -278,7 +280,7 @@
     </section>
     @endif
     @if($workspace === 'prices')
-    <section class="panel form-card"><span class="badge">DATED PRICE · SEPARATE PROVENANCE</span><h2 style="margin-top:12px">Tambah harga pasar</h2>
+    <section class="panel form-card"><span class="badge">Harga bertanggal</span><h2 style="margin-top:12px">Tambah harga pasar</h2>
         <form method="POST" action="{{ route('ii.fundamentals.market-prices.store') }}">@csrf
             <div class="split"><div class="field"><label for="price_ticker">Kode emiten</label><input id="price_ticker" name="ticker" required maxlength="16"></div><div class="field"><label for="observed_on">Tanggal harga</label><input id="observed_on" type="date" name="observed_on" required></div></div>
             <div class="split"><div class="field"><label for="price_currency">Mata uang</label><select id="price_currency" name="currency"><option>IDR</option><option>USD</option></select></div><div class="field"><label for="price">Harga per saham</label><input id="price" type="number" min="0.000001" step="0.000001" name="price" required></div></div>
@@ -312,7 +314,7 @@
         @endif
     </section>
     <section class="panel form-card" aria-labelledby="eod-batch-title">
-        <span class="badge blue">V3 · RIGHTS-AWARE EOD CSV</span><h2 id="eod-batch-title" style="margin-top:12px">Batch harga penutupan</h2>
+        <span class="badge blue">Impor harga penutupan</span><h2 id="eod-batch-title" style="margin-top:12px">Batch harga penutupan</h2>
         <p class="hint">Impor 1–1.000 observasi harga dengan sumber dan hak penggunaan yang jelas. Tidak mengambil data melalui scraping BEI. Semua baris divalidasi atomik; satu baris gagal membatalkan seluruh batch. <a href="{{ route('ii.fundamentals.market-prices.batch-example') }}">Unduh contoh CSV sintetis</a>.</p>
         <form method="POST" action="{{ route('ii.fundamentals.market-prices.batch') }}" enctype="multipart/form-data">@csrf
             <div class="field"><label for="market_prices_csv">File CSV sumber (maksimal 2 MB)</label><input id="market_prices_csv" type="file" name="market_prices_csv" accept=".csv,text/csv" required></div>
