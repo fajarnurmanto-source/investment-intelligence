@@ -1,0 +1,56 @@
+/* Shared visual shell; light content is opt-in until legacy screens are audited. */
+:root {
+  --ii-navy:#142a40; --ii-teal:#147d78; --ii-gold:#c6a36b;
+  --ii-canvas:#f4f6f9; --ii-white:#fff; --ii-ink:#172535;
+  --ii-muted:#526577; --ii-border:#dce2e9;
+  --ii-radius:16px; --ii-shadow:0 8px 30px rgba(20,42,64,.07);
+}
+body.ii-institutional {background:radial-gradient(ellipse at 85% 0%,#dcece9 0,transparent 42%),var(--ii-canvas)}
+.ii-institutional .shell {grid-template-columns:248px minmax(0,1fr);gap:14px;padding:14px;align-items:start}
+.ii-institutional .sidebar,.ii-institutional .top {color:var(--ii-ink);background:#fff;border:1px solid var(--ii-border);border-radius:20px;box-shadow:var(--ii-shadow)}
+@supports (backdrop-filter:blur(16px)) {
+ .ii-institutional .sidebar,.ii-institutional .top {background:rgba(255,255,255,.86);backdrop-filter:blur(16px)}
+}
+.ii-institutional .sidebar {top:14px;height:calc(100vh - 28px);padding:20px 12px}
+.ii-institutional .logo {color:var(--ii-navy);gap:10px;margin:0 4px 24px;font-weight:720;font-size:.95rem}
+.ii-institutional .logo img {width:42px;height:42px;flex:none}
+.ii-institutional .logo small {color:var(--ii-muted);text-transform:none;letter-spacing:0;font-size:.72rem;font-weight:450}
+.ii-institutional .group {color:var(--ii-muted);letter-spacing:.06em;font-size:.68rem}
+.ii-institutional .menu a {color:#34475a;font-size:.88rem;gap:10px;padding:9px 10px;margin:2px 0;min-height:42px;font-weight:550;transition:background .16s,color .16s}
+.ii-institutional .menu a:hover,.ii-institutional .menu a.active {background:#e0efec;color:#0e625e}
+.ii-institutional .menu a.active {box-shadow:inset 3px 0 var(--ii-teal)}
+.ii-institutional .nav-icon {width:19px;height:19px;flex:none;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.ii-institutional .top {padding:14px 22px;min-height:66px}
+.ii-institutional .top .subtle,.ii-institutional .idbox {color:var(--ii-muted)}
+.ii-institutional .top .quiet {color:var(--ii-navy);border-color:#bfcbd5;background:#fff}
+.ii-institutional .top .idbox strong {color:var(--ii-teal)}
+.ii-institutional .content {padding:28px 22px 65px;min-width:0}
+.ii-institutional .main {min-width:0}
+.ii-institutional:not(.ii-light-content) .content {background:var(--bg);border-radius:20px;margin-top:14px}
+.ii-institutional.ii-light-content {
+ color-scheme:light;--bg:#f4f6f9;--panel:#fff;--surface:#f1f5f7;--text:#172535;--muted:#526577;--line:#dce2e9;--cyan:#147d78;--green:#087550;--red:#b23a43;--amber:#80570e;color:var(--text)
+}
+.ii-light-content .panel {border-radius:var(--ii-radius);box-shadow:0 4px 18px rgba(20,42,64,.035)}
+.ii-light-content h1,.ii-light-content h2,.ii-light-content h3 {color:var(--ii-navy)}
+.ii-light-content .eyebrow {letter-spacing:.07em}
+.ii-light-content button,.ii-light-content .button {color:#fff;background:#147d78;font-weight:650}
+.ii-light-content .quiet {color:var(--ii-navy);background:#fff;border:1px solid #bfcbd5}
+.ii-light-content input,.ii-light-content select,.ii-light-content textarea {color:var(--ii-ink);background:#fff;border-color:#b8c5d0}
+.ii-light-content label {color:#34475a}
+.ii-light-content .error {background:#fff0ef;color:#8e2833;border-color:#e8b9ba}
+.ii-light-content .success {background:#e9f6ef;color:#146244;border-color:#b3d8c6}
+.ii-light-content .boundary {background:#fff6e5;color:#755016;border-color:#e9c991}
+.ii-light-content .tablewrap {scrollbar-color:#a3b8bc #f1f5f7}
+.ii-light-content table,.ii-light-content .metric {font-variant-numeric:tabular-nums}
+.ii-institutional :focus-visible {outline:3px solid #147d78;outline-offset:3px}
+@media(max-width:980px){
+ .ii-institutional .shell {display:block;padding:10px}
+ .ii-institutional .sidebar {height:auto;position:static;padding:12px}
+ .ii-institutional .logo {margin:0 0 12px}
+ .ii-institutional .menu {margin:0;gap:4px}
+ .ii-institutional .menu a {min-height:42px;white-space:nowrap}
+ .ii-institutional .top {margin-top:12px;padding:12px 16px}
+ .ii-institutional .content {padding:24px 12px 55px}
+}
+@media(max-width:540px){.ii-institutional .top .idbox{width:auto;max-width:100%}.ii-institutional .top{gap:8px}.ii-institutional .content{padding:20px 6px 48px}}
+@media(prefers-reduced-motion:reduce){.ii-institutional .menu a{transition:none}}
