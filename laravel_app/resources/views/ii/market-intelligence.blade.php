@@ -49,6 +49,26 @@
 <div class="tablewrap"><table><thead><tr><th>Saham</th><th>Rasio volume mentah</th></tr></thead><tbody>@forelse($comparison['activity'] as $row)<tr><td>{{ $row['ticker'] }}</td><td>{{ number_format($row['raw_volume_ratio'],2,',','.') }}×</td></tr>@empty<tr><td colspan="2">Data belum mencukupi.</td></tr>@endforelse</tbody></table></div></section>
 <section class="panel"><details><summary>Sumber dan batas analisis</summary><p>File diproses lokal tanpa penyimpanan permanen. Hak penggunaan dikonfirmasi pengguna, bukan verifikasi lisensi atau keaslian independen. Tidak ada persetujuan transaksi.</p>@foreach($comparison['sessions'] as $session)<p class="mi-hash">{{ $session['date'] }} · {{ $session['sha256'] }}</p>@endforeach</details></section>
 @elseif(!$result)
+@if($archive ?? null)
+<section class="panel mi-upload">
+<div><h2>Arsip perdagangan</h2><p>Gunakan data yang telah tersimpan dengan izin retensi untuk membandingkan tanggal tanpa unggah ulang.</p>
+<p class="note">{{ count($archive['batches']) }} sesi terakhir tersedia dalam daftar (maksimal 30). Tanggal yang tidak tersedia tidak diasumsikan sebagai hari libur atau sesi kosong.</p>
+@if(count($archive['batches']) < 2)<p class="note">Diperlukan sedikitnya dua sesi arsip. Penambahan arsip memerlukan konfirmasi hak penyimpanan lokal secara terpisah.</p>@endif
+</div>
+@if(count($archive['batches']) >= 2)
+<form method="POST" action="{{ route('ii.market-intelligence.analyze') }}">
+@csrf
+<input type="hidden" name="mode" value="history">
+<fieldset><legend>Pilih 2–5 tanggal</legend>
+@foreach($archive['batches'] as $batch)
+<label class="mi-check"><input type="checkbox" name="dates[]" value="{{ $batch['session_date'] }}"><span>{{ $batch['session_date'] }} · {{ $batch['rows'] }} baris</span></label>
+@endforeach
+</fieldset>
+<button type="submit">Analisis arsip</button>
+</form>
+@endif
+</section>
+@endif
 <section class="panel mi-upload">
 <div>
 <h2>Mulai analisis</h2>
