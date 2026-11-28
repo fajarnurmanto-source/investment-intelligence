@@ -1,8 +1,12 @@
 @extends('ii.layout')
 @section('title','Analisis pasar')
+@section('surface','ii-light-content')
 @push('styles')
 <style>
 .mi{max-width:1120px;margin:auto;display:grid;gap:24px}.mi h1{font-size:clamp(1.65rem,3vw,2.35rem);margin:0 0 8px}.mi p{margin:0 0 12px}.mi .lead{margin:0}.mi .panel{padding:clamp(16px,2.5vw,26px)}.mi-steps{display:flex;gap:12px;flex-wrap:wrap;color:var(--muted);font-size:.85rem}.mi-steps b{color:var(--cyan)}.mi-upload{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:start}.mi-check{display:flex;align-items:flex-start;gap:10px;font-weight:400}.mi-check input{width:auto;margin-top:5px;flex:none}.mi-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.mi-kpi{padding:16px;border:1px solid var(--line);border-radius:12px;background:var(--surface)}.mi-kpi strong{display:block;font-size:clamp(1.3rem,3vw,2rem);font-variant-numeric:tabular-nums}.mi-two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.mi table{min-width:0;font-variant-numeric:tabular-nums}.mi th{letter-spacing:0;text-transform:none}.mi td:last-child,.mi th:last-child{text-align:right}.mi-bar{height:14px;display:flex;overflow:hidden;background:var(--surface);border-radius:6px;margin:14px 0}.mi-bar span{display:block}.mi summary{cursor:pointer;font-weight:650}.mi details p{margin:12px 0}.mi-hash{overflow-wrap:anywhere;font-family:monospace;font-size:.8rem}.mi-positive{color:var(--green)}.mi-negative{color:var(--red)}.mi a.button{margin-top:8px}.mi .note{font-size:.85rem;color:var(--muted)}@media(max-width:850px){.mi-upload,.mi-two{grid-template-columns:1fr}.mi-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:420px){.mi{gap:16px}.mi-kpi{padding:12px}}
+.mi-steps{padding:10px 14px;background:#fff;border:1px solid var(--ii-border);border-radius:18px;box-shadow:var(--ii-shadow);width:fit-content}.mi-steps span{padding:4px 8px}.mi-kpi:first-child{background:linear-gradient(130deg,#142a40,#20575b);color:white;border:0}.mi-kpi:first-child .note{color:#d7e9ec}.mi-upload form{padding:20px;background:#f4f6f9;border:1px solid var(--ii-border);border-radius:14px}.mi summary{color:var(--ii-teal);min-height:36px}.mi .mi-bar{height:10px}.mi .mi-check{margin-bottom:16px}.mi .note{line-height:1.6}.mi h2{font-size:1.1rem;letter-spacing:-.015em}.mi .panel{min-width:0}.mi .mi-two>*{min-width:0}.mi td{padding:10px 6px}.mi td a{font-weight:650;text-decoration:none}.mi td a:hover{text-decoration:underline}.mi .mi-kpis{margin-bottom:16px}
+@supports(backdrop-filter:blur(12px)){.mi-steps{background:rgba(255,255,255,.82);backdrop-filter:blur(12px)}}
+@media(max-width:540px){.mi-upload form{padding:14px}.mi-steps{width:100%;gap:4px;padding:8px}.mi-steps span{padding:4px;font-size:.77rem}.mi-kpi strong{font-size:1.5rem}}
 </style>
 @endpush
 @section('content')
@@ -36,7 +40,7 @@
 @php($b = $result['breadth'])
 @php($eligible = $b['up'] + $b['down'] + $b['flat'])
 <section class="panel">
-<div class="section-header" style="margin:0 0 16px"><div><h2>Ringkasan perdagangan</h2><p class="note">{{ $result['session'] }} · Data dari file yang Anda pilih</p></div><a class="button quiet" href="{{ route('ii.market-intelligence.index') }}">Analisis file lain</a></div>
+<div class="section-header" style="margin:0 0 16px"><div><h2>Ringkasan perdagangan</h2><p class="note">{{ $result['session'] }} · Ringkasan saham BEI pilihan Anda</p></div><a class="button quiet" href="{{ route('ii.market-intelligence.index') }}">Analisis file lain</a></div>
 <div class="mi-kpis">
 @foreach(['Jumlah saham'=>$result['universe'],'Harga naik'=>$b['up'],'Harga turun'=>$b['down'],'Harga tetap'=>$b['flat']] as $label=>$n)
 <div class="mi-kpi"><span class="note">{{ $label }}</span><strong>{{ number_format($n,0,',','.') }}</strong></div>
@@ -48,7 +52,7 @@
 @else
 <p>Belum ada saham yang memenuhi syarat perbandingan harga.</p>
 @endif
-<p class="note">{{ $b['excluded'] }} saham tidak dimasukkan dalam perbandingan karena data harga atau volume tidak memenuhi syarat. Ini bukan ukuran perubahan IHSG.</p>
+<p class="note">{{ $b['excluded'] }} saham tidak masuk perbandingan karena data harga atau volume tidak memenuhi syarat. Ringkasan satu sesi ini bukan perubahan IHSG atau rekomendasi beli/jual. File belum diverifikasi secara independen.</p>
 </section>
 <div class="mi-two">
 @foreach(['Perubahan harga tertinggi'=>'top_price_moves','Perubahan harga terendah'=>'bottom_price_moves'] as $label=>$key)
@@ -63,7 +67,7 @@
 <div><h3>{{ $label }}</h3><div class="tablewrap"><table><thead><tr><th>Saham</th><th>Angka sumber</th></tr></thead><tbody>@forelse($result[$spec[0]] as $row)<tr><td>{{ $row['ticker'] }}</td><td>{{ number_format($row[$spec[1]],0,',','.') }}</td></tr>@empty<tr><td colspan="2">Data belum mencukupi.</td></tr>@endforelse</tbody></table></div></div>
 @endforeach
 </div><p class="note">Data beli-jual tersedia untuk {{ $result['foreign_field_coverage'] }} saham; data aktivitas lengkap untuk {{ $result['liquidity_field_coverage'] }} saham.</p></details></section>
-<section class="panel"><details><summary>Kualitas dan sumber data</summary><p>Harga pembukaan nol: {{ $b['zero_open'] }}. Volume nol: {{ $b['zero_volume'] }}. Volume kosong atau tidak valid: {{ $b['missing_volume'] }}. Data harga tidak memenuhi syarat: {{ $b['invalid_ohlc'] }}. Kelompok ini dapat saling beririsan.</p><p>Perbandingan menggunakan volume positif, harga pembukaan dan penutupan positif, rentang harga yang konsisten serta harga sebelumnya lebih dari nol.</p><p class="mi-hash">Sidik digital file (SHA-256): {{ $result['sha256'] }}</p><p>File belum diverifikasi secara independen. Analisis hanya menggambarkan satu sesi, bukan rekomendasi beli atau jual.</p></details></section>
+<section class="panel"><details><summary>Kualitas dan sumber data</summary><p>Harga pembukaan nol: {{ $b['zero_open'] }}. Volume nol: {{ $b['zero_volume'] }}. Volume kosong atau tidak valid: {{ $b['missing_volume'] }}. Data harga tidak memenuhi syarat: {{ $b['invalid_ohlc'] }}. Kelompok ini dapat saling beririsan.</p><p>Perbandingan menggunakan volume positif, harga pembukaan dan penutupan positif, rentang harga yang konsisten serta harga sebelumnya lebih dari nol.</p><p class="mi-hash">Sidik digital file (SHA-256): {{ $result['sha256'] }}</p><p>File belum diperiksa oleh sumber independen. Analisis ini menggambarkan satu sesi, bukan rekomendasi beli atau jual.</p></details></section>
 @endif
 </div>
 @endsection
