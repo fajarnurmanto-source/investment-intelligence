@@ -31,7 +31,7 @@ final class MarketWorkspaceTest extends TestCase
         $this->actingAs($owner)->get('/ii/market-data')->assertOk()
             ->assertSee('AAPL')->assertSee('NO_DATA')->assertSee('WAITING_FOR_FEED');
         $this->actingAs($other)->get('/ii/market-data')->assertOk()
-            ->assertSee('NOT_CONFIGURED')->assertDontSee('AAPL')->assertDontSee('WAITING_FOR_FEED');
+            ->assertSee('Belum dikonfigurasi')->assertViewHas('overview', fn ($overview) => $overview['status'] === 'NOT_CONFIGURED')->assertDontSee('AAPL')->assertDontSee('WAITING_FOR_FEED');
         $this->actingAs($owner)->withServerVariables(['REMOTE_ADDR' => '192.0.2.10'])
             ->get('/ii/market-data')->assertForbidden();
     }
