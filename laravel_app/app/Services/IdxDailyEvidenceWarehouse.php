@@ -215,6 +215,17 @@ final class IdxDailyEvidenceWarehouse
         });
     }
 
+    public function historicalLiquidity(int $owner): array
+    {
+        $this->owner($owner);
+        return DB::transaction(function () use ($owner) {
+            $this->owner($owner);
+            $dates = DB::table('ii_idx_evidence_batches')->where('user_id',$owner)->orderByDesc('session_date')
+                ->limit(IdxLiquidityAnomalyIntelligence::BASELINE+1)->pluck('session_date')->all();
+            return app(IdxLiquidityAnomalyIntelligence::class)->analyze($this->reviewedSessions($owner, array_reverse($dates)));
+        });
+    }
+
     private function reviewedSessions(int $owner, array $dates): iterable
     {
             foreach ($dates as $date) {
