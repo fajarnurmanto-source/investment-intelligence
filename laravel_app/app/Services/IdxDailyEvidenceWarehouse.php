@@ -200,7 +200,23 @@ final class IdxDailyEvidenceWarehouse
 
         return DB::transaction(function () use ($owner, $dates) {
             $this->owner($owner);
-            $sessions = [];
+            return app(IdxMultisessionIntelligence::class)->compare(iterator_to_array($this->reviewedSessions($owner, $dates), false)) + ['archive_source' => true];
+        });
+    }
+
+    public function historicalMomentum(int $owner): array
+    {
+        $this->owner($owner);
+        return DB::transaction(function () use ($owner) {
+            $this->owner($owner);
+            $dates = DB::table('ii_idx_evidence_batches')->where('user_id',$owner)->orderByDesc('session_date')
+                ->limit(250)->pluck('session_date')->all();
+            return app(IdxMomentumIntelligence::class)->analyze($this->reviewedSessions($owner, array_reverse($dates)));
+        });
+    }
+
+    private function reviewedSessions(int $owner, array $dates): iterable
+    {
             foreach ($dates as $date) {
                 $batch = DB::table('ii_idx_evidence_batches')->where('user_id', $owner)
                     ->where('session_date', $date)->first();
@@ -240,10 +256,8 @@ final class IdxDailyEvidenceWarehouse
                     }
                     $rows[] = $row;
                 }
-                $sessions[] = ['rows' => $rows, 'sha256' => $batch->source_sha256];
+                yield ['rows' => $rows, 'sha256' => $batch->source_sha256];
             }
-            return app(IdxMultisessionIntelligence::class)->compare($sessions) + ['archive_source' => true];
-        });
     }
 
     private function date(mixed $v): bool
