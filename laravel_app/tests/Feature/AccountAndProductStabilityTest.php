@@ -85,9 +85,9 @@ class AccountAndProductStabilityTest extends TestCase
             'review_status' => 'REVIEWED_SYNTHETIC',
         ])->assertNotFound();
         $this->actingAs($owner)->get('/ii/dashboard')->assertOk()
-            ->assertSee('Research cases')->assertSee('>1</div>', false);
+            ->assertSee('Catatan riset')->assertViewHas('researchCases', 1);
         $this->actingAs($other)->get('/ii/dashboard')->assertOk()
-            ->assertSee('Research cases')->assertSee('>0</div>', false);
+            ->assertSee('Catatan riset')->assertViewHas('researchCases', 0);
     }
 
     public function test_core_authenticated_navigation_and_exports_remain_available(): void

@@ -97,7 +97,7 @@ final class HistoricalSignalBootstrapTest extends TestCase
         $source->offline = true;
         $this->artisan('ii:bootstrap-idx-history', $args)->expectsOutput('II_HISTORICAL_BOOTSTRAP=OFFLINE_ARCHIVE')->assertFailed();
         $this->assertCount(1, Storage::disk('local')->files('ii_signal_center/u'.$owner->id));
-        $this->actingAs($owner)->get('/ii/signals')->assertOk()->assertSee('BBCA')->assertSee('STALE');
+        $this->actingAs($owner)->get('/ii/signals')->assertOk()->assertSee('BBCA')->assertSee('Perlu diperbarui')->assertViewHas('signals', fn ($items) => collect($items)->contains(fn ($item) => $item['ticker'] === 'BBCA' && $item['state'] === 'STALE' && $item['stale'] === true));
         $source->offline = false;
         $this->artisan('ii:bootstrap-idx-history', $args)->expectsOutput('II_HISTORICAL_BOOTSTRAP=UNCHANGED')->assertSuccessful();
     }
@@ -162,7 +162,7 @@ final class HistoricalSignalBootstrapTest extends TestCase
         $this->assertFalse($doc['trading_authorized']);
         $this->assertNull($signals->latestDocument($other->id, 'BBCA'));
         $this->assertCount(1, Storage::disk('local')->files('ii_signal_center/u'.$owner->id));
-        $this->actingAs($owner)->get('/ii/signals')->assertOk()->assertSee('BBCA')->assertSee('STALE');
+        $this->actingAs($owner)->get('/ii/signals')->assertOk()->assertSee('BBCA')->assertSee('Perlu diperbarui')->assertViewHas('signals', fn ($items) => collect($items)->contains(fn ($item) => $item['ticker'] === 'BBCA' && $item['state'] === 'STALE' && $item['stale'] === true));
         $this->assertFalse(app(MarketFeedSettings::class)->current()['enabled']);
         $this->assertFalse(app(MarketFeedSettings::class)->current()['discovery_enabled']);
     }

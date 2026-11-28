@@ -3,8 +3,10 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="referrer" content="no-referrer">
     <meta name="robots" content="noindex,nofollow,noarchive">
-    <meta name="theme-color" content="#0a1524">
+    <meta name="theme-color" content="#f4f6f9">
+    <link rel="icon" type="image/svg+xml" href="{{ asset('ii/brand.svg') }}">
     <title>@yield('title','Investment Intelligence') · II</title>
     <style>
         :root{color-scheme:dark;--bg:#070f1c;--panel:#111e30;--surface:#15253b;--text:#edf5ff;--muted:#91a9c5;--line:#26394f;--cyan:#61d5e8;--green:#97e4bf;--amber:#fac77a;--red:#fca5a5}
@@ -43,37 +45,37 @@
         @media(max-width:980px){.shell{display:block}.sidebar{height:auto;position:static;padding:13px 16px;border-right:0;border-bottom:1px solid var(--line)}.logo{margin:0 0 11px}.group,.menu .disabled{display:none}.menu{display:flex;overflow-x:auto;gap:5px;scrollbar-color:#4d8ca0 #0a1524}.menu a{white-space:nowrap;font-size:.8rem;padding:9px}.top{padding:15px 20px}.content{padding:26px 20px 70px}.grid{grid-template-columns:1fr}}
         @media(max-width:540px){.top{flex-wrap:wrap;align-items:flex-start}.top .idbox{width:100%;justify-content:space-between}.content{padding:24px 14px 60px}.panel{padding:17px}.boundary{padding:12px 14px}.menu{margin:0 -6px}.logo{font-size:.93rem}}
     </style>
+    <link rel="stylesheet" href="{{ asset('ii/institutional.css') }}">
     @stack('styles')
 </head>
-<body>
+<body class="ii-institutional @yield('surface', 'ii-light-content')">
 <a class="skip-link" href="#ii-main">Lewati navigasi ke konten utama</a>
 <div class="shell">
     <aside class="sidebar">
-        <a class="logo" href="{{ route('ii.dashboard') }}"><span class="mark">II</span><span>Investment Intelligence<small>Decision Platform · Research Preview</small></span></a>
-        <nav class="menu" aria-label="Navigasi utama">
-            <div class="group">Decision workspace</div>
-            <a href="{{ route('ii.dashboard') }}" @class(['active'=>request()->routeIs('ii.dashboard')])><span class="glyph">▦</span> Dashboard</a>
-            <a href="{{ route('ii.signals.index') }}" @class(['active'=>request()->routeIs('ii.signals.*')])><span class="glyph">⌁</span> Trading Signal Center</a>
-            <a href="{{ route('ii.strategy.index') }}" @class(['active'=>request()->routeIs('ii.strategy.index')])><span class="glyph">◎</span> Strategy Lab</a>
-            <a href="{{ route('ii.strategy.validate') }}" @class(['active'=>request()->routeIs('ii.strategy.validate')])><span class="glyph">◇</span> Strategy Validation</a>
-            <a href="{{ route('ii.strategy.rolling') }}" @class(['active'=>request()->routeIs('ii.strategy.rolling')])><span class="glyph">▤</span> Rolling Validation</a>
-            <a href="{{ route('ii.risk-budget.index') }}" @class(['active'=>request()->routeIs('ii.risk-budget.*')])><span class="glyph">▧</span> Risk Budget</a>
-            <a href="{{ route('ii.portfolio.index') }}" @class(['active'=>request()->routeIs('ii.portfolio.*')])><span class="glyph">◈</span> Portfolio Sandbox</a>
-            <a href="{{ route('ii.macro.index') }}" @class(['active'=>request()->routeIs('ii.macro.*')])><span class="glyph">◌</span> Macro Intelligence</a>
-            <div class="group">Investment research</div>
-            <a href="{{ route('ii.company') }}"><span class="glyph">▤</span> Company Research</a>
-            <a href="{{ route('ii.fundamentals.index') }}" @class(['active'=>request()->routeIs('ii.fundamentals.*')])><span class="glyph">▥</span> Issuer Fundamentals</a>
-            <a href="{{ route('ii.screener.index') }}" @class(['active'=>request()->routeIs('ii.screener.*')])><span class="glyph">⌕</span> Fundamental Screener</a>
-            <a href="{{ route('ii.cases.index') }}"><span class="glyph">▣</span> Research Cases</a>
-            <a href="{{ route('ii.workspace') }}"><span class="glyph">◫</span> Reviewer Workspace</a>
-            <div class="group">Data provenance</div>
-            <span class="disabled"><span class="glyph">◇</span> FRED · Laravel connector</span>
-        </nav>
+        <a class="logo" href="{{ route('ii.dashboard') }}"><img src="{{ asset('ii/brand.svg') }}" width="42" height="42" alt=""><span>Investment Intelligence<small>Ruang riset investasi</small></span></a>
+        <nav class="menu ii-primary-nav" aria-label="Navigasi utama">
+<a class="ii-nav-heading {{ request()->routeIs('ii.dashboard') ? 'active' : '' }}" href="{{ route('ii.dashboard') }}" @if(request()->routeIs('ii.dashboard')) aria-current="page" @endif><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z"/></svg><span>Dashboard</span></a>
+<details class="ii-nav-group" @if(request()->routeIs('ii.market-intelligence.*', 'ii.signals.*', 'ii.macro.*')) open @endif><summary @class(['ii-nav-heading','active'=>request()->routeIs('ii.market-intelligence.*', 'ii.signals.*', 'ii.macro.*')])><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 3v18h18M7 15l4-5 4 3 6-8"/></svg><span>Pasar</span><svg class="ii-nav-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></summary><div class="ii-subnav"><a href="{{ route('ii.market-intelligence.index') }}" @class(['active'=>request()->routeIs('ii.market-intelligence.*')]) @if(request()->routeIs('ii.market-intelligence.*')) aria-current="page" @endif>Analisis pasar</a>
+<a href="{{ route('ii.signals.index') }}" @class(['active'=>request()->routeIs('ii.signals.*')]) @if(request()->routeIs('ii.signals.*')) aria-current="page" @endif>Sinyal pasar</a>
+<a href="{{ route('ii.macro.index') }}" @class(['active'=>request()->routeIs('ii.macro.*')]) @if(request()->routeIs('ii.macro.*')) aria-current="page" @endif>Ekonomi makro</a></div></details>
+<a class="ii-nav-heading {{ request()->routeIs('ii.screener.*') ? 'active' : '' }}" href="{{ route('ii.screener.index') }}" @if(request()->routeIs('ii.screener.*')) aria-current="page" @endif><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M15 15l6 6M10 4a6 6 0 1 0 0 12a6 6 0 1 0 0-12"/></svg><span>Cari saham</span></a>
+<details class="ii-nav-group" @if(request()->routeIs('ii.company', 'ii.fundamentals.*')) open @endif><summary @class(['ii-nav-heading','active'=>request()->routeIs('ii.company', 'ii.fundamentals.*')])><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 21V7l8-4v18M12 10h8v11M2 21h20M7 10v2M7 15v2M16 14v2"/></svg><span>Perusahaan</span><svg class="ii-nav-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></summary><div class="ii-subnav"><a href="{{ route('ii.company') }}" @class(['active'=>request()->routeIs('ii.company')]) @if(request()->routeIs('ii.company')) aria-current="page" @endif>Analisis perusahaan</a>
+<a href="{{ route('ii.fundamentals.index') }}" @class(['active'=>request()->routeIs('ii.fundamentals.*')]) @if(request()->routeIs('ii.fundamentals.*')) aria-current="page" @endif>Laporan keuangan</a></div></details>
+<details class="ii-nav-group" @if(request()->routeIs('ii.portfolio.*', 'ii.strategy.*', 'ii.risk-budget.*')) open @endif><summary @class(['ii-nav-heading','active'=>request()->routeIs('ii.portfolio.*', 'ii.strategy.*', 'ii.risk-budget.*')])><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 5h18v15H3zM16 11h5v5h-5a2.5 2.5 0 0 1 0-5z"/></svg><span>Portofolio</span><svg class="ii-nav-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></summary><div class="ii-subnav"><a href="{{ route('ii.portfolio.index') }}" @class(['active'=>request()->routeIs('ii.portfolio.*')]) @if(request()->routeIs('ii.portfolio.*')) aria-current="page" @endif>Simulasi portofolio</a>
+<a href="{{ route('ii.strategy.index') }}" @class(['active'=>request()->routeIs('ii.strategy.index')]) @if(request()->routeIs('ii.strategy.index')) aria-current="page" @endif>Backtesting</a>
+<a href="{{ route('ii.strategy.validate') }}" @class(['active'=>request()->routeIs('ii.strategy.validate')]) @if(request()->routeIs('ii.strategy.validate')) aria-current="page" @endif>Evaluasi strategi</a>
+<a href="{{ route('ii.strategy.rolling') }}" @class(['active'=>request()->routeIs('ii.strategy.rolling')]) @if(request()->routeIs('ii.strategy.rolling')) aria-current="page" @endif>Uji lintas periode</a>
+<a href="{{ route('ii.risk-budget.index') }}" @class(['active'=>request()->routeIs('ii.risk-budget.*')]) @if(request()->routeIs('ii.risk-budget.*')) aria-current="page" @endif>Batas risiko</a></div></details>
+<details class="ii-nav-group" @if(request()->routeIs('ii.cases.*', 'ii.workspace')) open @endif><summary @class(['ii-nav-heading','active'=>request()->routeIs('ii.cases.*', 'ii.workspace')])><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 3h14v18H5zM8 8h8M8 12h8M8 16h5"/></svg><span>Riset saya</span><svg class="ii-nav-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></summary><div class="ii-subnav"><a href="{{ route('ii.cases.index') }}" @class(['active'=>request()->routeIs('ii.cases.*')]) @if(request()->routeIs('ii.cases.*')) aria-current="page" @endif>Catatan riset</a>
+<a href="{{ route('ii.workspace') }}" @class(['active'=>request()->routeIs('ii.workspace')]) @if(request()->routeIs('ii.workspace')) aria-current="page" @endif>Tinjau riset</a></div></details>
+<details class="ii-nav-group" @if(request()->routeIs('ii.market-data.*', 'ii.byok.*')) open @endif><summary @class(['ii-nav-heading','active'=>request()->routeIs('ii.market-data.*', 'ii.byok.*')])><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 6h16M4 12h16M4 18h16M8 3v6M16 9v6M10 15v6"/></svg><span>Pengaturan</span><svg class="ii-nav-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></summary><div class="ii-subnav"><a href="{{ route('ii.market-data.index') }}" @class(['active'=>request()->routeIs('ii.market-data.*')]) @if(request()->routeIs('ii.market-data.*')) aria-current="page" @endif>Kelola data pasar</a>
+<a href="{{ route('ii.byok.index') }}" @class(['active'=>request()->routeIs('ii.byok.*')]) @if(request()->routeIs('ii.byok.*')) aria-current="page" @endif>Sumber data</a></div></details>
+</nav>
     </aside>
     <div class="main">
         <header class="top">
-            <div><div style="font-weight:730">II Product Workspace</div><div class="subtle">Research + Signal + Portfolio roadmap</div></div>
-            <div class="idbox"><span>{{ auth()->user()->email }}<br><strong>{{ strtoupper(auth()->user()->ii_research_role) }}</strong></span>
+            <div><div style="font-weight:730">Ruang kerja investasi</div><div class="subtle">Riset, analisis, dan simulasi</div></div>
+            <div class="idbox"><span>{{ auth()->user()->email }}<br><strong>{{ ['analyst'=>'Analis','reviewer'=>'Peninjau','admin'=>'Administrator'][auth()->user()->ii_research_role] ?? 'Pengguna' }}</strong></span>
                 <form method="POST" action="{{ route('ii.logout') }}">@csrf<button type="submit" class="quiet">Keluar</button></form>
             </div>
         </header>

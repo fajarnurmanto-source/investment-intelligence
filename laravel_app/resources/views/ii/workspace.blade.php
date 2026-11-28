@@ -1,6 +1,7 @@
 @extends('ii.layout')
 
-@section('title', 'Reviewer Workspace')
+@section('title', 'Tinjau riset')
+@section('surface','ii-light-content')
 
 @push('styles')
 <style>
@@ -23,19 +24,18 @@
 @endpush
 
 @section('content')
-<p class="eyebrow">II / Investment Research / VS11 R3</p>
-<h1>Reviewer Workspace</h1>
-<p class="lead">Telusuri perusahaan demo, periksa provenance, dan catat temuan sesi tanpa memberikan persetujuan investasi atau bukti.</p>
+<p class="eyebrow">Riset saya</p>
+<h1>Tinjau riset</h1>
+<p class="lead">Pelajari perusahaan simulasi, periksa sumber dan catat temuan selama sesi penelitian.</p>
 
 <nav class="research-workspace-links" aria-label="Tautan terkait workspace reviewer">
     <a href="{{ route('ii.dashboard') }}">← Dashboard</a>
-    <a href="{{ route('ii.signals.index') }}">Trading Signal Center</a>
-    <a href="{{ route('ii.cases.index') }}">Research Cases</a>
+    <a href="{{ route('ii.signals.index') }}">Sinyal pasar</a>
+    <a href="{{ route('ii.cases.index') }}">Catatan riset</a>
 </nav>
 
 <div class="boundary" role="note">
-    <strong>NOT_ADMITTED · HOLD · AUTHORITY NONE.</strong> No real issuer data, valuation authority, or trading permission.
-    Reviewer statuses are not evidence admission decisions. Session notes are not persistent case records.
+    <strong>Latihan menggunakan perusahaan fiktif.</strong> Tidak ada data emiten nyata, persetujuan valuasi atau izin transaksi. Status peninjauan bukan persetujuan bukti. Catatan sesi tidak tersimpan sebagai kasus permanen.
 </div>
 
 @if(session('ii_vs4_notice'))
@@ -68,7 +68,7 @@
             <h3>Metrik historis</h3>
             <div class="tablewrap" role="region" aria-label="Metrik historis perusahaan" tabindex="0">
                 <table class="research-workspace-table">
-                    <thead><tr><th scope="col">Periode</th><th scope="col">Net margin (%)</th><th scope="col">Revenue index</th></tr></thead>
+                    <thead><tr><th scope="col">Periode</th><th scope="col">Margin laba (%)</th><th scope="col">Indeks pendapatan</th></tr></thead>
                     <tbody>
                         @foreach($data['history'] as $r)
                             <tr><td>{{ $r['period'] }}</td><td>{{ $r['net_margin_pct'] }}</td><td>{{ $r['revenue_index'] }}</td></tr>
@@ -80,12 +80,12 @@
         </section>
 
         <section class="panel" aria-labelledby="research-provenance-heading">
-            <h2 id="research-provenance-heading">Evidence dan provenance</h2>
+            <h2 id="research-provenance-heading">Sumber dan kualitas data</h2>
             <p>Sumber: <code>{{ $data['provenance']['source_id'] }}</code></p>
             <p>Tipe: <strong>{{ $data['provenance']['source_type'] }}</strong> · Rights: {{ $data['provenance']['rights'] }}</p>
             <p>{{ $data['provenance']['lineage'] }}</p>
             <p>Quality: <span class="badge amber">{{ $data['quality']['state'] }}</span></p>
-            <h3>Blocking reasons</h3>
+            <h3>Kekurangan bukti</h3>
             <ul>
                 @foreach($data['quality']['blocking_reasons'] as $reason)
                     <li>{{ $reason }}</li>
@@ -95,21 +95,21 @@
     </div>
 
     <section class="panel" aria-labelledby="research-session-notes-heading">
-        <h2 id="research-session-notes-heading">Reviewer workbench</h2>
-        <p class="research-workspace-status">Session notes only · NOT_ADMITTED</p>
+        <h2 id="research-session-notes-heading">Catatan peninjauan</h2>
+        <p class="research-workspace-status">Catatan sesi, bukan persetujuan bukti</p>
         <form method="POST" action="{{ url('/ii/workspace/note') }}">
             @csrf
             <input type="hidden" name="ticker" value="{{ $ticker }}">
             <div class="field">
-                <label for="research-workspace-finding">Finding</label>
+                <label for="research-workspace-finding">Temuan</label>
                 <textarea class="research-workspace-textarea" id="research-workspace-finding" name="finding" required maxlength="1000">{{ old('finding') }}</textarea>
             </div>
             <div class="field">
-                <label for="research-workspace-review-status">Review label</label>
+                <label for="research-workspace-review-status">Status peninjauan</label>
                 <select name="review_status" id="research-workspace-review-status">
-                    <option value="OPEN">OPEN</option>
-                    <option value="NEEDS_EVIDENCE">NEEDS_EVIDENCE</option>
-                    <option value="REVIEWED_SYNTHETIC">REVIEWED_SYNTHETIC</option>
+                    <option value="OPEN">Terbuka</option>
+                    <option value="NEEDS_EVIDENCE">Perlu bukti tambahan</option>
+                    <option value="REVIEWED_SYNTHETIC">Simulasi telah ditinjau</option>
                 </select>
             </div>
             <button type="submit">Simpan catatan sesi</button>
@@ -120,7 +120,7 @@
         <h3 style="margin-top:24px">Catatan sesi berjalan</h3>
         @forelse($notes as $n)
             <div class="research-workspace-note">
-                <strong>{{ $n['review_status'] }}</strong>
+                <strong>{{ match($n['review_status']) { 'OPEN'=>'Terbuka','NEEDS_EVIDENCE'=>'Perlu bukti tambahan','REVIEWED_SYNTHETIC'=>'Simulasi telah ditinjau',default=>'Perlu diperiksa' } }}</strong>
                 <p>{{ $n['finding'] }}</p>
                 <span class="hint">{{ $n['created_at'] }}</span>
             </div>

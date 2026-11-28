@@ -13,14 +13,14 @@ class ResearchLoginController extends Controller
     {
         $credentials = $request->validate(['email' => 'required|email', 'password' => 'required|string']);
         if (! Auth::attempt($credentials)) {
-            throw ValidationException::withMessages(['email' => 'Credentials not accepted.']);
+            throw ValidationException::withMessages(['email' => 'Email atau kata sandi tidak sesuai. Silakan coba kembali.']);
         }
         $request->session()->regenerate();
         if (! in_array((string) $request->user()->ii_research_role, ['analyst','reviewer','admin'], true)) {
             Auth::logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
-            throw ValidationException::withMessages(['email' => 'Research access not assigned.']);
+            throw ValidationException::withMessages(['email' => 'Akun ini belum memiliki akses ke ruang penelitian.']);
         }
         return redirect()->intended(route('ii.dashboard'));
     }

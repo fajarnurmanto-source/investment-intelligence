@@ -1,5 +1,5 @@
 <section class="panel form-card" aria-labelledby="v4-share-title">
-    <span class="badge blue">V4 · CORPORATE ACTION BASIS</span>
+    <span class="badge blue">Aksi korporasi</span>
     <h2 id="v4-share-title" style="margin-top:12px">Rekonsiliasi basis saham</h2>
     <p class="hint">Harga mentah setelah periode laporan ditahan dari valuasi sampai seluruh aksi korporasi dalam rentang tanggal tersebut ditelaah. Review adalah atestasi pengguna dengan tautan sumber, bukan verifikasi otomatis bursa.</p>
 
@@ -21,7 +21,7 @@
             <div class="field"><label for="ca_confidence">Confidence</label><select id="ca_confidence" name="provenance_confidence"><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></select></div>
         </div>
         <div class="field"><label class="checkline"><input type="checkbox" name="rights_confirmed" value="1" required>Saya memiliki hak penggunaan sumber yang dicatat.</label></div>
-        <button type="submit" style="width:100%">Catat aksi secara immutable</button>
+        <button type="submit" style="width:100%">Simpan aksi korporasi</button>
     </form>
 
     <h3 style="margin-top:20px">2. Review cakupan aksi</h3>
@@ -40,7 +40,7 @@
         </div>
         <div class="field"><label class="checkline"><input type="checkbox" name="coverage_confirmed" value="1" required>Saya telah memeriksa kelengkapan aksi dalam interval tersebut, termasuk bila tidak ada aksi.</label></div>
         <div class="field"><label class="checkline"><input type="checkbox" name="rights_confirmed" value="1" required>Saya berhak memakai informasi sumber untuk riset internal.</label></div>
-        <button type="submit" style="width:100%">Simpan review & faktor basis saham</button>
+        <button type="submit" style="width:100%">Simpan pemeriksaan basis saham</button>
     </form>
 
     @if($corporateActions->isNotEmpty() || $shareBasisReviews->isNotEmpty())

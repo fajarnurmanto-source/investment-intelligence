@@ -43,7 +43,7 @@ final class MarketOwnerBootstrapTest extends TestCase
         $this->assertTrue($settings->canManage($owner->id));
         $this->assertFalse($settings->canManage($other->id));
         $this->actingAs($owner)->get('/ii/market-data')->assertOk()
-            ->assertSee('Simpan kebijakan (nonaktif)')->assertViewHas('control', fn ($control) => !$control['configured']);
+            ->assertSee('Simpan pengaturan dan nonaktifkan otomatisasi')->assertViewHas('control', fn ($control) => !$control['configured']);
         $this->post('/ii/market-data/credential', ['api_key' => 'synthetic-test-key'])->assertSessionHasErrors('credential');
         $this->post('/ii/market-data/policy', ['mics' => 'XNAS', 'rights_reference' => 'synthetic-only',
             'daily_request_limit' => 10, 'storage_permitted' => '1', 'automation_permitted' => '1'])

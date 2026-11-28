@@ -1,5 +1,6 @@
 @extends('ii.layout')
-@section('title','Risk Budget')
+@section('title','Batas risiko')
+@section('surface','ii-light-content')
 @push('styles')
 <style>
     .risk-layout{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(290px,.83fr);gap:18px;align-items:start}
@@ -17,13 +18,14 @@
     @media(max-width:1120px){.risk-layout{display:block}.risk-side{margin-top:18px}}
     @media(max-width:710px){.risk-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
     @media(max-width:510px){.risk-metrics,.risk-bridge{grid-template-columns:1fr}.risk-form-grid{grid-template-columns:1fr}}
+.risk-metric,.risk-node{background:#f1f5f7;border-color:#dce2e9;color:#172535}.risk-note{color:#526577}.risk-warning{background:#fff6e5;color:#755016;border-color:#e9c991}
 </style>
 @endpush
 @section('content')
-    <p class="eyebrow">II / Trading Signal Intelligence / VS9 R2</p>
-    <h1>Risk Budget</h1>
+    <p class="eyebrow">Portofolio &amp; strategi</p>
+    <h1>Batas risiko</h1>
     <p class="lead">Hitung batas ukuran posisi hipotetis dari modal, alokasi risiko, batas eksposur, dan volatilitas ATR14. Semua angka menggunakan sumber harga milik akun Anda—tanpa koneksi order broker.</p>
-    <div class="boundary"><strong>HYPOTHETICAL RESEARCH ONLY — NOT_ADMITTED · HOLD · AUTHORITY NONE.</strong> Angka posisi dan target bukan rekomendasi transaksi. Stop dapat terlewati akibat gap, volatilitas, likuiditas, atau eksekusi nyata; kerugian dapat melebihi anggaran simulasi.</div>
+    <div class="boundary"><strong>Simulasi risiko.</strong> Angka posisi dan target bukan rekomendasi transaksi. Stop dapat terlewati akibat gap, volatilitas, likuiditas, atau eksekusi nyata; kerugian dapat melebihi anggaran simulasi.</div>
     <div class="risk-layout">
         <div>
             @if($warning)<div class="error" role="alert">{{ $warning }}</div>@endif
@@ -33,10 +35,10 @@
                 @endif
                 <section class="panel">
                     <div style="display:flex;align-items:start;justify-content:space-between;gap:12px;flex-wrap:wrap">
-                        <div><span class="badge {{ $result['kind']==='synthetic' ? 'amber' : 'blue' }}">{{ $result['kind']==='synthetic' ? 'SYNTHETIC DEMO' : 'USER DATA / UNVERIFIED' }}</span>
-                            <h2 style="font-size:1.8rem;margin:12px 0 6px">{{ $result['ticker'] }} · Risk envelope</h2>
+                        <div><span class="badge {{ $result['kind']==='synthetic' ? 'amber' : 'blue' }}">{{ $result['kind']==='synthetic' ? 'Data simulasi' : 'Data impor, belum terverifikasi' }}</span>
+                            <h2 style="font-size:1.8rem;margin:12px 0 6px">{{ $result['ticker'] }} · Batas posisi</h2>
                             <p class="caption">Harga referensi pada {{ $result['last_date'] }} · {{ $result['observations'] }} sesi · Status observasi {{ $signalContext['state'] ?? 'UNKNOWN' }}</p>
-                        </div><span class="badge amber">RESEARCH ONLY</span>
+                        </div><span class="badge amber">Khusus penelitian</span>
                     </div>
                     <div class="risk-metrics">
                         <div class="risk-metric"><span>Ukuran unit hipotetis</span><strong>{{ number_format($result['units'], 0) }}</strong></div>
@@ -44,7 +46,7 @@
                         <div class="risk-metric"><span>Batas eksposur model</span><strong>{{ number_format($result['exposure_budget'], 2) }}</strong></div>
                         <div class="risk-metric"><span>Perkiraan rugi pada stop*</span><strong>{{ number_format($result['modelled_loss_at_stop'], 2) }}</strong></div>
                         <div class="risk-metric"><span>Perkiraan hasil pada target*</span><strong>{{ number_format($result['modelled_gain_at_target'], 2) }}</strong></div>
-                        <div class="risk-metric"><span>Net reward/risk model*</span><strong>{{ $result['net_reward_to_risk'] === null ? 'N/A' : $result['net_reward_to_risk'].'×' }}</strong></div>
+                        <div class="risk-metric"><span>Risk–Reward Ratio*</span><strong>{{ $result['net_reward_to_risk'] === null ? 'N/A' : $result['net_reward_to_risk'].'×' }}</strong></div>
                     </div>
                     @if($result['units'] === 0)
                         <div class="risk-warning">Simulasi menghasilkan 0 unit: anggaran risiko atau batas eksposur terlalu kecil untuk satu unit instrumen berdasarkan asumsi ini.</div>
@@ -56,7 +58,7 @@
                     <h2>Referensi harga dan rentang model</h2>
                     <div class="risk-bridge">
                         <div class="risk-node"><span>Stop referensi (simulasi)</span><strong>{{ number_format($result['stop_reference'], 4) }}</strong></div>
-                        <div class="risk-node"><span>Close terakhir (referensi)</span><strong>{{ number_format($result['reference_close'], 4) }}</strong></div>
+                        <div class="risk-node"><span>Harga penutupan terakhir</span><strong>{{ number_format($result['reference_close'], 4) }}</strong></div>
                         <div class="risk-node"><span>Target referensi (simulasi)</span><strong>{{ number_format($result['target_reference'], 4) }}</strong></div>
                     </div>
                     <div class="tablewrap"><table><tbody>
@@ -70,16 +72,16 @@
                     <p class="risk-note">Perhitungan membatasi unit dengan dua syarat sekaligus: batas rugi hipotetis pada stop dan maksimum nilai modal untuk satu instrumen. Unit dibulatkan ke bawah sebagai satuan penuh; aturan lot/bursa nyata tidak dimodelkan.</p>
                 </section>
 
-                <section class="panel" style="margin-top:17px"><h2>Provenance dan keterbatasan</h2>
+                <section class="panel" style="margin-top:17px"><h2>Sumber data dan keterbatasan</h2>
                     <p class="muted">Harga sumber tidak diverifikasi sebagai kuotasi real time. Angka stop dan target adalah skenario matematis, bukan prediksi tercapainya harga atau peluang keberhasilan. Volatilitas masa lalu, biaya statis, dan penghitungan unit penuh belum memperhitungkan gangguan bursa, pajak, likuiditas, spread dinamis, atau perubahan pasar.</p>
                     <p class="caption">Sumber: {{ $result['source_name'] }} · impor {{ $result['imported_at'] }} · {{ $result['evidence'] }} · {{ $result['decision'] }} · trading disabled.</p>
-                    <p><a class="button" href="{{ route('ii.signals.index') }}">Lihat konteks indikator di Signal Center →</a> <a class="button" href="{{ route('ii.portfolio.index') }}" style="margin-top:8px;background:#1b4859;color:#c7f7ff">Eksplorasi portofolio →</a></p>
+                    <p><a class="button" href="{{ route('ii.signals.index') }}">Lihat indikator harga →</a> <a class="button" href="{{ route('ii.portfolio.index') }}" style="margin-top:8px;background:#1b4859;color:#c7f7ff">Simulasi portofolio →</a></p>
                 </section>
             @elseif(count($available)===0)
-                <section class="panel"><h2>Belum ada seri harga</h2><p class="muted">Tambahkan data CSV ke Signal Center atau muat DEMO9 sintetis pada Rolling Validation, lalu buka kembali Risk Budget.</p><p><a class="button" href="{{ route('ii.strategy.rolling') }}">Buka Rolling Validation →</a></p></section>
+                <section class="panel"><h2>Belum ada seri harga</h2><p class="muted">Tambahkan data CSV ke Signal Center atau muat DEMO9 sintetis pada Rolling Validation, lalu buka kembali Risk Budget.</p><p><a class="button" href="{{ route('ii.strategy.rolling') }}">Uji lintas periode →</a></p></section>
             @endif
         </div>
-        <aside class="panel risk-side"><span class="badge">RISK SIMULATOR · R2</span><h2 style="margin-top:12px">Atur batas modal</h2>
+        <aside class="panel risk-side"><span class="badge">Simulasi risiko</span><h2 style="margin-top:12px">Atur batas modal</h2>
             <form method="GET" action="{{ route('ii.risk-budget.index') }}">
                 <div class="field"><label for="ticker">Instrumen</label><select name="ticker" id="ticker" required>
                     @foreach($available as $item)<option value="{{ $item['ticker'] }}" @selected($ticker===$item['ticker'])>{{ $item['ticker'] }} · {{ $item['kind']==='synthetic' ? 'DEMO' : 'IMPORTED' }}</option>@endforeach
@@ -90,8 +92,8 @@
                     <div class="field"><label for="exposure_pct">Batas eksposur (%)</label><input id="exposure_pct" name="exposure_pct" type="number" min="5" max="100" step="1" value="{{ $exposurePct }}" required></div>
                     <div class="field"><label for="atr_multiple">Jarak stop × ATR14</label><input id="atr_multiple" name="atr_multiple" type="number" min="1" max="5" step="0.5" value="{{ $atrMultiple }}" required></div>
                     <div class="field"><label for="reward_multiple">Target × jarak stop</label><input id="reward_multiple" name="reward_multiple" type="number" min="1" max="5" step="0.5" value="{{ $rewardMultiple }}" required></div>
-                    <div class="field"><label for="fee_bps">Fee bps/sisi</label><input id="fee_bps" name="fee_bps" type="number" min="0" max="100" value="{{ $fee }}" required></div>
-                    <div class="field"><label for="slippage_bps">Slippage bps/sisi</label><input id="slippage_bps" name="slippage_bps" type="number" min="0" max="100" value="{{ $slippage }}" required></div>
+                    <div class="field"><label for="fee_bps">Biaya per transaksi (bps)</label><input id="fee_bps" name="fee_bps" type="number" min="0" max="100" value="{{ $fee }}" required></div>
+                    <div class="field"><label for="slippage_bps">Slippage per transaksi (bps)</label><input id="slippage_bps" name="slippage_bps" type="number" min="0" max="100" value="{{ $slippage }}" required></div>
                 </div>
                 <button type="submit" style="width:100%" @disabled(count($available)===0)>Hitung skenario risiko</button>
             </form>

@@ -1,30 +1,32 @@
 @extends('ii.layout')
-@section('title','Macro Intelligence')
+@section('title','Ekonomi makro')
+@section('surface','ii-light-content')
 @push('styles')
 <style>
     .macro-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}.macro-chart{background:#0b192a;border:1px solid var(--line);border-radius:11px;padding:10px;margin:16px 0}.macro-chart svg{display:block;width:100%;height:105px}.macro-provenance{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.macro-provenance div{background:#0b192a;border-radius:9px;padding:13px}.macro-provenance span{display:block;color:var(--muted);font-size:.76rem}.macro-provenance strong{display:block;margin-top:5px;overflow-wrap:anywhere}@media(max-width:820px){.macro-grid,.macro-provenance{grid-template-columns:1fr}}
+.macro-chart{background:#fff}.macro-provenance div{background:#f1f5f7}.macro-chart path{stroke:#dce2e9}.macro-chart polyline{stroke:#147d78}
 </style>
 @endpush
 @section('content')
-    <p class="eyebrow">II / Real Data / Macro Intelligence</p>
-    <h1>Macro Intelligence</h1>
-    <p class="lead">Data ekonomi nyata mengalir dari sumber FRED ke Laravel, dinormalisasi, dianalisis, lalu disajikan dengan provenance dan kualitas yang dapat ditelusuri.</p>
-    <div class="boundary"><strong>RESEARCH CONTEXT ONLY.</strong> Data makro bukan sinyal beli/jual. This product uses FRED data but is not endorsed or certified by the Federal Reserve Bank of St. Louis.</div>
+    <p class="eyebrow">Pasar &amp; ekonomi</p>
+    <h1>Ekonomi makro</h1>
+    <p class="lead">Pantau indikator ekonomi dari FRED dan pelajari perubahan dari waktu ke waktu.</p>
+    <div class="boundary"><strong>Konteks penelitian.</strong> Data makro bukan sinyal beli/jual. This product uses FRED data but is not endorsed or certified by the Federal Reserve Bank of St. Louis.</div>
     <div class="section-header">
-        <h2>Snapshot ekonomi</h2>
+        <h2>Ringkasan ekonomi</h2>
         @if(($rights['status'] ?? 'DENIED') === 'REVIEWED_ALLOWED_LOCAL_NONCOMMERCIAL')
-            <a class="button" href="{{ route('ii.macro.report') }}">Unduh CSV pribadi (reviewed)</a>
+            <a class="button" href="{{ route('ii.macro.report') }}">Unduh CSV pribadi</a>
         @else
-            <span class="badge amber">Ekspor CSV ditahan · review hak diperlukan</span>
+            <span class="badge amber">Unduhan belum diizinkan</span>
         @endif
     </div>
     @if(($rights['status'] ?? 'DENIED') !== 'REVIEWED_ALLOWED_LOCAL_NONCOMMERCIAL')
-        <p class="caption">Dashboard tetap tersedia untuk penelitian lokal. Pengunduhan data memerlukan review hak per seri (saat ini: {{ implode(', ', $rights['issues'] ?? ['NOT_CLEARED']) }}). <a href="{{ route('ii.macro.report.rights') }}">Periksa manifest hak tanpa nilai numerik</a>.</p>
+        <p class="caption">Dashboard tetap tersedia untuk penelitian lokal. Pengunduhan memerlukan pemeriksaan hak penggunaan untuk setiap indikator. <a href="{{ route('ii.macro.report.rights') }}">Lihat catatan hak penggunaan</a>.</p>
     @else
         <p class="caption">Izin dibatasi untuk CSV pribadi nonkomersial; tidak termasuk redistribusi atau transfer cloud. <a href="{{ route('ii.macro.report.rights') }}">Lihat manifest hak</a>.</p>
     @endif
     @if(count($dashboard['series']) === 0)
-        <section class="panel"><h2>Connector siap, ingestion belum dijalankan</h2><p class="muted">Jalankan <code>php artisan ii:ingest-fred --sync</code>. Kegagalan dicatat sebagai ingestion run tanpa menimpa observasi terakhir yang valid.</p><span class="badge amber">{{ $dashboard['pipeline_status'] }}</span></section>
+        <section class="panel"><h2>Data ekonomi belum tersedia</h2><p class="muted">Data belum berhasil dimuat. Hubungi pengelola aplikasi untuk memperbarui data. Observasi terakhir yang valid tidak akan diganti oleh hasil pengambilan yang gagal.</p></section>
     @else
         <div class="macro-grid">
             @foreach($dashboard['series'] as $series)
@@ -44,6 +46,6 @@
                 </article>
             @endforeach
         </div>
-        <section class="panel" style="margin-top:18px"><h2>Provenance & failure handling</h2><p class="muted">Setiap observasi menyimpan source URL, timestamp retrieval, checksum response, run ID, units, frequency, dan quality status. Ingestion memakai allow-list dua seri, retry terbatas, timeout, batas payload 5 MB, transaksi database, serta cache invalidation.</p><p class="caption">Pipeline: {{ $dashboard['pipeline_status'] }} · report dibuat {{ $dashboard['generated_at'] }} · <a href="{{ config('ii.fred.terms_url') }}" rel="noopener noreferrer">FRED Terms of Use</a></p></section>
+        <section class="panel" style="margin-top:18px"><h2>Sumber dan riwayat data</h2><p class="muted">Setiap indikator memiliki catatan sumber, waktu pengambilan, satuan dan frekuensi. Data yang gagal dimuat tidak menggantikan observasi terakhir yang valid.</p><p class="caption">Ringkasan dibuat {{ $dashboard['generated_at'] }} · <a href="{{ config('ii.fred.terms_url') }}" rel="noopener noreferrer">FRED Terms of Use</a></p></section>
     @endif
 @endsection

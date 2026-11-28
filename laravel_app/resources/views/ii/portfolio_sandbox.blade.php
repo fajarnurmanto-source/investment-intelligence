@@ -1,5 +1,6 @@
 @extends('ii.layout')
-@section('title','Portfolio Sandbox')
+@section('title','Simulasi portofolio')
+@section('surface','ii-light-content')
 @push('styles')
 <style>
     /* VS11 R4: controls beside summary; detailed analytical panels full width. */
@@ -45,25 +46,26 @@
     @media(max-width:700px){.portfolio-wide .tablewrap table{min-width:620px}}
     @media(max-width:680px){.portfolio-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
     @media(max-width:490px){.portfolio-metrics,.assurance-grid{grid-template-columns:1fr}}
+.portfolio-metric,.assurance-tile,.assurance-asset{background:#f1f5f7;border-color:#dce2e9;color:#172535}.portfolio-metric.negative strong{color:#b23a43}.portfolio-warning{background:#fff6e5;color:#755016;border-color:#e9c991}.portfolio-note,.assurance-list{color:#526577}.portfolio-kpi{color:#147d78}.assurance-facts div{border-color:#dce2e9}.portfolio-chart{background:#fff;border-color:#dce2e9}.portfolio-legend b{color:#142a40}.portfolio-legend .cyan{color:#147d78}.portfolio-legend .gold{color:#94651a}.portfolio-chart svg path{stroke:#dce2e9}.portfolio-chart svg polyline[stroke='#66dbe7']{stroke:#147d78}.portfolio-chart svg polyline[stroke='#f3bf75']{stroke:#94651a}
 </style>
 @endpush
 @section('content')
-    <p class="eyebrow">II / Portfolio Intelligence / VS11 R4 <span class="badge blue">Responsive Analytics</span></p>
-    <h1>Portfolio Sandbox</h1>
+    <p class="eyebrow">Portofolio &amp; strategi</p>
+    <h1>Simulasi portofolio</h1>
     <p class="lead">Jelajahi interaksi dua atau tiga instrumen dengan bobot hipotetis. Bandingkan pertumbuhan historis, penurunan nilai, konsentrasi, dan korelasi pada tanggal pengamatan yang sama.</p>
-    <div class="boundary"><strong>HISTORICAL RESEARCH ONLY — NOT_ADMITTED · HOLD · AUTHORITY NONE.</strong> Perbandingan ini bukan keputusan alokasi investasi, bukan prediksi, dan tidak mengirim order. Harga, dividen, aksi korporasi, pajak, serta kondisi eksekusi nyata belum diverifikasi.</div>
+    <div class="boundary"><strong>Simulasi historis.</strong> Perbandingan ini bukan keputusan alokasi investasi, bukan prediksi, dan tidak mengirim order. Harga, dividen, aksi korporasi, pajak, serta kondisi eksekusi nyata belum diverifikasi.</div>
     <div class="portfolio-layout {{ $result && $result['synthetic_state'] !== 'USER_IMPORTED' ? 'portfolio-has-synthetic' : 'portfolio-plain' }}">
         <div class="portfolio-primary">
             @if($warning)<div class="error" role="alert">{{ $warning }}</div>@endif
             @if($result)
                 @if($result['synthetic_state'] !== 'USER_IMPORTED')
-                    <div class="portfolio-warning"><strong>DATA DEMO TERLIBAT.</strong> {{ $result['synthetic_state']==='ALL_SYNTHETIC' ? 'Seluruh instrumen merupakan data sintetis, bukan harga pasar.' : 'Sebagian instrumen adalah data sintetis; hasil tidak merepresentasikan portofolio pasar nyata.' }}</div>
+                    <div class="portfolio-warning"><strong>Menggunakan data simulasi.</strong> {{ $result['synthetic_state']==='ALL_SYNTHETIC' ? 'Seluruh instrumen merupakan data sintetis, bukan harga pasar.' : 'Sebagian instrumen adalah data sintetis; hasil tidak merepresentasikan portofolio pasar nyata.' }}</div>
                 @endif
                 <section class="panel portfolio-summary">
                     <div style="display:flex;justify-content:space-between;align-items:start;gap:14px;flex-wrap:wrap">
-                        <div><span class="badge">FIXED-SHARE · HISTORICAL</span><h2 style="font-size:1.7rem;margin:12px 0 7px">Skenario {{ count($result['tickers']) }} instrumen</h2>
+                        <div><span class="badge">Simulasi historis</span><h2 style="font-size:1.7rem;margin:12px 0 7px">Skenario {{ count($result['tickers']) }} instrumen</h2>
                             <p class="caption">{{ $result['start_date'] }} hingga {{ $result['end_date'] }} · {{ $result['common_sessions'] }} sesi beririsan · {{ $result['return_observations'] }} perubahan harga</p></div>
-                        <span class="badge amber">RESEARCH ONLY</span>
+                        <span class="badge amber">Khusus penelitian</span>
                     </div>
                     <div class="portfolio-metrics">
                         <div class="portfolio-metric {{ $result['portfolio_return_pct'] < 0 ? 'negative' : '' }}"><span>Perubahan nilai portofolio*</span><strong>{{ $result['portfolio_return_pct'] }}%</strong></div>
@@ -79,7 +81,7 @@
                 </section>
 
                 <section class="panel portfolio-wide" style="margin-top:18px">
-                    <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:start"><div><span class="portfolio-kpi">DATA QUALITY ASSURANCE · R3</span><h2 style="margin-top:10px">Kesiapan dan kesetaraan data</h2></div><span class="badge amber">{{ $result['quality']['state'] }} · NOT ADMITTED</span></div>
+                    <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:start"><div><span class="portfolio-kpi">Pemeriksaan data</span><h2 style="margin-top:10px">Kesiapan dan kesetaraan data</h2></div><span class="badge amber">{{ $result['quality']['state'] }} · NOT ADMITTED</span></div>
                     <p class="muted">Pemeriksaan sumber hanya membantu menemukan ketidaksesuaian sebelum membandingkan portofolio. Tidak ada klaim bahwa data sudah diverifikasi oleh bursa atau penyedia pasar.</p>
                     <div class="assurance-grid">
                         <div class="assurance-tile"><span>Cakupan tanggal bersama / gabungan</span><strong>{{ $result['quality']['overall_overlap_pct'] }}%</strong><span>{{ $result['quality']['common_dates'] }} dari {{ $result['quality']['union_dates'] }} tanggal unik</span></div>
@@ -115,7 +117,7 @@
                 </section>
 
                 <section class="panel portfolio-wide" style="margin-top:18px">
-                    <h2>Jalur nilai relatif</h2>
+                    <h2>Perkembangan nilai portofolio</h2>
                     <p class="muted">Keduanya dimulai dari indeks 100 pada tanggal pertama yang sama. Grafik menunjukkan sejarah, bukan estimasi ke depan.</p>
                     <div class="portfolio-chart">
                         <div class="portfolio-legend"><span><b class="cyan">●</b> Bobot pilihan: <b>{{ $result['portfolio_return_pct'] }}%</b></span><span><b class="gold">●</b> Bobot sama: <b>{{ $result['equal_weight_return_pct'] }}%</b></span></div>
@@ -134,9 +136,9 @@
 
                 <section class="panel portfolio-wide" style="margin-top:18px">
                     <h2>Komposisi dan perkembangan instrumen</h2>
-                    <div class="tablewrap"><table><thead><tr><th>Instrumen</th><th>Bobot</th><th>Close awal</th><th>Close akhir</th><th>Return*</th><th>Sumber</th></tr></thead><tbody>
+                    <div class="tablewrap"><table><thead><tr><th>Instrumen</th><th>Bobot</th><th>Harga awal</th><th>Harga akhir</th><th>Return*</th><th>Sumber</th></tr></thead><tbody>
                         @foreach($result['instruments'] as $instrument)
-                            <tr><td><strong>{{ $instrument['ticker'] }}</strong></td><td>{{ $instrument['weight_pct'] }}%</td><td>{{ number_format($instrument['start_close'], 4) }}</td><td>{{ number_format($instrument['end_close'], 4) }}</td><td>{{ $instrument['return_pct'] }}%</td><td>{{ $instrument['kind']==='synthetic' ? 'DEMO' : 'IMPORTED / UNVERIFIED' }}</td></tr>
+                            <tr><td><strong>{{ $instrument['ticker'] }}</strong></td><td>{{ $instrument['weight_pct'] }}%</td><td>{{ number_format($instrument['start_close'], 4) }}</td><td>{{ number_format($instrument['end_close'], 4) }}</td><td>{{ $instrument['return_pct'] }}%</td><td>{{ $instrument['kind']==='synthetic' ? 'DEMO' : 'Data impor, belum terverifikasi' }}</td></tr>
                         @endforeach
                     </tbody></table></div>
                     <p class="caption">*Hanya perubahan close dari tanggal awal/akhir beririsan, tanpa menyesuaikan total return sebenarnya.</p>
@@ -153,17 +155,17 @@
                     <p class="portfolio-note">Korelasi mendekati +1 menunjukkan gerak historis searah; mendekati −1 berlawanan; mendekati 0 hubungan linear lemah. Nilainya dapat berubah dan tidak menjamin perlindungan portofolio.</p>
                 </section>
 
-                <section class="panel portfolio-wide" style="margin-top:18px"><h2>Provenance dan batas interpretasi</h2>
+                <section class="panel portfolio-wide" style="margin-top:18px"><h2>Sumber data dan batas interpretasi</h2>
                     <p class="muted">Model menggunakan close yang sama tanggalnya dari seri masing-masing pengguna. Tidak ada harga real time, estimasi pembayaran dividen, koreksi stock split, konversi mata uang, biaya transaksi, pajak, eksposur bersih, atau optimasi portofolio. Return historis tidak menunjukkan kinerja masa depan.</p>
                     <p class="caption">{{ $result['synthetic_state'] }} · {{ $result['evidence'] }} · {{ $result['decision'] }} · broker disabled.</p>
-                    <p><a class="button" href="{{ route('ii.risk-budget.index') }}">Kembali ke Risk Budget →</a></p>
+                    <p><a class="button" href="{{ route('ii.risk-budget.index') }}">Hitung batas risiko →</a></p>
                 </section>
             @elseif(count($available) < 2)
-                <section class="panel"><h2>Butuh minimal dua instrumen</h2><p class="muted">Portfolio Sandbox perlu paling sedikit dua seri OHLCV yang tersimpan pada akun Anda dan mempunyai tanggal beririsan. Muat DEMO7 dan DEMO9, atau impor seri CSV yang lain.</p><p><a class="button" href="{{ route('ii.strategy.rolling') }}">Buka Rolling Validation →</a></p></section>
+                <section class="panel"><h2>Butuh minimal dua instrumen</h2><p class="muted">Simulasi memerlukan paling sedikit dua seri OHLCV yang tersimpan pada akun Anda dan mempunyai tanggal beririsan. Muat DEMO7 dan DEMO9, atau impor seri CSV yang lain.</p><p><a class="button" href="{{ route('ii.strategy.rolling') }}">Uji lintas periode →</a></p></section>
             @endif
         </div>
         <aside class="panel portfolio-side">
-            <span class="badge">PORTFOLIO SCENARIO · R1</span><h2 style="margin-top:12px">Rancang komposisi</h2>
+            <span class="badge">Komposisi portofolio</span><h2 style="margin-top:12px">Rancang komposisi</h2>
             <p class="muted" style="font-size:.87rem">Pilih dua instrumen wajib dan satu opsional. Setiap instrumen hanya boleh dipilih sekali, dengan total bobot 100%.</p>
             <form method="GET" action="{{ route('ii.portfolio.index') }}">
                 <div class="portfolio-form-grid"><div class="field"><label for="pa">Instrumen A</label><select class="portfolio-instrument-select" id="pa" name="a" aria-describedby="portfolio-series-hint" required>@foreach($available as $instrument)<option value="{{ $instrument['ticker'] }}" @selected($a===$instrument['ticker'])>{{ $instrument['ticker'] }}</option>@endforeach</select></div><div class="field"><label for="pwa">Bobot %</label><input id="pwa" type="number" name="wa" value="{{ $wa }}" min="0" max="100" step="0.1" required></div></div>

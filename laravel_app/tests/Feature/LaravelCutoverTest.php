@@ -32,8 +32,9 @@ class LaravelCutoverTest extends TestCase
         $this->actingAs($user)
             ->get('/ii/company?ticker=DEMO2')
             ->assertOk()
-            ->assertSee('Laravel B1')
-            ->assertSee('SYNTHETIC_FIXTURE_LARAVEL_DEMO2');
+            ->assertSee('Contoh simulasi')
+            ->assertSee('perusahaan fiktif')
+            ->assertViewHas('research', fn ($research) => $research['provenance']['source_id'] === 'SYNTHETIC_FIXTURE_LARAVEL_DEMO2' && $research['admission'] === 'NOT_ADMITTED' && $research['trading_authorized'] === false);
 
         $this->actingAs($user)
             ->get('/ii/workspace?ticker=DEMO3')
