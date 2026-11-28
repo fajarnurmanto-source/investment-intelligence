@@ -46,3 +46,29 @@ Schedule::command('ii:discover-market-universe')->dailyAt('10:00')->timezone('UT
 
 // Explicit owner opt-in; five immutable public candidates per 15-minute tick.
 Schedule::command('ii:historical-cycle scheduled')->everyFifteenMinutes()->withoutOverlapping();
+
+/** Explicit local manifest; never infer storage rights from an upload. */
+Artisan::command('ii:idx-evidence-batch {action : preview|store} {--user=} {--manifest=}', function () {
+    try {
+        $action = $this->argument('action');
+        $owner = filter_var($this->option('user'), FILTER_VALIDATE_INT, ['options'=>['min_range'=>1]]);
+        $path = $this->option('manifest');
+        if (!in_array($action,['preview','store'],true) || !$owner || !is_string($path) || !is_file($path)) {
+            throw new \InvalidArgumentException('II_IDX_BATCH_ARGUMENTS_INVALID');
+        }
+        $raw = file_get_contents($path,false,null,0,100001);
+        if (!is_string($raw) || strlen($raw)>100000) {
+            throw new \InvalidArgumentException('II_IDX_BATCH_MANIFEST_INVALID');
+        }
+        $pairs = json_decode($raw,true,12,JSON_THROW_ON_ERROR);
+        if (!is_array($pairs)) {
+            throw new \InvalidArgumentException('II_IDX_BATCH_MANIFEST_INVALID');
+        }
+        $result = app(\App\Services\IdxDailyEvidenceWarehouse::class)->ingestBatch($owner,$pairs,$action==='store');
+        $this->line(json_encode($result,JSON_PRETTY_PRINT|JSON_THROW_ON_ERROR));
+        return 0;
+    } catch (\Throwable $e) {
+        $this->error('II_IDX_BATCH_FAILED: '.($e instanceof \InvalidArgumentException ? $e->getMessage() : 'Check manifest, existing evidence and runtime.'));
+        return 1;
+    }
+})->purpose('Preview or atomically store reviewed local IDX evidence pairs');
