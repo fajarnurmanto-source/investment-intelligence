@@ -124,6 +124,58 @@ final class IdxMultisessionUploadTest extends TestCase
         $this->actingAs($owner)->post('http://localhost/ii/market-intelligence',['mode'=>'history','dates'=>$dates])->assertStatus(422);
     }
 
+    public function test_batch_preview_atomic_store_replay_and_coverage(): void
+    {
+        $owner = User::factory()->create(['ii_research_role'=>'analyst']);
+        app(MarketFeedSettings::class)->initializeOwner($owner->id);
+        $warehouse = app(IdxDailyEvidenceWarehouse::class);
+        $files = [$this->workbook('03 Nov 2025','100','100'), $this->workbook('04 Nov 2025','120','300', true)];
+        $dates = ['2025-11-03','2025-11-04'];
+        $pairs = [];
+        $receipts = [];
+        try {
+            foreach ($files as $i => $file) {
+                $path = $file->getRealPath();
+                $review = tempnam(sys_get_temp_dir(),'ii-review-');
+                $pairs[] = ['file'=>$path,'review'=>$review];
+                $receipts[] = ['source_url'=>IdxOfficialExportIntake::SOURCE,'terms_url'=>IdxOfficialExportIntake::TERMS,
+                    'document_sha256'=>hash_file('sha256',$path),'acquisition'=>'MANUAL_OFFICIAL_DOWNLOAD',
+                    'usage'=>'PERSONAL_NONCOMMERCIAL_RESEARCH','rights_confirmed'=>true,'no_redistribution'=>true,
+                    'local_retention_confirmed'=>true,'direct_cost_idr'=>0,'reviewer'=>'Synthetic fixture',
+                    'session_date'=>$dates[$i],'access_date'=>'2025-11-05','format'=>'ORIGINAL_XLSX','sheet'=>'Sheet1','header_row'=>1];
+                file_put_contents($review,json_encode($receipts[$i],JSON_THROW_ON_ERROR));
+            }
+            $preview = $warehouse->ingestBatch($owner->id,array_reverse($pairs));
+            $this->assertSame('BATCH_PREVIEW',$preview['status']);
+            $this->assertSame($dates,array_column($preview['sessions'],'session_date'));
+            $this->assertDatabaseCount('ii_idx_evidence_batches',0);
+            $warehouse->ingest($owner->id,$pairs[1]['file'],$pairs[1]['review'],true);
+            $changed = array_replace($receipts[1],['reviewer'=>'Changed fixture']);
+            file_put_contents($pairs[1]['review'],json_encode($changed,JSON_THROW_ON_ERROR));
+            try {
+                $warehouse->ingestBatch($owner->id,$pairs,true);
+                $this->fail('Conflicting batch accepted');
+            } catch (\RuntimeException $e) {
+                $this->assertSame('II_IDX_WAREHOUSE_EXISTING_BATCH_CONFLICT',$e->getMessage());
+            }
+            $this->assertDatabaseCount('ii_idx_evidence_batches',1);
+            $this->assertDatabaseCount('ii_idx_evidence_rows',1);
+            file_put_contents($pairs[1]['review'],json_encode($receipts[1],JSON_THROW_ON_ERROR));
+            $result = $warehouse->ingestBatch($owner->id,$pairs,true);
+            $this->assertSame(['STORED_EVIDENCE_ONLY','UNCHANGED'],array_column($result['sessions'],'status'));
+            $replay = $warehouse->ingestBatch($owner->id,$pairs,true);
+            $this->assertSame(['UNCHANGED','UNCHANGED'],array_column($replay['sessions'],'status'));
+            $this->assertSame(['sessions'=>2,'first_date'=>$dates[0],'last_date'=>$dates[1],'observations'=>2],$warehouse->status($owner->id)['coverage']);
+            $this->assertDatabaseCount('ii_idx_evidence_rows',2);
+            $this->expectExceptionMessage('II_IDX_BATCH_DUPLICATE_DATE');
+            $warehouse->ingestBatch($owner->id,[$pairs[0],$pairs[0]],true);
+        } finally {
+            foreach ($pairs as $pair) {
+                unlink($pair['review']);
+            }
+        }
+    }
+
     public function test_multisession_requires_rights_and_distinct_dates(): void
     {
         $user = User::factory()->create(['ii_research_role'=>'analyst']);
