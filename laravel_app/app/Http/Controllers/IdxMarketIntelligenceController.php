@@ -26,6 +26,18 @@ final class IdxMarketIntelligenceController extends Controller
     public function analyze(Request $request, IdxSessionIntelligence $engine)
     {
         $this->localOnly($request);
+        if ($request->input('mode') === 'liquidity') {
+            $warehouse = app(IdxDailyEvidenceWarehouse::class);
+            $owner = (int) $request->user()->id;
+            abort_unless($warehouse->isOwner($owner), 403);
+            try {
+                return $this->page(null, null, 200, null, null, $warehouse->historicalLiquidity($owner));
+            } catch (\InvalidArgumentException) {
+                return $this->page(null, 'Bukti arsip belum memenuhi syarat untuk analisis aktivitas.', 422);
+            } catch (\Throwable) {
+                return $this->page(null, 'Analisis aktivitas belum dapat dijalankan.', 503);
+            }
+        }
         if ($request->input('mode') === 'momentum') {
             $warehouse = app(IdxDailyEvidenceWarehouse::class);
             $owner = (int) $request->user()->id;
@@ -118,7 +130,7 @@ final class IdxMarketIntelligenceController extends Controller
         }
     }
 
-    private function page(?array $result = null, ?string $notice = null, int $status = 200, ?array $comparison = null, ?array $momentum = null)
+    private function page(?array $result = null, ?string $notice = null, int $status = 200, ?array $comparison = null, ?array $momentum = null, ?array $liquidity = null)
     {
         $warehouse = app(IdxDailyEvidenceWarehouse::class);
         $owner = (int) auth()->id();
@@ -126,7 +138,7 @@ final class IdxMarketIntelligenceController extends Controller
         if ($warehouse->isOwner($owner)) {
             $archive = $warehouse->status($owner);
         }
-        return response()->view('ii.market-intelligence', compact('result', 'notice', 'comparison', 'archive', 'momentum'), $status)
+        return response()->view('ii.market-intelligence', compact('result', 'notice', 'comparison', 'archive', 'momentum', 'liquidity'), $status)
             ->header('Cache-Control', 'private, no-store')
             ->header('X-Content-Type-Options', 'nosniff');
     }
