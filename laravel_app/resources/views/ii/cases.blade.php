@@ -1,6 +1,7 @@
 @extends('ii.layout')
 
-@section('title', 'Research Cases')
+@section('title', 'Catatan riset')
+@section('surface','ii-light-content')
 
 @push('styles')
 <style>
@@ -17,19 +18,19 @@
 @endpush
 
 @section('content')
-<p class="eyebrow">II / Investment Research / VS11 R3</p>
+<p class="eyebrow">Riset saya</p>
 <h1>Kasus riset perusahaan</h1>
-<p class="lead">Simpan kasus riset sintetis, telusuri catatan reviewer, dan unduh laporan penelitian dalam satu workspace.</p>
+<p class="lead">Simpan latihan penelitian perusahaan, lihat catatan peninjauan dan unduh laporan.</p>
 
 <nav class="research-links" aria-label="Tautan terkait kasus riset">
-    <a href="{{ route('ii.dashboard') }}">Dashboard Produk</a>
-    <a href="{{ route('ii.signals.index') }}">Trading Signal Center</a>
-    <a href="{{ route('ii.company') }}">Company Research</a>
-    <a href="{{ route('ii.workspace') }}">Reviewer Workspace</a>
+    <a href="{{ route('ii.dashboard') }}">Dashboard</a>
+    <a href="{{ route('ii.signals.index') }}">Sinyal pasar</a>
+    <a href="{{ route('ii.company') }}">Analisis perusahaan</a>
+    <a href="{{ route('ii.workspace') }}">Tinjau riset</a>
 </nav>
 
 <div class="boundary" role="note">
-    <strong>MODE DEMO SINTETIS.</strong> Data hanya DEMO2/DEMO3. NOT_ADMITTED · HOLD · Authority NONE.
+    <strong>MODE DEMO SINTETIS.</strong> Data hanya DEMO2/DEMO3. Belum disahkan sebagai dasar keputusan investasi.
     Status reviewer bukan persetujuan bukti, valuasi, ataupun transaksi.
 </div>
 
@@ -69,8 +70,8 @@
                     <tr>
                         <td><a href="{{ route('ii.cases.show', ['id' => $case->id]) }}">{{ $case->title }}</a></td>
                         <td>{{ $case->ticker }}</td>
-                        <td><span class="badge blue research-status">{{ $case->review_status }}</span></td>
-                        <td>{{ $case->creator_email ?? 'Sebelum VS6' }}</td>
+                        <td><span class="badge blue research-status">{{ match($case->review_status) { 'OPEN'=>'Terbuka','NEEDS_EVIDENCE'=>'Perlu bukti tambahan','REVIEWED_SYNTHETIC'=>'Simulasi telah ditinjau',default=>'Perlu diperiksa' } }}</span></td>
+                        <td>{{ $case->creator_email ?? 'Pengguna lama' }}</td>
                         <td>{{ $case->created_at }}</td>
                     </tr>
                 @empty
