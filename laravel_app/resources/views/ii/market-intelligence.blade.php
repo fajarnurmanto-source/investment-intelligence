@@ -20,7 +20,38 @@
 @if($notice)
 <div class="error" role="alert">{{ $notice }}</div>
 @endif
-@if($comparison ?? null)
+@if($momentum ?? null)
+<section class="panel">
+<div class="section-header"><h2>Market Momentum Intelligence</h2><a class="button quiet" href="{{ route('ii.market-intelligence.index') }}">Analisis baru</a></div>
+<p>{{ $momentum['available'] }} tanggal arsip tersedia. Setiap periode menggunakan tanggal observasi terakhir, bukan jumlah hari perdagangan berturut-turut yang sudah diverifikasi.</p>
+<p class="note">Harga mentah belum disesuaikan terhadap dividen atau aksi korporasi. Kelompok pembanding hanya saham yang memenuhi syarat pada semua tanggal dalam periode. Tidak ada rekomendasi transaksi.</p>
+<div class="tablewrap"><table><thead><tr><th>Observasi</th><th>Cakupan</th><th>Median harga</th><th>Perubahan net breadth (poin %)</th></tr></thead><tbody>
+@foreach($momentum['windows'] as $window)
+<tr><td>{{ $window['window'] }}</td><td>@if($window['status']==='INSUFFICIENT_HISTORY')Data belum cukup ({{ $window['available'] }}/{{ $window['required'] }})@else{{ $window['matched_count'] }} saham · {{ $window['first_date'] }} – {{ $window['last_date'] }}@endif</td><td>{{ isset($window['median_change_pct']) ? number_format($window['median_change_pct'],2,',','.').'%' : '—' }}</td><td>{{ isset($window['breadth_change_pp']) ? number_format($window['breadth_change_pp'],2,',','.') : '—' }}</td></tr>
+@endforeach
+</tbody></table></div>
+</section>
+@foreach($momentum['windows'] as $window)
+@if($window['status']==='OBSERVED_ONLY')
+<section class="panel"><details @if($window['window']===5) open @endif><summary>Momentum {{ $window['window'] }} observasi · {{ $window['matched_count'] }} saham</summary>
+<p class="note">Konsistensi naik adalah persentase transisi antarobservasi dengan harga penutupan meningkat. Akselerasi adalah selisih perubahan harga sederhana per transisi antara paruh akhir dan awal, bukan prediksi. Rasio volume membandingkan angka sumber terakhir dengan rata-rata sebelumnya; satuan dan cakupan belum terverifikasi.</p>
+@foreach(['leaders'=>'Momentum tertinggi','laggards'=>'Momentum terendah'] as $key=>$label)
+<h3>{{ $label }}</h3><div class="tablewrap"><table><thead><tr><th>Saham</th><th>Harga</th><th>Relatif median (pp)</th><th>Konsistensi naik</th><th>Akselerasi (pp/transisi)</th><th>Volume relatif</th></tr></thead><tbody>
+@foreach($window[$key] as $row)
+<tr><td><a href="{{ route('ii.company',['ticker'=>$row['ticker']]) }}">{{ $row['ticker'] }}</a></td><td>{{ number_format($row['price_change_pct'],2,',','.') }}%</td><td>{{ number_format($row['relative_to_median_pp'],2,',','.') }}</td><td>{{ number_format($row['up_transition_pct'],1,',','.') }}%</td><td>{{ number_format($row['acceleration_pp_per_transition'],2,',','.') }}</td><td>{{ number_format($row['raw_volume_ratio'],2,',','.') }}×</td></tr>
+@endforeach
+</tbody></table></div>
+@endforeach
+</details></section>
+@endif
+@endforeach
+<section class="panel"><details open><summary>Perubahan arah pasar per tanggal</summary><p class="note">Net breadth = (jumlah naik − jumlah turun) / saham memenuhi syarat. Komposisi saham dapat berbeda tiap tanggal.</p><div class="tablewrap"><table><thead><tr><th>Tanggal</th><th>Memenuhi syarat</th><th>Naik</th><th>Turun</th><th>Net breadth</th></tr></thead><tbody>
+@foreach(array_slice($momentum['sessions'],-30) as $session)
+<tr><td>{{ $session['date'] }}</td><td>{{ $session['eligible'] }} / {{ $session['universe'] }}</td><td>{{ $session['up'] }}</td><td>{{ $session['down'] }}</td><td>{{ $session['net_breadth_pct']===null ? '—' : number_format($session['net_breadth_pct'],2,',','.').'%' }}</td></tr>
+@endforeach
+</tbody></table></div><p class="note">Maksimal 30 tanggal terakhir ditampilkan di tabel ini.</p></details>
+<details><summary>Bukti sumber ({{ $momentum['available'] }} tanggal)</summary>@foreach($momentum['sessions'] as $session)<p class="mi-hash">{{ $session['date'] }} · {{ $session['sha256'] }}</p>@endforeach</details></section>
+@elseif($comparison ?? null)
 <section class="panel">
 <div class="section-header"><h2>Perbandingan sesi perdagangan</h2><a class="button quiet" href="{{ route('ii.market-intelligence.index') }}">Analisis baru</a></div>
 <div class="mi-kpis">
@@ -47,9 +78,11 @@
 </div>
 <section class="panel"><h2>Aktivitas perdagangan relatif</h2><p class="note">Rasio angka volume terakhir terhadap rata-rata tanggal sebelumnya yang dipilih. Satuan, cakupan dan kesetaraan basis volume antarfile belum diverifikasi. Rasio ini bukan deteksi anomali statistik atau ukuran likuiditas yang terverifikasi.</p>
 <div class="tablewrap"><table><thead><tr><th>Saham</th><th>Rasio volume mentah</th></tr></thead><tbody>@forelse($comparison['activity'] as $row)<tr><td>{{ $row['ticker'] }}</td><td>{{ number_format($row['raw_volume_ratio'],2,',','.') }}×</td></tr>@empty<tr><td colspan="2">Data belum mencukupi.</td></tr>@endforelse</tbody></table></div></section>
-<section class="panel"><details><summary>Sumber dan batas analisis</summary><p>File diproses lokal tanpa penyimpanan permanen. Hak penggunaan dikonfirmasi pengguna, bukan verifikasi lisensi atau keaslian independen. Tidak ada persetujuan transaksi.</p>@foreach($comparison['sessions'] as $session)<p class="mi-hash">{{ $session['date'] }} · {{ $session['sha256'] }}</p>@endforeach</details></section>
+<section class="panel"><details><summary>Sumber dan batas analisis</summary><p>{{ !empty($comparison['archive_source']) ? 'Analisis menggunakan arsip lokal; hash merujuk pada file sumber, bukan verifikasi ulang file asli.' : 'File diproses lokal tanpa penyimpanan permanen.' }} Hak penggunaan dikonfirmasi pengguna, bukan verifikasi lisensi atau keaslian independen. Tidak ada persetujuan transaksi.</p>@foreach($comparison['sessions'] as $session)<p class="mi-hash">{{ $session['date'] }} · {{ $session['sha256'] }}</p>@endforeach</details></section>
 @elseif(!$result)
 @if($archive ?? null)
+<section class="panel mi-upload"><div><h2>Market Momentum Intelligence</h2><p>Bandingkan momentum 5, 20, 60, 120 dan 250 observasi dari arsip lokal. Periode yang belum cukup tidak menghasilkan angka.</p><p class="note">Kalender perdagangan dan penyesuaian aksi korporasi belum diverifikasi.</p></div>
+<form method="POST" action="{{ route('ii.market-intelligence.analyze') }}">@csrf<input type="hidden" name="mode" value="momentum"><button type="submit">Analisis momentum</button></form></section>
 <section class="panel mi-upload">
 <div><h2>Arsip perdagangan</h2><p>Gunakan data yang telah tersimpan dengan izin retensi untuk membandingkan tanggal tanpa unggah ulang.</p>
 <div class="mi-kpis">
