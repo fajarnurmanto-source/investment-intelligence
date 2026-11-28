@@ -1,5 +1,6 @@
 @extends('ii.layout')
-@section('title','Rolling Validation')
+@section('title','Uji lintas periode')
+@section('surface','ii-light-content')
 @push('styles')
 <style>
     .rolling-grid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(275px,.8fr);gap:18px;align-items:start}
@@ -14,14 +15,15 @@
     @media(max-width:1110px){.rolling-grid{display:block}.rolling-side{margin-top:18px}}
     @media(max-width:710px){.rolling-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
     @media(max-width:490px){.rolling-metrics{grid-template-columns:1fr}}
+.rolling-metric{background:#f1f5f7;border-color:#dce2e9}.rolling-alert{background:#fff6e5;color:#755016;border-color:#e9c991}.rolling-step{color:#526577}@media(max-width:490px){.rolling-fields{grid-template-columns:1fr}}
 </style>
 @endpush
 @section('content')
-    <p class="eyebrow">II / Trading Signal Intelligence / VS9 R1</p>
-    <h1>Rolling Validation</h1>
+    <p class="eyebrow">Portofolio &amp; strategi</p>
+    <h1>Uji lintas periode</h1>
     <p class="lead">Uji ketahanan strategi melalui beberapa siklus: pilih pendekatan dari riwayat masa lalu, uji pada 30 sesi berikutnya, perluas riwayat, dan ulangi. Tiap periode uji berdiri sendiri dan tidak tumpang tindih.</p>
     <p><a class="button" href="{{ route('ii.risk-budget.index', ['ticker' => $ticker]) }}">Hitung batas risiko posisi hipotetis →</a></p>
-    <div class="boundary"><strong>HISTORICAL RESEARCH ONLY — NOT_ADMITTED · HOLD · AUTHORITY NONE.</strong> Riset beberapa periode lebih informatif daripada satu potongan historis, tetapi tetap tidak membuktikan keberhasilan pada transaksi mendatang.</div>
+    <div class="boundary"><strong>Pengujian historis.</strong> Riset beberapa periode lebih informatif daripada satu potongan historis, tetapi tetap tidak membuktikan keberhasilan pada transaksi mendatang.</div>
     <div class="rolling-grid">
         <div>
             @if(session('rolling_notice'))<div class="panel soft" role="status" style="margin-bottom:16px">{{ session('rolling_notice') }}</div>@endif
@@ -32,18 +34,18 @@
                 @endif
                 <section class="panel">
                     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
-                        <div><span class="badge {{ $result['kind']==='synthetic' ? 'amber' : 'blue' }}">{{ $result['kind']==='synthetic' ? 'SYNTHETIC DEMO' : 'USER DATA / UNVERIFIED' }}</span>
+                        <div><span class="badge {{ $result['kind']==='synthetic' ? 'amber' : 'blue' }}">{{ $result['kind']==='synthetic' ? 'Data simulasi' : 'Data impor, belum terverifikasi' }}</span>
                             <h2 style="font-size:1.8rem;margin:12px 0 5px">{{ $result['ticker'] }} · {{ $result['fold_count'] }} fold</h2>
                             <p class="caption">{{ $result['first_test_date'] }} s.d. {{ $result['last_test_date'] }} · {{ $result['test_sessions_total'] }} sesi uji non-overlap</p>
-                        </div><span class="badge amber">RESEARCH ONLY</span>
+                        </div><span class="badge amber">Khusus penelitian</span>
                     </div>
                     <div class="rolling-metrics">
                         <div class="rolling-metric"><span>Pertumbuhan gabungan strategi*</span><strong>{{ $result['strategy_growth_pct'] }}%</strong></div>
                         <div class="rolling-metric"><span>Pertumbuhan gabungan buy-and-hold*</span><strong>{{ $result['benchmark_growth_pct'] }}%</strong></div>
                         <div class="rolling-metric"><span>Selisih gabungan*</span><strong>{{ $result['aggregate_excess_pp'] }} pp</strong></div>
-                        <div class="rolling-metric"><span>Fold di atas benchmark</span><strong>{{ $result['positive_folds'] }}/{{ $result['fold_count'] }}</strong></div>
+                        <div class="rolling-metric"><span>Periode melampaui benchmark</span><strong>{{ $result['positive_folds'] }}/{{ $result['fold_count'] }}</strong></div>
                         <div class="rolling-metric"><span>Drawdown intraperiode terburuk</span><strong>{{ $result['worst_fold_intraperiod_drawdown_pct'] }}%</strong></div>
-                        <div class="rolling-metric"><span>Sesi sejarah tersedia</span><strong>{{ $result['history_sessions'] }}</strong></div>
+                        <div class="rolling-metric"><span>Riwayat sesi tersedia</span><strong>{{ $result['history_sessions'] }}</strong></div>
                     </div>
                     <p class="caption">*Komposit hipotetis: persentase hasil tiap fold dikalikan berurutan, dengan likuidasi asumtif pada penutupan akhir setiap fold. Ini bukan return portofolio live; biaya dan likuiditas nyata dapat berbeda.</p>
                 </section>
@@ -73,16 +75,16 @@
                 </section>
 
                 <section class="panel" style="margin-top:17px">
-                    <h2>Batas dan provenance</h2>
+                    <h2>Sumber data dan batas evaluasi</h2>
                     <p class="muted">Maksimum empat fold terbaru, masing-masing 30 sesi. Training dimulai setelah 50 sesi indikator pemanasan dan diperluas pada setiap fold. Tidak ada penyetelan parameter berdasarkan fold uji yang sama. Penelitian belum mencakup market impact, pajak, dividen, corporate actions, optimasi portofolio, atau perubahan likuiditas.</p>
                     <p class="caption">Fee {{ $result['fee_bps'] }} bps/sisi · Slippage {{ $result['slippage_bps'] }} bps/sisi · Sumber {{ $result['source_name'] }} · impor {{ $result['imported_at'] }} · {{ $result['evidence'] }} · {{ $result['decision'] }}.</p>
-                    <p><a class="button" href="{{ route('ii.strategy.validate', ['ticker' => $ticker]) }}">Kembali ke single holdout →</a></p>
+                    <p><a class="button" href="{{ route('ii.strategy.validate', ['ticker' => $ticker]) }}">Kembali ke evaluasi strategi →</a></p>
                 </section>
             @elseif(count($available)===0)
-                <section class="panel"><h2>Belum ada data harga</h2><p class="muted">Impor data harga ke Trading Signal Center untuk memulai riset strategi.</p><a href="{{ route('ii.signals.index') }}">Buka Signal Center →</a></section>
+                <section class="panel"><h2>Belum ada data harga</h2><p class="muted">Impor data harga ke Trading Signal Center untuk memulai riset strategi.</p><a href="{{ route('ii.signals.index') }}">Lihat data harga →</a></section>
             @endif
         </div>
-        <aside class="panel rolling-side"><span class="badge">ROLLING RESEARCH · R1</span><h2 style="margin-top:12px">Pengaturan simulasi</h2>
+        <aside class="panel rolling-side"><span class="badge">Pengaturan pengujian</span><h2 style="margin-top:12px">Pengaturan simulasi</h2>
             <form method="GET" action="{{ route('ii.strategy.rolling') }}">
                 <div class="field"><label for="ticker">Instrumen</label><select name="ticker" id="ticker" required>
                     @foreach($available as $item)<option value="{{ $item['ticker'] }}" @selected($ticker===$item['ticker'])>{{ $item['ticker'] }} · {{ $item['kind']==='synthetic' ? 'DEMO' : 'IMPORTED' }}</option>@endforeach
@@ -91,7 +93,7 @@
                     <div class="field"><label for="fee_bps">Fee (bps/sisi)</label><input id="fee_bps" name="fee_bps" type="number" min="0" max="100" value="{{ $fee }}" required></div>
                     <div class="field"><label for="slippage_bps">Slippage (bps/sisi)</label><input id="slippage_bps" name="slippage_bps" type="number" min="0" max="100" value="{{ $slippage }}" required></div>
                 </div>
-                <button type="submit" style="width:100%" @disabled(count($available)===0)>Hitung rolling validation</button>
+                <button type="submit" style="width:100%" @disabled(count($available)===0)>Jalankan pengujian</button>
             </form>
             <div class="rolling-step"><strong>Minimal 150 sesi OHLCV.</strong> DEMO7 yang berisi 90 sesi dapat digunakan pada Strategy Lab dan Strategy Validation VS8 R2, tetapi belum cukup panjang untuk rolling validation ini.</div>
             <form method="POST" action="{{ route('ii.strategy.rolling.load-demo') }}">
