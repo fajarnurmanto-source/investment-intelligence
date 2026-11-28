@@ -3,6 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="referrer" content="no-referrer">
     <meta name="robots" content="noindex,nofollow,noarchive">
     <meta name="theme-color" content="#f4f6f9">
     <link rel="icon" type="image/svg+xml" href="{{ asset('ii/brand.svg') }}">
@@ -47,7 +48,7 @@
     <link rel="stylesheet" href="{{ asset('ii/institutional.css') }}">
     @stack('styles')
 </head>
-<body class="ii-institutional @yield('surface', 'ii-legacy-content')">
+<body class="ii-institutional @yield('surface', 'ii-light-content')">
 <a class="skip-link" href="#ii-main">Lewati navigasi ke konten utama</a>
 <div class="shell">
     <aside class="sidebar">
