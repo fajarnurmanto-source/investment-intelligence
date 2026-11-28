@@ -49,7 +49,8 @@ final class IdxDailyEvidenceWarehouse
             throw new \InvalidArgumentException('II_IDX_WAREHOUSE_REVIEW_INVALID');
         }
         [$header,$records] = app(IdxXlsxExportReader::class)->read($raw,$receipt['sheet'] ?? null,$receipt['header_row'] ?? null);
-        if ($header !== self::HEADERS || !$records) {
+        $records = app(IdxSessionIntelligence::class)->normalizeExport($header, $records);
+        if (!$records || count($records) > 2000) {
             throw new \InvalidArgumentException('II_IDX_WAREHOUSE_SCHEMA_INVALID');
         }
         $seen = [];
@@ -115,6 +116,76 @@ final class IdxDailyEvidenceWarehouse
         return ['batches'=>$batches->map(fn($b)=>['session_date'=>$b->session_date,'sha256'=>$b->source_sha256,
             'review_sha256'=>$b->review_sha256,'rows'=>DB::table('ii_idx_evidence_rows')->where('batch_id',$b->id)->count()])->all(),
             'admitted'=>false,'trading_authorized'=>false];
+    }
+
+    public function isOwner(int $owner): bool
+    {
+        try {
+            $this->owner($owner);
+            return true;
+        } catch (\InvalidArgumentException) {
+            return false;
+        }
+    }
+
+    public function historicalCompare(int $owner, array $dates): array
+    {
+        $this->owner($owner);
+        if (count($dates) < 2 || count($dates) > 5 || count(array_unique($dates, SORT_REGULAR)) !== count($dates)) {
+            throw new \InvalidArgumentException('II_IDX_HISTORY_DATES_INVALID');
+        }
+        foreach ($dates as $date) {
+            if (!$this->date($date) || $date >= now('Asia/Jakarta')->toDateString()) {
+                throw new \InvalidArgumentException('II_IDX_HISTORY_DATES_INVALID');
+            }
+        }
+
+        return DB::transaction(function () use ($owner, $dates) {
+            $this->owner($owner);
+            $sessions = [];
+            foreach ($dates as $date) {
+                $batch = DB::table('ii_idx_evidence_batches')->where('user_id', $owner)
+                    ->where('session_date', $date)->first();
+                if (!$batch) {
+                    throw new \InvalidArgumentException('II_IDX_HISTORY_SESSION_NOT_FOUND');
+                }
+                $review = json_decode($batch->review_json, true, 12, JSON_THROW_ON_ERROR);
+                if (!hash_equals($batch->review_sha256, hash('sha256', $batch->review_json))
+                    || ($review['document_sha256'] ?? null) !== $batch->source_sha256
+                    || ($review['session_date'] ?? null) !== $date
+                    || ($review['source_url'] ?? null) !== IdxOfficialExportIntake::SOURCE
+                    || ($review['terms_url'] ?? null) !== IdxOfficialExportIntake::TERMS
+                    || ($review['acquisition'] ?? null) !== 'MANUAL_OFFICIAL_DOWNLOAD'
+                    || ($review['format'] ?? null) !== 'ORIGINAL_XLSX'
+                    || ($review['usage'] ?? null) !== 'PERSONAL_NONCOMMERCIAL_RESEARCH'
+                    || ($review['rights_confirmed'] ?? null) !== true
+                    || ($review['local_retention_confirmed'] ?? null) !== true
+                    || ($review['no_redistribution'] ?? null) !== true
+                    || ($review['direct_cost_idr'] ?? null) !== 0
+                    || !is_string($review['reviewer'] ?? null) || trim($review['reviewer']) === ''
+                    || !$this->date($review['access_date'] ?? null)
+                    || $review['access_date'] < $date || $review['access_date'] > now('Asia/Jakarta')->toDateString()) {
+                    throw new \InvalidArgumentException('II_IDX_HISTORY_REVIEW_INVALID');
+                }
+                $stored = DB::table('ii_idx_evidence_rows')->where('batch_id', $batch->id)
+                    ->orderBy('row_number')->limit(2001)->get();
+                if ($stored->isEmpty() || $stored->count() > 2000) {
+                    throw new \InvalidArgumentException('II_IDX_HISTORY_ROWS_INVALID');
+                }
+                $rows = [];
+                foreach ($stored as $entry) {
+                    $row = json_decode($entry->payload, true, 12, JSON_THROW_ON_ERROR);
+                    if (array_keys($row) !== self::HEADERS
+                        || $row['Stock Code'] !== $entry->ticker
+                        || $row['Last Trading Date'] !== (new \DateTimeImmutable($date))->format('d M Y')) {
+                        throw new \InvalidArgumentException('II_IDX_HISTORY_ROW_INVALID');
+                    }
+                    $rows[] = $row;
+                }
+                $sessions[] = ['rows' => $rows, 'sha256' => $batch->source_sha256];
+            }
+            return app(IdxMultisessionIntelligence::class)->compare($sessions) + ['archive_source' => true];
+        });
     }
 
     private function date(mixed $v): bool
