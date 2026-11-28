@@ -20,7 +20,39 @@
 @if($notice)
 <div class="error" role="alert">{{ $notice }}</div>
 @endif
-@if($momentum ?? null)
+@if($liquidity ?? null)
+<section class="panel">
+<div class="section-header"><h2>Liquidity &amp; Anomaly Intelligence</h2><a class="button quiet" href="{{ route('ii.market-intelligence.index') }}">Analisis baru</a></div>
+<p>{{ $liquidity['available'] }} dari {{ $liquidity['required'] }} observasi tersedia. Tanggal terakhir: {{ $liquidity['latest_date'] ?? '—' }}.</p>
+@if($liquidity['status']==='INSUFFICIENT_HISTORY')
+<p role="status">Data belum cukup. Diperlukan 20 tanggal pembanding dan satu tanggal terbaru. Skor anomali tidak diterbitkan.</p>
+@elseif($liquidity['status']==='NO_SCORABLE_BASELINE')
+<p role="status">Tidak ada baseline yang dapat diberi skor. Riwayat per saham belum lengkap atau variasi median absolut bernilai nol.</p>
+@endif
+<p class="note">Volume, nilai dan frekuensi adalah angka mentah dari sumber. Satuan, cakupan, kontinuitas tanggal dan likuiditas yang dapat dieksekusi belum diverifikasi. Tidak ada rekomendasi atau persetujuan transaksi.</p>
+<div class="tablewrap"><table><thead><tr><th>Indikator</th><th>Data terakhir valid</th><th>Baseline lengkap</th><th>Dapat diberi skor</th><th>MAD nol</th><th>Kandidat</th></tr></thead><tbody>
+@foreach(['volume'=>'Volume','value'=>'Nilai','frequency'=>'Frekuensi'] as $key=>$label)
+@php($cov=$liquidity['coverage'][$key] ?? [])
+<tr><td>{{ $label }}</td><td>{{ $cov['latest_valid'] ?? 0 }}</td><td>{{ $cov['baseline_complete'] ?? 0 }}</td><td>{{ $cov['scored'] ?? 0 }}</td><td>{{ $cov['zero_mad'] ?? 0 }}</td><td>{{ $cov['candidate_count'] ?? 0 }}</td></tr>
+@endforeach
+</tbody></table></div>
+</section>
+@if($liquidity['status']!=='INSUFFICIENT_HISTORY')
+@foreach(['volume'=>'Volume','value'=>'Nilai','frequency'=>'Frekuensi'] as $key=>$label)
+<section class="panel"><h2>{{ $label }} — aktivitas relatif dan kandidat anomali</h2>
+<p class="note">Robust Z-score menggunakan median dan MAD dari 20 observasi sebelum tanggal terakhir. Ambang penyaringan |Z| ≥ {{ $liquidity['threshold'] }} bersifat heuristik, bukan uji signifikansi atau bukti manipulasi. MAD nol tidak diberi skor.</p>
+@foreach(['activity'=>'Rasio aktivitas terbesar','anomalies'=>'Kandidat berdasarkan |Z| terbesar'] as $group=>$heading)
+<h3>{{ $heading }}</h3><div class="tablewrap"><table><thead><tr><th>Saham</th><th>Angka terakhir</th><th>Median baseline</th><th>Rasio</th><th>Robust Z</th><th>Harga vs sebelumnya</th></tr></thead><tbody>
+@forelse($liquidity[$group][$key] ?? [] as $row)
+<tr><td><a href="{{ route('ii.company',['ticker'=>$row['ticker']]) }}">{{ $row['ticker'] }}</a></td><td>{{ number_format($row['latest_raw'],0,',','.') }}</td><td>{{ number_format($row['baseline_median'],1,',','.') }}</td><td>{{ $row['ratio']===null ? '—' : number_format($row['ratio'],2,',','.').'×' }}</td><td>{{ $row['robust_z']===null ? '— (MAD nol)' : number_format($row['robust_z'],2,',','.') }}</td><td>{{ number_format($row['price_change_pct'],2,',','.') }}%</td></tr>
+@empty<tr><td colspan="6">Tidak ada hasil yang memenuhi syarat untuk daftar ini.</td></tr>@endforelse
+</tbody></table></div>
+@endforeach
+</section>
+@endforeach
+@endif
+<section class="panel"><details><summary>Bukti sumber</summary>@foreach($liquidity['sources'] as $source)<p class="mi-hash">{{ $source['date'] }} · {{ $source['sha256'] }}</p>@endforeach</details></section>
+@elseif($momentum ?? null)
 <section class="panel">
 <div class="section-header"><h2>Market Momentum Intelligence</h2><a class="button quiet" href="{{ route('ii.market-intelligence.index') }}">Analisis baru</a></div>
 <p>{{ $momentum['available'] }} tanggal arsip tersedia. Setiap periode menggunakan tanggal observasi terakhir, bukan jumlah hari perdagangan berturut-turut yang sudah diverifikasi.</p>
@@ -81,6 +113,8 @@
 <section class="panel"><details><summary>Sumber dan batas analisis</summary><p>{{ !empty($comparison['archive_source']) ? 'Analisis menggunakan arsip lokal; hash merujuk pada file sumber, bukan verifikasi ulang file asli.' : 'File diproses lokal tanpa penyimpanan permanen.' }} Hak penggunaan dikonfirmasi pengguna, bukan verifikasi lisensi atau keaslian independen. Tidak ada persetujuan transaksi.</p>@foreach($comparison['sessions'] as $session)<p class="mi-hash">{{ $session['date'] }} · {{ $session['sha256'] }}</p>@endforeach</details></section>
 @elseif(!$result)
 @if($archive ?? null)
+<section class="panel mi-upload"><div><h2>Liquidity &amp; Anomaly Intelligence</h2><p>Bandingkan volume, nilai dan frekuensi terbaru dengan 20 observasi sebelumnya. Kandidat anomali ditampilkan jika baseline memadai.</p></div>
+<form method="POST" action="{{ route('ii.market-intelligence.analyze') }}">@csrf<input type="hidden" name="mode" value="liquidity"><button type="submit">Analisis aktivitas</button></form></section>
 <section class="panel mi-upload"><div><h2>Market Momentum Intelligence</h2><p>Bandingkan momentum 5, 20, 60, 120 dan 250 observasi dari arsip lokal. Periode yang belum cukup tidak menghasilkan angka.</p><p class="note">Kalender perdagangan dan penyesuaian aksi korporasi belum diverifikasi.</p></div>
 <form method="POST" action="{{ route('ii.market-intelligence.analyze') }}">@csrf<input type="hidden" name="mode" value="momentum"><button type="submit">Analisis momentum</button></form></section>
 <section class="panel mi-upload">
