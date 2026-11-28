@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Services\IdxOfficialExportIntake;
 use App\Services\IdxSessionIntelligence;
+use App\Services\IdxMultisessionIntelligence;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -24,6 +25,9 @@ final class IdxMarketIntelligenceController extends Controller
     public function analyze(Request $request, IdxSessionIntelligence $engine)
     {
         $this->localOnly($request);
+        if ($request->hasFile('workbooks')) {
+            return $this->compare($request);
+        }
         $validator = Validator::make($request->all(), [
             'workbook' => ['required', 'file', 'max:19531'],
             'rights' => ['accepted'],
@@ -48,9 +52,38 @@ final class IdxMarketIntelligenceController extends Controller
         }
     }
 
-    private function page(?array $result = null, ?string $notice = null, int $status = 200)
+    private function compare(Request $request)
     {
-        return response()->view('ii.market-intelligence', compact('result', 'notice'), $status)
+        $validator = Validator::make($request->all(), [
+            'workbooks' => ['required', 'array', 'min:2', 'max:5'],
+            'workbooks.*' => ['required', 'file', 'max:19531'],
+            'rights' => ['accepted'],
+        ]);
+        if ($validator->fails()) {
+            return $this->page(null, 'Pilih 2–5 file Excel dan konfirmasikan hak penggunaan.', 422);
+        }
+        try {
+            $files = $request->file('workbooks');
+            $total = 0;
+            $raw = [];
+            foreach ($files as $file) {
+                if (strtolower($file->getClientOriginalExtension()) !== 'xlsx'
+                    || ($total += $file->getSize()) > IdxOfficialExportIntake::MAX_BYTES) {
+                    throw new \InvalidArgumentException('Invalid file.');
+                }
+                $raw[] = file_get_contents($file->getRealPath(), false, null, 0, IdxOfficialExportIntake::MAX_BYTES + 1);
+            }
+            return $this->page(null, null, 200, app(IdxMultisessionIntelligence::class)->analyze($raw));
+        } catch (\InvalidArgumentException) {
+            return $this->page(null, 'Gunakan 2–5 file asli BEI dari tanggal berbeda yang telah selesai, dengan total maksimal 19 MB.', 422);
+        } catch (\Throwable) {
+            return $this->page(null, 'Perbandingan belum dapat dijalankan. Periksa file atau coba kembali.', 503);
+        }
+    }
+
+    private function page(?array $result = null, ?string $notice = null, int $status = 200, ?array $comparison = null)
+    {
+        return response()->view('ii.market-intelligence', compact('result', 'notice', 'comparison'), $status)
             ->header('Cache-Control', 'private, no-store')
             ->header('X-Content-Type-Options', 'nosniff');
     }
