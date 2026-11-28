@@ -119,7 +119,7 @@ class LocalByokArchitectureTest extends TestCase
         ]);
         $this->post('/ii/data-sources/quote', ['symbol' => 'AAPL'])
             ->assertOk()->assertSee('DELAYED_QUOTES_ENDPOINT')
-            ->assertSee('NOT_ADMITTED')->assertDontSee('test-owner-key')
+            ->assertSee('Belum disahkan sebagai dasar keputusan transaksi.')->assertDontSee('test-owner-key')
             ->assertHeader('X-Content-Type-Options', 'nosniff');
         Http::assertSentCount(1);
         Http::assertSent(fn (ClientRequest $request) =>
