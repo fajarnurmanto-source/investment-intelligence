@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use App\Services\IdxDailyEvidenceWarehouse;
+use App\Services\IdxSessionIntelligence;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
@@ -12,7 +13,7 @@ final class IdxMultisessionUploadTest extends TestCase
 {
     use RefreshDatabase;
 
-    private function workbook(string $date, string $close, string $volume): UploadedFile
+    private function workbook(string $date, string $close, string $volume, bool $indonesian = false): UploadedFile
     {
         if (!class_exists(\ZipArchive::class) || !class_exists(\DOMDocument::class)) {
             $this->markTestSkipped('Native XLSX extensions required.');
@@ -31,7 +32,7 @@ final class IdxMultisessionUploadTest extends TestCase
                 $xml .= '<row r="'.$n.'">';
                 foreach (IdxDailyEvidenceWarehouse::HEADERS as $i=>$name) {
                     $col = $i < 26 ? chr(65+$i) : 'A'.chr(65+$i-26);
-                    $value = $n === 1 ? $name : ($data[$name] ?? '');
+                    $value = $n === 1 ? ($indonesian ? IdxSessionIntelligence::INDONESIAN_HEADERS[$i] : $name) : ($data[$name] ?? '');
                     $xml .= '<c r="'.$col.$n.'" t="inlineStr"><is><t>'.htmlspecialchars($value, ENT_XML1).'</t></is></c>';
                 }
                 $xml .= '</row>';
@@ -49,7 +50,7 @@ final class IdxMultisessionUploadTest extends TestCase
         $user = User::factory()->create(['ii_research_role'=>'analyst']);
         $this->actingAs($user)->withServerVariables(['REMOTE_ADDR'=>'127.0.0.1'])
             ->post('http://localhost/ii/market-intelligence', [
-                'workbooks'=>[$this->workbook('04 Nov 2025','120','300'), $this->workbook('03 Nov 2025','100','100')],
+                'workbooks'=>[$this->workbook('04 Nov 2025','120','300', true), $this->workbook('03 Nov 2025','100','100')],
                 'rights'=>'1',
             ])->assertOk()->assertSee('Perbandingan sesi perdagangan')->assertSee('BBCA')
             ->assertSee('20,00%')->assertSee('3,00')
@@ -59,6 +60,16 @@ final class IdxMultisessionUploadTest extends TestCase
                 && $r['admitted'] === false && $r['trading_authorized'] === false);
         $this->assertDatabaseCount('ii_idx_evidence_batches', 0);
         $this->assertDatabaseCount('ii_idx_evidence_rows', 0);
+    }
+
+    public function test_indonesian_single_session_upload(): void
+    {
+        $user = User::factory()->create(['ii_research_role'=>'analyst']);
+        $this->actingAs($user)->withServerVariables(['REMOTE_ADDR'=>'127.0.0.1'])
+            ->post('http://localhost/ii/market-intelligence', [
+                'workbook'=>$this->workbook('04 Nov 2025','120','300', true),
+                'rights'=>'1',
+            ])->assertOk()->assertViewHas('result', fn ($r) => $r['universe'] === 1 && $r['breadth']['up'] === 1);
     }
 
     public function test_multisession_requires_rights_and_distinct_dates(): void
