@@ -1,6 +1,7 @@
 @extends('ii.layout')
 
 @section('title', $case->title)
+@section('surface','ii-light-content')
 
 @push('styles')
 <style>
@@ -21,20 +22,20 @@
 @endpush
 
 @section('content')
-<p class="eyebrow">II / Investment Research / Case Detail</p>
+<p class="eyebrow">Riset saya</p>
 <nav class="research-detail-actions" aria-label="Aksi kasus riset">
     <a href="{{ route('ii.dashboard') }}">Dashboard</a>
-    <a href="{{ route('ii.signals.index') }}">Trading Signal Center</a>
+    <a href="{{ route('ii.signals.index') }}">Sinyal pasar</a>
     <a href="{{ route('ii.cases.index') }}">← Semua kasus</a>
     <a class="button quiet" href="{{ route('ii.cases.report', ['id' => $case->id]) }}">Unduh laporan Markdown</a>
 </nav>
 
 <h1>{{ $case->title }}</h1>
-<p class="research-case-id">ID kasus: <code>{{ $case->id }}</code></p>
+<details class="research-case-id"><summary>Identitas kasus</summary><code>{{ $case->id }}</code></details>
 
 <div class="boundary" role="note">
-    <strong>DEMO SINTETIS</strong> · NOT_ADMITTED · HOLD · Authority NONE · Trading FALSE.
-    Status <span class="badge blue">{{ $case->review_status }}</span> tidak berarti bukti sudah diterima.
+    <strong>DEMO SINTETIS</strong> · Belum disahkan sebagai dasar keputusan investasi atau transaksi.
+    Status <span class="badge blue">{{ match($case->review_status) { 'OPEN'=>'Terbuka','NEEDS_EVIDENCE'=>'Perlu bukti tambahan','REVIEWED_SYNTHETIC'=>'Simulasi telah ditinjau',default=>'Perlu diperiksa' } }}</span> tidak berarti bukti sudah diterima.
 </div>
 
 <section class="panel research-detail-panel" aria-labelledby="research-company-detail">
@@ -44,7 +45,7 @@
     <h2>Metrik historis sintetis</h2>
     <div class="tablewrap" role="region" aria-label="Metrik historis sintetis" tabindex="0">
         <table class="research-detail-table">
-            <thead><tr><th scope="col">Periode</th><th scope="col">Net margin (%)</th><th scope="col">Revenue index</th></tr></thead>
+            <thead><tr><th scope="col">Periode</th><th scope="col">Margin laba (%)</th><th scope="col">Indeks pendapatan</th></tr></thead>
             <tbody>
                 @foreach(($data['history'] ?? []) as $row)
                     <tr><td>{{ $row['period'] }}</td><td>{{ $row['net_margin_pct'] }}</td><td>{{ $row['revenue_index'] }}</td></tr>
@@ -71,9 +72,9 @@
             <div class="field research-review-fields">
                 <label for="research-review-status">Status</label>
                 <select id="research-review-status" name="review_status" required>
-                    <option value="OPEN" @selected(old('review_status') === 'OPEN')>OPEN</option>
-                    <option value="NEEDS_EVIDENCE" @selected(old('review_status') === 'NEEDS_EVIDENCE')>NEEDS_EVIDENCE</option>
-                    <option value="REVIEWED_SYNTHETIC" @selected(old('review_status') === 'REVIEWED_SYNTHETIC')>REVIEWED_SYNTHETIC</option>
+                    <option value="OPEN" @selected(old('review_status') === 'OPEN')>Terbuka</option>
+                    <option value="NEEDS_EVIDENCE" @selected(old('review_status') === 'NEEDS_EVIDENCE')>Perlu bukti tambahan</option>
+                    <option value="REVIEWED_SYNTHETIC" @selected(old('review_status') === 'REVIEWED_SYNTHETIC')>Simulasi telah ditinjau</option>
                 </select>
             </div>
             <div class="field">
