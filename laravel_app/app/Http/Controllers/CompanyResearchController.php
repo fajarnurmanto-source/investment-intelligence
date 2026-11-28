@@ -3,18 +3,25 @@
 namespace App\Http\Controllers;
 
 use App\Services\CompanyResearchService;
+use App\Services\FundamentalSnapshotService;
 use App\Services\ScenarioEvaluationService;
 use Illuminate\Http\Request;
 
 class CompanyResearchController extends Controller
 {
-    public function index(Request $request, CompanyResearchService $companies)
+    public function index(Request $request, CompanyResearchService $companies, FundamentalSnapshotService $fundamentals)
     {
-        $ticker = strtoupper((string) $request->query('ticker', 'DEMO2'));
+        $records = $fundamentals->latestByTicker((int) $request->user()->id);
+        $requested = $request->query('ticker', '');
+        abort_unless(is_string($requested) && strlen($requested) <= 16, 400);
+        $ticker = strtoupper(trim($requested));
         $universe = $companies->universe();
-        $research = $companies->research($ticker);
+        $record = $records[$ticker] ?? null;
+        $demo = $record === null && in_array($ticker, ['DEMO2', 'DEMO3'], true);
+        $research = $demo ? $companies->research($ticker) : null;
 
-        return view('ii.company', compact('ticker', 'universe', 'research'));
+        return response()->view('ii.company', compact('ticker', 'universe', 'research', 'records', 'record', 'demo'))
+            ->header('Cache-Control', 'private, no-store');
     }
 
     public function scenario(Request $request, ScenarioEvaluationService $evaluator)
@@ -33,7 +40,7 @@ class CompanyResearchController extends Controller
                 (float) $data['falsification_below'],
             );
         } catch (\InvalidArgumentException $exception) {
-            return back()->withErrors(['falsification_below' => $exception->getMessage()])->withInput();
+            return back()->withErrors(['falsification_below' => 'Batas yang menggugurkan asumsi tidak boleh melebihi target margin.'])->withInput();
         }
 
         $result = [
