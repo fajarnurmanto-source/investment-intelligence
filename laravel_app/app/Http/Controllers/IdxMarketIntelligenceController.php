@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\IdxOfficialExportIntake;
+use App\Services\IdxDailyEvidenceWarehouse;
 use App\Services\IdxSessionIntelligence;
 use App\Services\IdxMultisessionIntelligence;
 use Illuminate\Http\Request;
@@ -25,6 +26,9 @@ final class IdxMarketIntelligenceController extends Controller
     public function analyze(Request $request, IdxSessionIntelligence $engine)
     {
         $this->localOnly($request);
+        if ($request->input('mode') === 'history') {
+            return $this->history($request);
+        }
         if ($request->hasFile('workbooks')) {
             return $this->compare($request);
         }
@@ -81,9 +85,36 @@ final class IdxMarketIntelligenceController extends Controller
         }
     }
 
+    private function history(Request $request)
+    {
+        $warehouse = app(IdxDailyEvidenceWarehouse::class);
+        $owner = (int) $request->user()->id;
+        abort_unless($warehouse->isOwner($owner), 403);
+        $validator = Validator::make($request->all(), [
+            'dates' => ['required', 'array', 'min:2', 'max:5'],
+            'dates.*' => ['required', 'string', 'date_format:Y-m-d', 'distinct'],
+        ]);
+        if ($validator->fails()) {
+            return $this->page(null, 'Pilih 2–5 tanggal arsip yang berbeda.', 422);
+        }
+        try {
+            return $this->page(null, null, 200, $warehouse->historicalCompare($owner, $validator->validated()['dates']));
+        } catch (\InvalidArgumentException) {
+            return $this->page(null, 'Arsip tidak tersedia atau bukti hak penggunaan tidak memenuhi syarat.', 422);
+        } catch (\Throwable) {
+            return $this->page(null, 'Arsip belum dapat diperiksa. Coba kembali.', 503);
+        }
+    }
+
     private function page(?array $result = null, ?string $notice = null, int $status = 200, ?array $comparison = null)
     {
-        return response()->view('ii.market-intelligence', compact('result', 'notice', 'comparison'), $status)
+        $warehouse = app(IdxDailyEvidenceWarehouse::class);
+        $owner = (int) auth()->id();
+        $archive = null;
+        if ($warehouse->isOwner($owner)) {
+            $archive = $warehouse->status($owner);
+        }
+        return response()->view('ii.market-intelligence', compact('result', 'notice', 'comparison', 'archive'), $status)
             ->header('Cache-Control', 'private, no-store')
             ->header('X-Content-Type-Options', 'nosniff');
     }
