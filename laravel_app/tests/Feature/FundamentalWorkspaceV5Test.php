@@ -25,7 +25,7 @@ class FundamentalWorkspaceV5Test extends TestCase
         $this->get('/ii/fundamentals')
             ->assertOk()->assertSee('Ringkasan emiten')
             ->assertSee('Valuasi tersedia')
-            ->assertSee('NOT_ADMITTED')
+            ->assertSee('Data belum disahkan sebagai dasar keputusan investasi.')
             ->assertDontSee('id="fundamental_file"', false)
             ->assertDontSee('id="market_prices_csv"', false)
             ->assertDontSee('id="basis_ticker"', false);
