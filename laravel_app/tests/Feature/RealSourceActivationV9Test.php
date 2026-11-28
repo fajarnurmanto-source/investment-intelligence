@@ -85,7 +85,7 @@ class RealSourceActivationV9Test extends TestCase
             ->assertSee('RIGHTS_REVIEW_REQUIRED')
             ->assertSee('DOCUMENT_REQUIRED')
             ->assertSee('NOT_ADMITTED')
-            ->assertSee('TRADING_AUTHORITY=NONE')
+            ->assertSee('bukan rekomendasi saham atau izin perdagangan')
             ->assertSee('https://data.idx.co.id/', false)
             ->assertDontSee('HIDDEN.JK');
         $this->assertStringContainsString('keterangan yang dilaporkan pengguna', $page->getContent());
