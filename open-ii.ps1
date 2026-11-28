@@ -22,6 +22,6 @@ try {
         if (-not $edge) { throw 'Microsoft Edge tidak ditemukan. Gunakan open-ii.ps1 -Browser untuk akses sementara.' }
         $profile = Join-Path $context.HabitatRoot 'runtime\desktop-profile'
         New-Item -ItemType Directory -Path $profile -Force | Out-Null
-        Start-Process -FilePath $edge -ArgumentList @('--app=' + $context.AppUrl, ('--user-data-dir="' + $profile + '"'), '--no-first-run')
+        Start-Process -FilePath $edge -ArgumentList @('--app=' + $context.AppUrl, ('--user-data-dir="' + $profile + '"'), '--no-first-run', '--disable-extensions', '--disable-background-mode', '--no-default-browser-check')
     }
 } finally { Exit-IIRuntimeLock -Mutex $mutex }
